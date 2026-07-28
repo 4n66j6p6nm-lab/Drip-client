@@ -1,7 +1,8 @@
-print("✅ Asesinos VS Sheriffs - Fixed Hitbox")
+print("✅ Asesinos VS Sheriffs - Final")
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
 local localPlayer = Players.LocalPlayer
 
 local speedEnabled = false
@@ -14,27 +15,75 @@ local isPremium = false
 
 local LICENSE_KEY = "LIC-D16335"
 local FREE_LICENSE = "FREE-12H"
+local FREE_PREMIUM_5H = "PREMIUM-5H"
 
 local guiName = "DuelsGod"
 if game:GetService("CoreGui"):FindFirstChild(guiName) then
     game:GetService("CoreGui")[guiName]:Destroy()
 end
 
+-- ==================== LOADING SCREEN ====================
+local function showLoading()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "DuelsLoading"
+    screenGui.IgnoreGuiInset = true
+    screenGui.DisplayOrder = 999
+    screenGui.Parent = game:GetService("CoreGui")
+
+    local bg = Instance.new("ImageLabel")
+    bg.Size = UDim2.new(1, 0, 1, 0)
+    bg.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+    bg.Image = "rbxassetid://18622390193"
+    bg.ScaleType = Enum.ScaleType.Crop
+    bg.Parent = screenGui
+
+    local dark = Instance.new("Frame")
+    dark.Size = UDim2.new(1, 0, 1, 0)
+    dark.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    dark.BackgroundTransparency = 0.4
+    dark.Parent = bg
+
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 60)
+    title.Position = UDim2.new(0, 0, 0.38, 0)
+    title.BackgroundTransparency = 1
+    title.Text = "Asesinos VS Sheriffs"
+    title.TextColor3 = Color3.fromRGB(255, 60, 60)
+    title.TextSize = 32
+    title.Font = Enum.Font.SourceSansBold
+    title.Parent = bg
+
+    local status = Instance.new("TextLabel")
+    status.Size = UDim2.new(1, 0, 0, 30)
+    status.Position = UDim2.new(0, 0, 0.52, 0)
+    status.BackgroundTransparency = 1
+    status.Text = "Loading..."
+    status.TextColor3 = Color3.fromRGB(220, 220, 220)
+    status.TextSize = 20
+    status.Parent = bg
+
+    task.wait(2.5)
+    status.Text = "Loaded!"
+    task.wait(0.8)
+    screenGui:Destroy()
+    showLicense()
+end
+
 -- ==================== LICENSE ====================
-local function showLicense()
+function showLicense()
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "LicenseCheck"
     screenGui.Parent = game:GetService("CoreGui")
 
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 340, 0, 250)
-    frame.Position = UDim2.new(0.5, -170, 0.3, 0)
+    frame.Size = UDim2.new(0, 340, 0, 340)
+    frame.Position = UDim2.new(0.5, -170, 0.22, 0)
     frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
     frame.Parent = screenGui
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
 
     local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1, 0, 0, 40)
+    title.Size = UDim2.new(1, 0, 0, 45)
     title.BackgroundTransparency = 1
     title.Text = "Asesinos VS Sheriffs"
     title.TextColor3 = Color3.fromRGB(255, 50, 50)
@@ -43,8 +92,8 @@ local function showLicense()
     title.Parent = frame
 
     local box = Instance.new("TextBox")
-    box.Size = UDim2.new(0.85, 0, 0, 40)
-    box.Position = UDim2.new(0.075, 0, 0.28, 0)
+    box.Size = UDim2.new(0.85, 0, 0, 42)
+    box.Position = UDim2.new(0.075, 0, 0.18, 0)
     box.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     box.Text = ""
     box.PlaceholderText = "Ingresa tu licencia..."
@@ -54,8 +103,8 @@ local function showLicense()
     Instance.new("UICorner", box).CornerRadius = UDim.new(0, 8)
 
     local activateBtn = Instance.new("TextButton")
-    activateBtn.Size = UDim2.new(0.85, 0, 0, 40)
-    activateBtn.Position = UDim2.new(0.075, 0, 0.5, 0)
+    activateBtn.Size = UDim2.new(0.85, 0, 0, 42)
+    activateBtn.Position = UDim2.new(0.075, 0, 0.35, 0)
     activateBtn.BackgroundColor3 = Color3.fromRGB(220, 40, 80)
     activateBtn.Text = "Activar Licencia"
     activateBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -65,8 +114,8 @@ local function showLicense()
     Instance.new("UICorner", activateBtn).CornerRadius = UDim.new(0, 8)
 
     local freeBtn = Instance.new("TextButton")
-    freeBtn.Size = UDim2.new(0.85, 0, 0, 40)
-    freeBtn.Position = UDim2.new(0.075, 0, 0.72, 0)
+    freeBtn.Size = UDim2.new(0.85, 0, 0, 42)
+    freeBtn.Position = UDim2.new(0.075, 0, 0.52, 0)
     freeBtn.BackgroundColor3 = Color3.fromRGB(40, 120, 220)
     freeBtn.Text = "Licencia Gratis (12h)"
     freeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -75,8 +124,19 @@ local function showLicense()
     freeBtn.Parent = frame
     Instance.new("UICorner", freeBtn).CornerRadius = UDim.new(0, 8)
 
+    local premium5hBtn = Instance.new("TextButton")
+    premium5hBtn.Size = UDim2.new(0.85, 0, 0, 42)
+    premium5hBtn.Position = UDim2.new(0.075, 0, 0.69, 0)
+    premium5hBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 100)
+    premium5hBtn.Text = "Premium Gratis (5h) - Discord"
+    premium5hBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    premium5hBtn.TextSize = 14
+    premium5hBtn.Font = Enum.Font.SourceSansBold
+    premium5hBtn.Parent = frame
+    Instance.new("UICorner", premium5hBtn).CornerRadius = UDim.new(0, 8)
+
     activateBtn.MouseButton1Click:Connect(function()
-        if box.Text == LICENSE_KEY then
+        if box.Text == LICENSE_KEY or box.Text == FREE_PREMIUM_5H then
             licenseAccepted = true
             isPremium = true
             screenGui:Destroy()
@@ -95,6 +155,18 @@ local function showLicense()
     freeBtn.MouseButton1Click:Connect(function()
         box.Text = FREE_LICENSE
     end)
+
+    premium5hBtn.MouseButton1Click:Connect(function()
+        setclipboard("https://discord.gg/wHc9aBmvh")
+        box.Text = FREE_PREMIUM_5H
+        pcall(function()
+            StarterGui:SetCore("SendNotification", {
+                Title = "Duels",
+                Text = "Discord copiado! Usa PREMIUM-5H",
+                Duration = 5
+            })
+        end)
+    end)
 end
 
 -- ==================== MAIN MENU ====================
@@ -104,17 +176,28 @@ function loadMainMenu()
     screenGui.ResetOnSpawn = false
     screenGui.Parent = game:GetService("CoreGui")
 
-    local logoBtn = Instance.new("TextButton")
+    -- Icono circular con imagen
+    local logoBtn = Instance.new("ImageButton")
     logoBtn.Size = UDim2.new(0, 80, 0, 80)
     logoBtn.Position = UDim2.new(0.05, 0, 0.2, 0)
-    logoBtn.BackgroundColor3 = Color3.fromRGB(220, 30, 30)
-    logoBtn.Text = "DUELS"
-    logoBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    logoBtn.TextSize = 18
-    logoBtn.Font = Enum.Font.SourceSansBold
+    logoBtn.BackgroundTransparency = 1
+    logoBtn.Image = "rbxassetid://18622390193"
+    logoBtn.ScaleType = Enum.ScaleType.Crop
     logoBtn.Draggable = true
     logoBtn.Parent = screenGui
-    Instance.new("UICorner", logoBtn).CornerRadius = UDim.new(1, 0)
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(1, 0)
+    corner.Parent = logoBtn
+
+    local logoText = Instance.new("TextLabel")
+    logoText.Size = UDim2.new(1, 0, 1, 0)
+    logoText.BackgroundTransparency = 1
+    logoText.Text = "DUELS"
+    logoText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    logoText.TextSize = 16
+    logoText.Font = Enum.Font.SourceSansBold
+    logoText.Parent = logoBtn
 
     local menu = Instance.new("Frame")
     menu.Size = UDim2.new(0, 290, 0, isPremium and 420 or 260)
@@ -125,6 +208,16 @@ function loadMainMenu()
     menu.Draggable = true
     menu.Parent = screenGui
     Instance.new("UICorner", menu).CornerRadius = UDim.new(0, 12)
+
+    -- Fondo del menú con imagen
+    local bgImage = Instance.new("ImageLabel")
+    bgImage.Size = UDim2.new(1, 0, 1, 0)
+    bgImage.BackgroundTransparency = 1
+    bgImage.Image = "rbxassetid://18622390193"
+    bgImage.ImageTransparency = 0.55
+    bgImage.ScaleType = Enum.ScaleType.Crop
+    bgImage.Parent = menu
+    Instance.new("UICorner", bgImage).CornerRadius = UDim.new(0, 12)
 
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(1, 0, 0, 40)
@@ -140,6 +233,7 @@ function loadMainMenu()
         toggle.Size = UDim2.new(0.9, 0, 0, 48)
         toggle.Position = UDim2.new(0.05, 0, 0, y)
         toggle.BackgroundColor3 = default and Color3.fromRGB(40, 180, 40) or Color3.fromRGB(220, 40, 80)
+        toggle.BackgroundTransparency = 0.1
         toggle.Text = name .. ": " .. (default and "ON" or "OFF")
         toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
         toggle.TextSize = 15
@@ -161,11 +255,11 @@ function loadMainMenu()
     if isPremium then
         createToggle("Hitbox (Cuerpo)", 160, hitboxEnabled, function(s) hitboxEnabled = s end)
 
-        -- Ajustar tamaño de Hitbox
         local sizeLabel = Instance.new("TextLabel")
         sizeLabel.Size = UDim2.new(0.55, 0, 0, 40)
         sizeLabel.Position = UDim2.new(0.05, 0, 0, 220)
         sizeLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        sizeLabel.BackgroundTransparency = 0.1
         sizeLabel.Text = "Tamaño Hitbox"
         sizeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
         sizeLabel.TextSize = 14
@@ -203,12 +297,10 @@ end
 RunService.RenderStepped:Connect(function()
     if not licenseAccepted then return end
 
-    -- Speed
     if speedEnabled and localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
         localPlayer.Character.Humanoid.WalkSpeed = isPremium and 36 or 24
     end
 
-    -- ESP
     if espEnabled then
         for _, plr in ipairs(Players:GetPlayers()) do
             if plr ~= localPlayer and plr.Character and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health > 0 then
@@ -224,7 +316,6 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
-    -- Hitbox en el CUERPO (Torso) - ajustable
     if isPremium and hitboxEnabled then
         for _, plr in ipairs(Players:GetPlayers()) do
             if plr ~= localPlayer and plr.Character then
@@ -239,7 +330,6 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
-    -- Auto Shoot
     if isPremium and autoShootEnabled then
         local gun = localPlayer.Character and localPlayer.Character:FindFirstChild("Gun")
         if gun then
@@ -250,4 +340,4 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-showLicense()
+showLoading()
