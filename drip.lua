@@ -1,9 +1,10 @@
-print("✅ Drip Client - Rivals + 5h Premium")
+print("✅ Drip Client - Rivals Full")
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
 local StarterGui = game:GetService("StarterGui")
+local UserInputService = game:GetService("UserInputService")
 local localPlayer = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 
@@ -11,6 +12,7 @@ local aimbotEnabled = false
 local speedEnabled = false
 local espEnabled = false
 local flyEnabled = false
+local infiniteJumpEnabled = false
 local licenseAccepted = false
 local isPremium = false
 
@@ -33,7 +35,10 @@ local currentSong = 1
 
 local function playNextSong()
     local sound = SoundService:FindFirstChild("DripMusic")
-    if sound then sound:Destroy() end
+    if sound then
+        sound:Stop()
+        sound:Destroy()
+    end
 
     sound = Instance.new("Sound")
     sound.Name = "DripMusic"
@@ -50,68 +55,80 @@ local function playNextSong()
     end)
 end
 
+-- ==================== LOADING SCREEN ====================
 local function showLoading()
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "DripLoading"
+    screenGui.IgnoreGuiInset = true
+    screenGui.DisplayOrder = 999
     screenGui.Parent = game:GetService("CoreGui")
 
-    local bg = Instance.new("Frame")
+    local bg = Instance.new("ImageLabel")
     bg.Size = UDim2.new(1, 0, 1, 0)
-    bg.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+    bg.BackgroundColor3 = Color3.fromRGB(10, 10, 20)
+    bg.Image = "rbxassetid://8064764164"
+    bg.ScaleType = Enum.ScaleType.Crop
     bg.Parent = screenGui
 
+    local dark = Instance.new("Frame")
+    dark.Size = UDim2.new(1, 0, 1, 0)
+    dark.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    dark.BackgroundTransparency = 0.4
+    dark.Parent = bg
+
     local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1, 0, 0, 60)
-    title.Position = UDim2.new(0, 0, 0.35, 0)
+    title.Size = UDim2.new(1, 0, 0, 70)
+    title.Position = UDim2.new(0, 0, 0.38, 0)
     title.BackgroundTransparency = 1
     title.Text = "Drip Client"
-    title.TextColor3 = Color3.fromRGB(0, 200, 255)
-    title.TextSize = 42
+    title.TextColor3 = Color3.fromRGB(0, 220, 255)
+    title.TextSize = 48
     title.Font = Enum.Font.SourceSansBold
     title.Parent = bg
 
     local status = Instance.new("TextLabel")
     status.Size = UDim2.new(1, 0, 0, 30)
-    status.Position = UDim2.new(0, 0, 0.48, 0)
+    status.Position = UDim2.new(0, 0, 0.52, 0)
     status.BackgroundTransparency = 1
     status.Text = "Loading..."
-    status.TextColor3 = Color3.fromRGB(200, 200, 200)
-    status.TextSize = 20
+    status.TextColor3 = Color3.fromRGB(220, 220, 220)
+    status.TextSize = 22
     status.Parent = bg
 
     playNextSong()
-    task.wait(2.5)
+    task.wait(2.8)
     status.Text = "Loaded!"
-    task.wait(0.8)
+    task.wait(0.9)
     screenGui:Destroy()
     showLicense()
 end
 
+-- ==================== LICENSE ====================
 function showLicense()
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "LicenseCheck"
     screenGui.Parent = game:GetService("CoreGui")
 
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 340, 0, 320)
-    frame.Position = UDim2.new(0.5, -170, 0.25, 0)
-    frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    frame.Size = UDim2.new(0, 340, 0, 340)
+    frame.Position = UDim2.new(0.5, -170, 0.22, 0)
+    frame.BackgroundColor3 = Color3.fromRGB(20, 20, 35)
     frame.Parent = screenGui
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 14)
 
     local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1, 0, 0, 40)
+    title.Size = UDim2.new(1, 0, 0, 45)
     title.BackgroundTransparency = 1
     title.Text = "Drip Client - Licencia"
-    title.TextColor3 = Color3.fromRGB(0, 200, 255)
+    title.TextColor3 = Color3.fromRGB(0, 220, 255)
     title.TextSize = 20
     title.Font = Enum.Font.SourceSansBold
     title.Parent = frame
 
     local box = Instance.new("TextBox")
-    box.Size = UDim2.new(0.85, 0, 0, 40)
+    box.Size = UDim2.new(0.85, 0, 0, 42)
     box.Position = UDim2.new(0.075, 0, 0.18, 0)
-    box.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    box.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
     box.Text = ""
     box.PlaceholderText = "Ingresa tu licencia..."
     box.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -120,7 +137,7 @@ function showLicense()
     Instance.new("UICorner", box).CornerRadius = UDim.new(0, 8)
 
     local activateBtn = Instance.new("TextButton")
-    activateBtn.Size = UDim2.new(0.85, 0, 0, 40)
+    activateBtn.Size = UDim2.new(0.85, 0, 0, 42)
     activateBtn.Position = UDim2.new(0.075, 0, 0.35, 0)
     activateBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 220)
     activateBtn.Text = "Activar Licencia"
@@ -131,7 +148,7 @@ function showLicense()
     Instance.new("UICorner", activateBtn).CornerRadius = UDim.new(0, 8)
 
     local freeBtn = Instance.new("TextButton")
-    freeBtn.Size = UDim2.new(0.85, 0, 0, 40)
+    freeBtn.Size = UDim2.new(0.85, 0, 0, 42)
     freeBtn.Position = UDim2.new(0.075, 0, 0.52, 0)
     freeBtn.BackgroundColor3 = Color3.fromRGB(40, 120, 180)
     freeBtn.Text = "Licencia Gratis (12h)"
@@ -141,9 +158,8 @@ function showLicense()
     freeBtn.Parent = frame
     Instance.new("UICorner", freeBtn).CornerRadius = UDim.new(0, 8)
 
-    -- Nuevo botón Premium 5 horas
     local premium5hBtn = Instance.new("TextButton")
-    premium5hBtn.Size = UDim2.new(0.85, 0, 0, 40)
+    premium5hBtn.Size = UDim2.new(0.85, 0, 0, 42)
     premium5hBtn.Position = UDim2.new(0.075, 0, 0.69, 0)
     premium5hBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 100)
     premium5hBtn.Text = "Premium Gratis (5h) - Discord"
@@ -175,51 +191,74 @@ function showLicense()
     end)
 
     premium5hBtn.MouseButton1Click:Connect(function()
-        -- Copia el Discord
         setclipboard("https://discord.gg/wHc9aBmvh")
         box.Text = FREE_PREMIUM_5H
-        StarterGui:SetCore("SendNotification", {
-            Title = "Drip Client",
-            Text = "Discord copiado! Usa la licencia PREMIUM-5H",
-            Duration = 5
-        })
+        pcall(function()
+            StarterGui:SetCore("SendNotification", {
+                Title = "Drip Client",
+                Text = "Discord copiado! Usa PREMIUM-5H",
+                Duration = 5
+            })
+        end)
     end)
 end
 
+-- ==================== MAIN MENU ====================
 function loadMainMenu()
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = guiName
     screenGui.ResetOnSpawn = false
     screenGui.Parent = game:GetService("CoreGui")
 
-    local logoBtn = Instance.new("TextButton")
-    logoBtn.Size = UDim2.new(0, 140, 0, 50)
+    -- ICONO CIRCULAR CON IMAGEN
+    local logoBtn = Instance.new("ImageButton")
+    logoBtn.Size = UDim2.new(0, 75, 0, 75)
     logoBtn.Position = UDim2.new(0.05, 0, 0.2, 0)
-    logoBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 220)
-    logoBtn.Text = "Drip Client"
-    logoBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    logoBtn.TextSize = 18
-    logoBtn.Font = Enum.Font.SourceSansBold
+    logoBtn.BackgroundTransparency = 1
+    logoBtn.Image = "rbxassetid://8064764164"
+    logoBtn.ScaleType = Enum.ScaleType.Crop
     logoBtn.Draggable = true
     logoBtn.Parent = screenGui
-    Instance.new("UICorner", logoBtn).CornerRadius = UDim.new(0, 10)
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(1, 0)
+    corner.Parent = logoBtn
+
+    local logoText = Instance.new("TextLabel")
+    logoText.Size = UDim2.new(1, 0, 1, 0)
+    logoText.BackgroundTransparency = 1
+    logoText.Text = "DC"
+    logoText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    logoText.TextSize = 22
+    logoText.Font = Enum.Font.SourceSansBold
+    logoText.Parent = logoBtn
 
     local menu = Instance.new("Frame")
-    menu.Size = UDim2.new(0, 280, 0, isPremium and 340 or 280)
-    menu.Position = UDim2.new(0.5, -140, 0.2, 0)
-    menu.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    menu.Size = UDim2.new(0, 300, 0, isPremium and 420 or 300)
+    menu.Position = UDim2.new(0.5, -150, 0.18, 0)
+    menu.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
     menu.Visible = false
     menu.Active = true
     menu.Draggable = true
     menu.Parent = screenGui
-    Instance.new("UICorner", menu).CornerRadius = UDim.new(0, 12)
+    Instance.new("UICorner", menu).CornerRadius = UDim.new(0, 14)
+
+    -- Fondo del menú
+    local bgImage = Instance.new("ImageLabel")
+    bgImage.Size = UDim2.new(1, 0, 1, 0)
+    bgImage.BackgroundTransparency = 1
+    bgImage.Image = "rbxassetid://8064764164"
+    bgImage.ImageTransparency = 0.55
+    bgImage.ScaleType = Enum.ScaleType.Crop
+    bgImage.Parent = menu
+    Instance.new("UICorner", bgImage).CornerRadius = UDim.new(0, 14)
 
     local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1, 0, 0, 40)
+    title.Size = UDim2.new(1, 0, 0, 45)
     title.BackgroundTransparency = 1
     title.Text = "Drip Client"
-    title.TextColor3 = Color3.fromRGB(0, 200, 255)
-    title.TextSize = 22
+    title.TextColor3 = Color3.fromRGB(0, 220, 255)
+    title.TextSize = 24
     title.Font = Enum.Font.SourceSansBold
     title.Parent = menu
 
@@ -227,28 +266,30 @@ function loadMainMenu()
         local toggle = Instance.new("TextButton")
         toggle.Size = UDim2.new(0.9, 0, 0, 48)
         toggle.Position = UDim2.new(0.05, 0, 0, y)
-        toggle.BackgroundColor3 = default and Color3.fromRGB(40, 180, 40) or Color3.fromRGB(220, 40, 80)
+        toggle.BackgroundColor3 = default and Color3.fromRGB(40, 180, 40) or Color3.fromRGB(220, 50, 90)
+        toggle.BackgroundTransparency = 0.1
         toggle.Text = name .. ": " .. (default and "ON" or "OFF")
         toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-        toggle.TextSize = 15
+        toggle.TextSize = 16
         toggle.Font = Enum.Font.SourceSansBold
         toggle.Parent = menu
-        Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 8)
+        Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 10)
 
         toggle.MouseButton1Click:Connect(function()
             default = not default
-            toggle.BackgroundColor3 = default and Color3.fromRGB(40, 180, 40) or Color3.fromRGB(220, 40, 80)
+            toggle.BackgroundColor3 = default and Color3.fromRGB(40, 180, 40) or Color3.fromRGB(220, 50, 90)
             toggle.Text = name .. ": " .. (default and "ON" or "OFF")
             callback(default)
         end)
     end
 
-    createToggle("Aimbot", 50, aimbotEnabled, function(s) aimbotEnabled = s end)
-    createToggle("Speed", 105, speedEnabled, function(s) speedEnabled = s end)
-    createToggle("ESP", 160, espEnabled, function(s) espEnabled = s end)
+    createToggle("Aimbot", 55, aimbotEnabled, function(s) aimbotEnabled = s end)
+    createToggle("Speed", 110, speedEnabled, function(s) speedEnabled = s end)
+    createToggle("ESP", 165, espEnabled, function(s) espEnabled = s end)
 
     if isPremium then
-        createToggle("Fly (Joystick)", 215, flyEnabled, function(s) flyEnabled = s end)
+        createToggle("Fly (Joystick)", 220, flyEnabled, function(s) flyEnabled = s end)
+        createToggle("Infinite Jump", 275, infiniteJumpEnabled, function(s) infiniteJumpEnabled = s end)
     end
 
     logoBtn.MouseButton1Click:Connect(function()
@@ -256,6 +297,7 @@ function loadMainMenu()
     end)
 end
 
+-- Features
 local bodyVelocity = nil
 
 RunService.RenderStepped:Connect(function()
@@ -290,8 +332,7 @@ RunService.RenderStepped:Connect(function()
         for _, plr in ipairs(Players:GetPlayers()) do
             if plr ~= localPlayer and plr.Character and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health > 0 then
                 local hl = plr.Character:FindFirstChildOfClass("Highlight")
-                if hl then hl:Destroy() end
-                if plr.Team ~= localPlayer.Team or not plr.Team then
+                if not hl then
                     hl = Instance.new("Highlight")
                     hl.Parent = plr.Character
                     hl.FillColor = Color3.fromRGB(0, 200, 255)
@@ -320,6 +361,12 @@ RunService.RenderStepped:Connect(function()
             bodyVelocity:Destroy()
             bodyVelocity = nil
         end
+    end
+end)
+
+UserInputService.JumpRequest:Connect(function()
+    if isPremium and infiniteJumpEnabled and localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
+        localPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
     end
 end)
 
