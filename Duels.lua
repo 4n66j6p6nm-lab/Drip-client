@@ -1,4 +1,4 @@
-print("✅ Asesinos VS Sheriffs - Same Match Only")
+print("✅ Asesinos VS Sheriffs - Simple Working")
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -9,9 +9,9 @@ local localPlayer = Players.LocalPlayer
 local speedEnabled = false
 local espEnabled = false
 local hitboxEnabled = false
-local hitboxSize = 6
+local hitboxSize = 8
 local autoShootEnabled = false
-local instaKillEnabled = false
+local tpEnemyEnabled = false
 local licenseAccepted = false
 local isPremium = false
 
@@ -20,9 +20,6 @@ local FREE_PREMIUM_5H = "PREMIUM-5H"
 
 local ICON_ID = "rbxassetid://18622390193"
 local PARTICLE_ID = "rbxassetid://134384906566930"
-
--- Solo enemigos cercanos (misma partida)
-local MAX_DUEL_DISTANCE = 120
 
 local guiName = "DuelsGod"
 if game:GetService("CoreGui"):FindFirstChild(guiName) then
@@ -163,7 +160,6 @@ local function createFallingParticles(parent)
 
     local function spawnParticle()
         if not parent or not parent.Parent or not parent.Visible then return end
-
         local size = math.random(18, 32)
         local p = Instance.new("ImageLabel")
         p.Size = UDim2.new(0, size, 0, size)
@@ -177,7 +173,6 @@ local function createFallingParticles(parent)
 
         local duration = math.random(28, 50) / 10
         local endX = p.Position.X.Scale + (math.random(-30, 30) / 100)
-
         local tween = TweenService:Create(p, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
             Position = UDim2.new(math.clamp(endX, -0.1, 1.1), 0, 1.2, 0),
             Rotation = p.Rotation + math.random(120, 360)
@@ -192,11 +187,8 @@ local function createFallingParticles(parent)
         while parent and parent.Parent do
             if parent.Visible then
                 spawnParticle()
-                if math.random(1, 3) == 1 then
-                    spawnParticle()
-                end
             end
-            task.wait(0.18)
+            task.wait(0.2)
         end
     end)
 end
@@ -227,7 +219,7 @@ function loadMainMenu()
     logoText.Parent = logoBtn
 
     local menu = Instance.new("Frame")
-    menu.Size = UDim2.new(0, 290, 0, isPremium and 470 or 260)
+    menu.Size = UDim2.new(0, 290, 0, isPremium and 450 or 260)
     menu.Position = UDim2.new(0.5, -145, 0.15, 0)
     menu.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
     menu.Visible = false
@@ -282,7 +274,7 @@ function loadMainMenu()
     createToggle("ESP", 110, espEnabled, function(s) espEnabled = s end)
 
     if isPremium then
-        createToggle("Hitbox (Cuerpo)", 165, hitboxEnabled, function(s) hitboxEnabled = s end)
+        createToggle("Hitbox", 165, hitboxEnabled, function(s) hitboxEnabled = s end)
 
         local sizeLabel = Instance.new("TextLabel")
         sizeLabel.Size = UDim2.new(0.55, 0, 0, 40)
@@ -301,7 +293,7 @@ function loadMainMenu()
         sizeBox.Size = UDim2.new(0.3, 0, 0, 40)
         sizeBox.Position = UDim2.new(0.65, 0, 0, 225)
         sizeBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-        sizeBox.Text = "6"
+        sizeBox.Text = "8"
         sizeBox.TextColor3 = Color3.fromRGB(255, 255, 255)
         sizeBox.TextSize = 16
         sizeBox.Font = Enum.Font.GothamBold
@@ -317,7 +309,7 @@ function loadMainMenu()
         end)
 
         createToggle("Auto Shoot", 285, autoShootEnabled, function(s) autoShootEnabled = s end)
-        createToggle("Insta Kill (Same Match)", 340, instaKillEnabled, function(s) instaKillEnabled = s end)
+        createToggle("TP al Enemigo", 340, tpEnemyEnabled, function(s) tpEnemyEnabled = s end)
     end
 
     createFallingParticles(menu)
@@ -326,6 +318,8 @@ function loadMainMenu()
         menu.Visible = not menu.Visible
     end)
 end
+
+local lastTP = 0
 
 RunService.Heartbeat:Connect(function()
     if not licenseAccepted then return end
@@ -340,40 +334,45 @@ RunService.Heartbeat:Connect(function()
         myHum.WalkSpeed = isPremium and 36 or 24
     end
 
+    -- ESP
     if espEnabled then
         for _, plr in ipairs(Players:GetPlayers()) do
-            if plr ~= localPlayer and plr.Character then
-                local hum = plr.Character:FindFirstChild("Humanoid")
-                if hum and hum.Health > 0 then
-                    local hl = plr.Character:FindFirstChildOfClass("Highlight")
-                    if not hl then
-                        hl = Instance.new("Highlight")
+            if plr ~= localPlayer and plr.Character and plr.Character:FindFirstChild("Humanoid") then
+                if plr.Character.Humanoid.Health > 0 then
+                    if not plr.Character:FindFirstChildOfClass("Highlight") then
+                        local hl = Instance.new("Highlight")
                         hl.Parent = plr.Character
                         hl.FillColor = Color3.fromRGB(255, 0, 0)
                         hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-                        hl.FillTransparency = 0.4
+                        hl.FillTransparency = 0.3
                     end
                 end
             end
         end
     end
 
+    -- HITBOX (todos los jugadores vivos)
     if isPremium and hitboxEnabled then
         for _, plr in ipairs(Players:GetPlayers()) do
             if plr ~= localPlayer and plr.Character then
-                local torso = plr.Character:FindFirstChild("Torso") or plr.Character:FindFirstChild("UpperTorso")
-                if torso then
-                    pcall(function()
-                        torso.Size = Vector3.new(hitboxSize, hitboxSize * 1.3, hitboxSize)
-                        torso.Transparency = 0.65
-                        torso.CanCollide = false
-                        torso.Massless = true
-                    end)
+                local hum = plr.Character:FindFirstChild("Humanoid")
+                if hum and hum.Health > 0 then
+                    for _, name in ipairs({"Head", "Torso", "UpperTorso", "LowerTorso", "HumanoidRootPart"}) do
+                        local part = plr.Character:FindFirstChild(name)
+                        if part and part:IsA("BasePart") then
+                            part.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
+                            part.Transparency = 0.35
+                            part.Color = Color3.fromRGB(255, 0, 0)
+                            part.Material = Enum.Material.Neon
+                            part.CanCollide = false
+                        end
+                    end
                 end
             end
         end
     end
 
+    -- Auto Shoot
     if isPremium and autoShootEnabled then
         local gun = char:FindFirstChild("Gun") or localPlayer.Backpack:FindFirstChild("Gun")
         if gun then
@@ -386,60 +385,28 @@ RunService.Heartbeat:Connect(function()
         end
     end
 
-    -- Solo enemigos de TU partida (dentro del rango del duelo)
-    if isPremium and instaKillEnabled then
-        local target = nil
-        local closest = MAX_DUEL_DISTANCE
+    -- TP al más cercano (cualquier otro jugador vivo cerca)
+    if isPremium and tpEnemyEnabled then
+        local closest = nil
+        local closestDist = 100
 
         for _, plr in ipairs(Players:GetPlayers()) do
             if plr ~= localPlayer and plr.Character then
                 local hum = plr.Character:FindFirstChild("Humanoid")
                 local root = plr.Character:FindFirstChild("HumanoidRootPart")
-
-                if hum and root and hum.Health > 0 and hum:GetState() ~= Enum.HumanoidStateType.Dead then
+                if hum and root and hum.Health > 0 then
                     local dist = (myRoot.Position - root.Position).Magnitude
-
-                    -- Solo si está cerca (misma partida)
-                    if dist < closest and dist < MAX_DUEL_DISTANCE then
-                        closest = dist
-                        target = plr
+                    if dist < closestDist then
+                        closestDist = dist
+                        closest = root
                     end
                 end
             end
         end
 
-        if target and target.Character then
-            local enemyRoot = target.Character:FindFirstChild("HumanoidRootPart")
-            local enemyHum = target.Character:FindFirstChild("Humanoid")
-
-            if enemyRoot and enemyHum and enemyHum.Health > 0 then
-                myRoot.CFrame = enemyRoot.CFrame * CFrame.new(0, 0, 2.5)
-
-                pcall(function()
-                    enemyHum.Health = 0
-                    enemyHum:TakeDamage(99999)
-                end)
-
-                local knife = char:FindFirstChild("Knife") or localPlayer.Backpack:FindFirstChild("Knife")
-                if knife then
-                    pcall(function()
-                        if knife.Parent == localPlayer.Backpack then
-                            myHum:EquipTool(knife)
-                        end
-                        knife:Activate()
-                    end)
-                end
-
-                local gun = char:FindFirstChild("Gun") or localPlayer.Backpack:FindFirstChild("Gun")
-                if gun then
-                    pcall(function()
-                        if gun.Parent == localPlayer.Backpack then
-                            myHum:EquipTool(gun)
-                        end
-                        gun:Activate()
-                    end)
-                end
-            end
+        if closest and tick() - lastTP > 0.1 then
+            myRoot.CFrame = closest.CFrame * CFrame.new(0, 1, 3)
+            lastTP = tick()
         end
     end
 end)
