@@ -1,4 +1,4 @@
-print("✅ Asesinos VS Sheriffs - Simple Working")
+print("✅ Asesinos VS Sheriffs - Premium 5h Guardado")
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -17,6 +17,7 @@ local isPremium = false
 
 local LICENSE_KEY = "LIC-D16335"
 local FREE_PREMIUM_5H = "PREMIUM-5H"
+local LICENSE_FILE = "DuelsGod_License.txt"
 
 local ICON_ID = "rbxassetid://18622390193"
 local PARTICLE_ID = "rbxassetid://134384906566930"
@@ -24,6 +25,36 @@ local PARTICLE_ID = "rbxassetid://134384906566930"
 local guiName = "DuelsGod"
 if game:GetService("CoreGui"):FindFirstChild(guiName) then
     game:GetService("CoreGui")[guiName]:Destroy()
+end
+
+-- Guardar / cargar licencia
+local function saveLicense(hours)
+    if writefile then
+        local expire
+        if hours == -1 then
+            expire = 9999999999 -- infinita
+        else
+            expire = os.time() + (hours * 3600)
+        end
+        pcall(function()
+            writefile(LICENSE_FILE, tostring(expire))
+        end)
+    end
+end
+
+local function checkSavedLicense()
+    if isfile and readfile and isfile(LICENSE_FILE) then
+        local ok, data = pcall(function()
+            return readfile(LICENSE_FILE)
+        end)
+        if ok and data then
+            local expire = tonumber(data)
+            if expire and os.time() < expire then
+                return true
+            end
+        end
+    end
+    return false
 end
 
 local function showLoading()
@@ -70,7 +101,15 @@ local function showLoading()
     status.Text = "Loaded!"
     task.wait(0.8)
     screenGui:Destroy()
-    showLicense()
+
+    -- Si ya tiene licencia guardada y válida → entra directo
+    if checkSavedLicense() then
+        licenseAccepted = true
+        isPremium = true
+        loadMainMenu()
+    else
+        showLicense()
+    end
 end
 
 function showLicense()
@@ -129,9 +168,16 @@ function showLicense()
     Instance.new("UICorner", premium5hBtn).CornerRadius = UDim.new(0, 10)
 
     activateBtn.MouseButton1Click:Connect(function()
-        if box.Text == LICENSE_KEY or box.Text == FREE_PREMIUM_5H then
+        if box.Text == LICENSE_KEY then
             licenseAccepted = true
             isPremium = true
+            saveLicense(-1) -- infinita
+            screenGui:Destroy()
+            loadMainMenu()
+        elseif box.Text == FREE_PREMIUM_5H then
+            licenseAccepted = true
+            isPremium = true
+            saveLicense(5) -- 5 horas
             screenGui:Destroy()
             loadMainMenu()
         else
@@ -146,7 +192,7 @@ function showLicense()
         pcall(function()
             StarterGui:SetCore("SendNotification", {
                 Title = "Duels",
-                Text = "Discord copiado! Usa PREMIUM-5H",
+                Text = "Discord copiado! Usa PREMIUM-5H (5 horas)",
                 Duration = 5
             })
         end)
@@ -334,7 +380,6 @@ RunService.Heartbeat:Connect(function()
         myHum.WalkSpeed = isPremium and 36 or 24
     end
 
-    -- ESP
     if espEnabled then
         for _, plr in ipairs(Players:GetPlayers()) do
             if plr ~= localPlayer and plr.Character and plr.Character:FindFirstChild("Humanoid") then
@@ -351,7 +396,6 @@ RunService.Heartbeat:Connect(function()
         end
     end
 
-    -- HITBOX (todos los jugadores vivos)
     if isPremium and hitboxEnabled then
         for _, plr in ipairs(Players:GetPlayers()) do
             if plr ~= localPlayer and plr.Character then
@@ -372,7 +416,6 @@ RunService.Heartbeat:Connect(function()
         end
     end
 
-    -- Auto Shoot
     if isPremium and autoShootEnabled then
         local gun = char:FindFirstChild("Gun") or localPlayer.Backpack:FindFirstChild("Gun")
         if gun then
@@ -385,7 +428,6 @@ RunService.Heartbeat:Connect(function()
         end
     end
 
-    -- TP al más cercano (cualquier otro jugador vivo cerca)
     if isPremium and tpEnemyEnabled then
         local closest = nil
         local closestDist = 100
