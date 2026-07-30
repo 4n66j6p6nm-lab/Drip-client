@@ -1,12 +1,820 @@
---[[
- .____                  ________ ___.    _____                           __                
- |    |    __ _______   \_____  \\_ |___/ ____\_ __  ______ ____ _____ _/  |_  ___________ 
- |    |   |  |  \__  \   /   |   \| __ \   __\  |  \/  ___// ___\\__  \\   __\/  _ \_  __ \
- |    |___|  |  // __ \_/    |    \ \_\ \  | |  |  /\___ \\  \___ / __ \|  | (  <_> )  | \/
- |_______ \____/(____  /\_______  /___  /__| |____//____  >\___  >____  /__|  \____/|__|   
-         \/          \/         \/    \/                \/     \/     \/                   
-          \_Welcome to LuaObfuscator.com   (Alpha 0.10.9) ~  Much Love, Ferib 
+print("✅ Asesinos VS Sheriffs - Aimbot + Visuals Pro")
 
-]]--
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local StarterGui = game:GetService("StarterGui")
+local UserInputService = game:GetService("UserInputService")
+local localPlayer = Players.LocalPlayer
+local camera = workspace.CurrentCamera
 
-print("✅ Asesinos VS Sheriffs - Sidebar + Fondo + Particles");local v0=game:GetService("Players");local v1=game:GetService("RunService");local v2=game:GetService("TweenService");local v3=game:GetService("StarterGui");local v4=game:GetService("UserInputService");local v5=v0.LocalPlayer;local v6=false;local v7=false;local v8=false;local v9=1421 -(447 + 966) ;local v10=false;local v11=false;local v12=false;local v13=false;local v14="LIC-D16335";local v15="PREMIUM-5H";local v16="DuelsGod_License.txt";local v17="rbxassetid://18622390193";local v18="rbxassetid://134384906566930";local v19="DuelsGod";if game:GetService("CoreGui"):FindFirstChild(v19) then game:GetService("CoreGui")[v19]:Destroy();end local v20,v21,v22;local function v23(v32) if writefile then local v185=0 -0 ;local v186;while true do if (v185==0) then v186=((v32== -(1818 -(1703 + 114))) and (10000000700 -(376 + 325))) or (os.time() + (v32 * (5899 -2299))) ;pcall(function() writefile(v16,tostring(v186));end);break;end end end end local function v24() if (isfile and readfile and isfile(v16)) then local v187,v188=pcall(function() return readfile(v16);end);if (v187 and v188) then local v277=tonumber(v188);if (v277 and (os.time()<v277)) then return true;end end end return false;end local function v25() local v33=0 -0 ;local v34;local v35;local v36;local v37;local v38;while true do if (v33==8) then v38.Font=Enum.Font.Gotham;v38.Parent=v35;task.wait(1.2000000000000002 + 1 );v38.Text="Loaded!";v33=19 -10 ;end if (v33==(20 -(9 + 5))) then v37.Parent=v35;v38=Instance.new("TextLabel");v38.Size=UDim2.new(377 -(85 + 291) ,1265 -(243 + 1022) ,0 -0 ,25 + 5 );v38.Position=UDim2.new(1180 -(1123 + 57) ,0 + 0 ,254.52 -(163 + 91) ,0);v33=1937 -(1869 + 61) ;end if (v33==(1 + 0)) then v34.Parent=game:GetService("CoreGui");v35=Instance.new("ImageLabel");v35.Size=UDim2.new(3 -2 ,0,1 -0 ,0 + 0 );v35.BackgroundColor3=Color3.fromRGB(10,10,13 -3 );v33=2 + 0 ;end if (v33==0) then v34=Instance.new("ScreenGui");v34.Name="DuelsLoading";v34.IgnoreGuiInset=true;v34.DisplayOrder=2473 -(1329 + 145) ;v33=972 -(140 + 831) ;end if (v33==9) then task.wait(1850.7 -(1409 + 441) );v34:Destroy();if v24() then local v285=718 -(15 + 703) ;while true do if (v285==(1 + 0)) then loadMainMenu();break;end if (v285==0) then v11=true;v12=true;v285=1;end end else showLicense();end break;end if (v33==(445 -(262 + 176))) then v38.BackgroundTransparency=1;v38.Text="Loading...";v38.TextColor3=Color3.fromRGB(1941 -(345 + 1376) ,908 -(198 + 490) ,971 -751 );v38.TextSize=47 -27 ;v33=1214 -(696 + 510) ;end if (v33==5) then v37.Text="Asesinos VS Sheriffs";v37.TextColor3=Color3.fromRGB(534 -279 ,1322 -(1091 + 171) ,60);v37.TextSize=6 + 26 ;v37.Font=Enum.Font.GothamBold;v33=18 -12 ;end if (v33==(9 -6)) then v36.Size=UDim2.new(1,374 -(123 + 251) ,1,0 -0 );v36.BackgroundColor3=Color3.fromRGB(698 -(208 + 490) ,0 + 0 ,0);v36.BackgroundTransparency=0.4;v36.Parent=v35;v33=4;end if (v33==(1 + 1)) then v35.Image=v17;v35.ScaleType=Enum.ScaleType.Crop;v35.Parent=v34;v36=Instance.new("Frame");v33=839 -(660 + 176) ;end if (v33==(1 + 3)) then v37=Instance.new("TextLabel");v37.Size=UDim2.new(1,202 -(14 + 188) ,675 -(534 + 141) ,25 + 35 );v37.Position=UDim2.new(0 + 0 ,0 + 0 ,0.38 -0 ,0);v37.BackgroundTransparency=1 -0 ;v33=14 -9 ;end end end function showLicense() local v39=0 + 0 ;local v40;local v41;local v42;local v43;local v44;local v45;while true do if (v39==9) then v44.Parent=v41;Instance.new("UICorner",v44).CornerRadius=UDim.new(0 + 0 ,10);v45=Instance.new("TextButton");v45.Size=UDim2.new(396.85 -(115 + 281) ,0,0 -0 ,35 + 7 );v39=24 -14 ;end if (v39==(25 -18)) then v44=Instance.new("TextButton");v44.Size=UDim2.new(867.85 -(550 + 317) ,0,0 -0 ,58 -16 );v44.Position=UDim2.new(0.075 -0 ,0,0.4,0);v44.BackgroundColor3=Color3.fromRGB(505 -(134 + 151) ,1705 -(970 + 695) ,80);v39=15 -7 ;end if (v39==5) then v43.BackgroundColor3=Color3.fromRGB(2030 -(582 + 1408) ,138 -98 ,50 -10 );v43.Text="";v43.PlaceholderText="Ingresa tu licencia...";v43.TextColor3=Color3.fromRGB(255,255,960 -705 );v39=1830 -(1195 + 629) ;end if ((5 -1)==v39) then v42.Parent=v41;v43=Instance.new("TextBox");v43.Size=UDim2.new(241.85 -(187 + 54) ,780 -(162 + 618) ,0,42);v43.Position=UDim2.new(0.075,0,0.2 + 0 ,0);v39=4 + 1 ;end if ((0 -0)==v39) then v40=Instance.new("ScreenGui");v40.Name="LicenseCheck";v40.Parent=game:GetService("CoreGui");v41=Instance.new("Frame");v39=1 -0 ;end if ((1 + 5)==v39) then v43.TextSize=1652 -(1373 + 263) ;v43.Font=Enum.Font.Gotham;v43.Parent=v41;Instance.new("UICorner",v43).CornerRadius=UDim.new(0,1010 -(451 + 549) );v39=7;end if (v39==10) then v45.Position=UDim2.new(0.075 + 0 ,0 -0 ,0.6,0 -0 );v45.BackgroundColor3=Color3.fromRGB(1384 -(746 + 638) ,68 + 112 ,151 -51 );v45.Text="Premium Gratis (5h) - Discord";v45.TextColor3=Color3.fromRGB(596 -(218 + 123) ,1836 -(1535 + 46) ,254 + 1 );v39=11;end if (v39==(2 + 10)) then v44.MouseButton1Click:Connect(function() if (v43.Text==v14) then local v305=0;while true do if (v305==(560 -(306 + 254))) then v11=true;v12=true;v305=1;end if (v305==2) then loadMainMenu();break;end if (v305==(1 + 0)) then v23( -(1 -0));v40:Destroy();v305=2;end end elseif (v43.Text==v15) then local v327=1467 -(899 + 568) ;while true do if (v327==(1 + 0)) then v23(12 -7 );v40:Destroy();v327=605 -(268 + 335) ;end if (0==v327) then v11=true;v12=true;v327=291 -(60 + 230) ;end if (v327==(574 -(426 + 146))) then loadMainMenu();break;end end else v43.Text="";v43.PlaceholderText="Licencia incorrecta";end end);v45.MouseButton1Click:Connect(function() local v278=0 + 0 ;while true do if (v278==(1456 -(282 + 1174))) then setclipboard("https://discord.gg/wHc9aBmvh");v43.Text=v15;v278=812 -(569 + 242) ;end if (v278==(2 -1)) then pcall(function() v3:SetCore("SendNotification",{Title="Duels",Text="Discord copiado! Usa PREMIUM-5H",Duration=1 + 4 });end);break;end end end);break;end if (v39==(1025 -(706 + 318))) then v41.Size=UDim2.new(1251 -(721 + 530) ,340,1271 -(945 + 326) ,320);v41.Position=UDim2.new(0.5 -0 , -170,0.24 + 0 ,700 -(271 + 429) );v41.BackgroundColor3=Color3.fromRGB(19 + 1 ,1520 -(1408 + 92) ,1106 -(461 + 625) );v41.Parent=v40;v39=2;end if (v39==(1291 -(993 + 295))) then v42.Text="Asesinos VS Sheriffs";v42.TextColor3=Color3.fromRGB(255,50,3 + 47 );v42.TextSize=1189 -(418 + 753) ;v42.Font=Enum.Font.GothamBold;v39=2 + 2 ;end if (v39==11) then v45.TextSize=14;v45.Font=Enum.Font.GothamBold;v45.Parent=v41;Instance.new("UICorner",v45).CornerRadius=UDim.new(0,2 + 8 );v39=4 + 8 ;end if (v39==8) then v44.Text="Activar Licencia";v44.TextColor3=Color3.fromRGB(255,65 + 190 ,784 -(406 + 123) );v44.TextSize=1785 -(1749 + 20) ;v44.Font=Enum.Font.GothamBold;v39=9;end if (v39==2) then Instance.new("UICorner",v41).CornerRadius=UDim.new(0 + 0 ,1336 -(1249 + 73) );v42=Instance.new("TextLabel");v42.Size=UDim2.new(1 + 0 ,1145 -(466 + 679) ,0 -0 ,128 -83 );v42.BackgroundTransparency=1901 -(106 + 1794) ;v39=1 + 2 ;end end end local function v26(v46) local v47=0;local v48;local v49;while true do if (v47==(1 + 0)) then v48.Parent=v46;v49=nil;v47=5 -3 ;end if (v47==2) then function v49() local v279=0;local v280;local v281;local v282;local v283;local v284;while true do if ((0 -0)==v279) then if ( not v46 or  not v46.Parent or  not v46.Visible or v13) then return;end v280=math.random(130 -(4 + 110) ,612 -(57 + 527) );v281=Instance.new("ImageLabel");v281.Size=UDim2.new(0,v280,1427 -(41 + 1386) ,v280);v279=1;end if (v279==(104 -(17 + 86))) then v281.Position=UDim2.new((math.random() * 0.9) + 0.05 + 0 ,0 -0 , -0.12,0 -0 );v281.BackgroundTransparency=1;v281.Image=v18;v281.ImageTransparency=math.random(166 -(122 + 44) ,51 -21 )/(331 -231) ;v279=2 + 0 ;end if (v279==(1 + 2)) then v283=v281.Position.X.Scale + (math.random( -(50 -25),90 -(30 + 35) )/(69 + 31)) ;v284=v2:Create(v281,TweenInfo.new(v282,Enum.EasingStyle.Linear),{Position=UDim2.new(math.clamp(v283, -(1257.1 -(1043 + 214)),1.1),0 -0 ,1.15,1212 -(323 + 889) ),Rotation=v281.Rotation + math.random(269 -169 ,880 -(361 + 219) ) });v284:Play();v284.Completed:Connect(function() v281:Destroy();end);break;end if (v279==(322 -(53 + 267))) then v281.Rotation=math.random(0 + 0 ,773 -(15 + 398) );v281.ZIndex=1002 -(18 + 964) ;v281.Parent=v48;v282=math.random(28,50)/(37 -27) ;v279=3;end end end task.spawn(function() while v46 and v46.Parent  do if (v46.Visible and  not v13) then v49();end task.wait(0.22 + 0 );end end);break;end if (0==v47) then v48=Instance.new("Folder");v48.Name="FallingParticles";v47=1 + 0 ;end end end local function v27(v50,v51,v52,v53,v54) local v55=Instance.new("TextButton");v55.Size=UDim2.new(850.9 -(20 + 830) ,0 + 0 ,0,42);v55.Position=UDim2.new(0.05,126 -(116 + 10) ,0 + 0 ,v52);v55.BackgroundColor3=(v53 and Color3.fromRGB(778 -(542 + 196) ,342 -182 ,40)) or Color3.fromRGB(15 + 35 ,50,28 + 27 ) ;v55.BackgroundTransparency=0.15 + 0 ;v55.Text="  "   .. v51   .. "  ["   .. ((v53 and "ON") or "OFF")   .. "]" ;v55.TextColor3=Color3.fromRGB(671 -416 ,255,653 -398 );v55.TextSize=1565 -(1126 + 425) ;v55.Font=Enum.Font.Gotham;v55.TextXAlignment=Enum.TextXAlignment.Left;v55.ZIndex=15;v55.Parent=v50;Instance.new("UICorner",v55).CornerRadius=UDim.new(0,8);v55.MouseButton1Click:Connect(function() v53= not v53;v55.BackgroundColor3=(v53 and Color3.fromRGB(445 -(118 + 287) ,627 -467 ,1161 -(118 + 1003) )) or Color3.fromRGB(50,146 -96 ,432 -(142 + 235) ) ;v55.Text="  "   .. v51   .. "  ["   .. ((v53 and "ON") or "OFF")   .. "]" ;v54(v53);end);return v55;end function loadMainMenu() v20=Instance.new("ScreenGui");v20.Name=v19;v20.ResetOnSpawn=false;v20.Parent=game:GetService("CoreGui");v21=Instance.new("ImageButton");v21.Size=UDim2.new(0,70,0,70);v21.Position=UDim2.new(0.04 -0 ,0 + 0 ,977.2 -(553 + 424) ,0 -0 );v21.BackgroundColor3=Color3.fromRGB(23 + 2 ,25,30 + 0 );v21.Image=v17;v21.ScaleType=Enum.ScaleType.Crop;v21.Draggable=true;v21.Parent=v20;Instance.new("UICorner",v21).CornerRadius=UDim.new(0,7 + 5 );local v82=Instance.new("UIStroke");v82.Color=Color3.fromRGB(80,109 + 146 ,69 + 51 );v82.Thickness=2;v82.Parent=v21;v22=Instance.new("Frame");v22.Size=UDim2.new(0 -0 ,380,0 -0 ,716 -396 );v22.Position=UDim2.new(0.5 + 0 , -190,0.5 -0 , -(913 -(239 + 514)));v22.BackgroundColor3=Color3.fromRGB(8 + 14 ,22,1355 -(797 + 532) );v22.Visible=false;v22.Active=true;v22.Draggable=true;v22.ClipsDescendants=true;v22.Parent=v20;Instance.new("UICorner",v22).CornerRadius=UDim.new(0 + 0 ,5 + 7 );local v95=Instance.new("ImageLabel");v95.Size=UDim2.new(2 -1 ,0,1203 -(373 + 829) ,0);v95.BackgroundTransparency=732 -(476 + 255) ;v95.Image=v17;v95.ImageTransparency=1130.55 -(369 + 761) ;v95.ScaleType=Enum.ScaleType.Crop;v95.ZIndex=1 + 0 ;v95.Parent=v22;Instance.new("UICorner",v95).CornerRadius=UDim.new(0,12);local v104=Instance.new("Frame");v104.Size=UDim2.new(0 -0 ,227 -107 ,1,238 -(64 + 174) );v104.BackgroundColor3=Color3.fromRGB(16,3 + 13 ,18);v104.BackgroundTransparency=0.15 -0 ;v104.BorderSizePixel=336 -(144 + 192) ;v104.ZIndex=221 -(42 + 174) ;v104.Parent=v22;Instance.new("UICorner",v104).CornerRadius=UDim.new(0 + 0 ,10 + 2 );local v112=Instance.new("Frame");v112.Size=UDim2.new(0,20,1,0 + 0 );v112.Position=UDim2.new(1505 -(363 + 1141) , -(1600 -(1183 + 397)),0 -0 ,0 + 0 );v112.BackgroundColor3=Color3.fromRGB(12 + 4 ,1991 -(1913 + 62) ,12 + 6 );v112.BackgroundTransparency=0.15 -0 ;v112.BorderSizePixel=1933 -(565 + 1368) ;v112.ZIndex=18 -13 ;v112.Parent=v104;local v120=Instance.new("TextLabel");v120.Size=UDim2.new(1662 -(1477 + 184) , -8,0 -0 ,40);v120.Position=UDim2.new(0,4,0 + 0 ,862 -(564 + 292) );v120.BackgroundTransparency=1;v120.Text="DUELS\nScript";v120.TextColor3=Color3.fromRGB(345 -145 ,200,602 -402 );v120.TextSize=317 -(244 + 60) ;v120.Font=Enum.Font.GothamBold;v120.ZIndex=5 + 1 ;v120.Parent=v104;local v131=Instance.new("Frame");v131.Size=UDim2.new(477 -(41 + 435) , -130,1002 -(938 + 63) , -(16 + 4));v131.Position=UDim2.new(0,125,1125 -(936 + 189) ,4 + 6 );v131.BackgroundTransparency=1614 -(1565 + 48) ;v131.ZIndex=7 + 3 ;v131.Parent=v22;local function v137() for v189,v190 in ipairs(v131:GetChildren()) do v190:Destroy();end end local function v138(v154) v137();local v155=Instance.new("TextLabel");v155.Size=UDim2.new(1,1138 -(782 + 356) ,267 -(176 + 91) ,30);v155.BackgroundTransparency=1;v155.Text=v154;v155.TextColor3=Color3.fromRGB(255,664 -409 ,375 -120 );v155.TextSize=1110 -(975 + 117) ;v155.Font=Enum.Font.GothamBold;v155.TextXAlignment=Enum.TextXAlignment.Left;v155.ZIndex=1887 -(157 + 1718) ;v155.Parent=v131;if (v154=="Combat") then if v12 then local v286=0 + 0 ;local v287;local v288;while true do if (v286==(24 -17)) then v288.Font=Enum.Font.GothamBold;v288.ZIndex=40 -28 ;v288.Parent=v131;v286=8;end if (v286==(1019 -(697 + 321))) then v287.Size=UDim2.new(0.55,0,0 -0 ,75 -39 );v287.Position=UDim2.new(0.05,0 -0 ,0 + 0 ,271 -126 );v287.BackgroundColor3=Color3.fromRGB(40,40,120 -75 );v286=1229 -(322 + 905) ;end if (v286==0) then v27(v131,"Hitbox",40,v8,function(v360) v8=v360;end);v27(v131,"TP al Enemigo",701 -(602 + 9) ,v10,function(v361) v10=v361;end);v287=Instance.new("TextLabel");v286=1190 -(449 + 740) ;end if (v286==(877 -(826 + 46))) then v288.Size=UDim2.new(947.3 -(245 + 702) ,0 -0 ,0,36);v288.Position=UDim2.new(0.62 + 0 ,0,1898 -(260 + 1638) ,585 -(382 + 58) );v288.BackgroundColor3=Color3.fromRGB(160 -110 ,50,46 + 9 );v286=11 -5 ;end if (v286==(8 -5)) then v287.TextSize=13;v287.Font=Enum.Font.Gotham;v287.ZIndex=1217 -(902 + 303) ;v286=8 -4 ;end if (v286==(4 -2)) then v287.BackgroundTransparency=0.15 + 0 ;v287.Text="Tamaño Hitbox";v287.TextColor3=Color3.fromRGB(1945 -(1121 + 569) ,469 -(22 + 192) ,938 -(483 + 200) );v286=1466 -(1404 + 59) ;end if (8==v286) then Instance.new("UICorner",v288).CornerRadius=UDim.new(0,16 -10 );v288.FocusLost:Connect(function() local v362=tonumber(v288.Text);if (v362 and (v362>(0 -0))) then v9=v362;end end);break;end if (v286==6) then v288.Text=tostring(v9);v288.TextColor3=Color3.fromRGB(255,1020 -(468 + 297) ,817 -(334 + 228) );v288.TextSize=47 -33 ;v286=15 -8 ;end if (v286==(6 -2)) then v287.Parent=v131;Instance.new("UICorner",v287).CornerRadius=UDim.new(0,2 + 4 );v288=Instance.new("TextBox");v286=241 -(141 + 95) ;end end else local v289=Instance.new("TextLabel");v289.Size=UDim2.new(1 + 0 ,0 -0 ,0 -0 ,10 + 30 );v289.Position=UDim2.new(0 -0 ,0 + 0 ,0,50);v289.BackgroundTransparency=1 + 0 ;v289.Text="Premium requerido";v289.TextColor3=Color3.fromRGB(359 -104 ,59 + 41 ,263 -(92 + 71) );v289.TextSize=16;v289.Font=Enum.Font.Gotham;v289.ZIndex=12;v289.Parent=v131;end elseif (v154=="Visual") then v27(v131,"ESP",20 + 20 ,v7,function(v306) v7=v306;end);elseif (v154=="Player") then v27(v131,"Speed",67 -27 ,v6,function(v353) v6=v353;end);elseif (v154=="Settings") then local v363=0;local v364;while true do if (v363==(766 -(574 + 191))) then v364.BackgroundColor3=Color3.fromRGB(35,35,40);v364.BackgroundTransparency=0.15;v364.Text="Stream Mode:\nPon 4 dedos en la pantalla\npara ocultar/mostrar el menú\n\nLicencia se guarda sola";v363=2 + 0 ;end if (v363==4) then Instance.new("UICorner",v364).CornerRadius=UDim.new(0 -0 ,8);break;end if (v363==(0 + 0)) then v364=Instance.new("TextLabel");v364.Size=UDim2.new(0.95,849 -(254 + 595) ,126 -(55 + 71) ,158 -38 );v364.Position=UDim2.new(1790.025 -(573 + 1217) ,0 -0 ,0,40);v363=1 + 0 ;end if (v363==(2 -0)) then v364.TextColor3=Color3.fromRGB(1139 -(714 + 225) ,584 -384 ,278 -78 );v364.TextSize=2 + 11 ;v364.Font=Enum.Font.Gotham;v363=3 -0 ;end if (v363==(809 -(118 + 688))) then v364.TextWrapped=true;v364.ZIndex=60 -(25 + 23) ;v364.Parent=v131;v363=1 + 3 ;end end end end local v139={{name="Combat",y=1941 -(927 + 959) },{name="Visual",y=832 -(16 + 716) },{name="Player",y=145},{name="Settings",y=463 -273 }};local v140={};for v167,v168 in ipairs(v139) do local v169=Instance.new("TextButton");v169.Size=UDim2.new(285.9 -(175 + 110) ,0 -0 ,0 -0 ,1832 -(503 + 1293) );v169.Position=UDim2.new(0.05 -0 ,0 + 0 ,1061 -(810 + 251) ,v168.y);v169.BackgroundColor3=Color3.fromRGB(12 + 4 ,5 + 11 ,18);v169.Text="  "   .. v168.name ;v169.TextColor3=Color3.fromRGB(163 + 17 ,713 -(43 + 490) ,180);v169.TextSize=747 -(711 + 22) ;v169.Font=Enum.Font.Gotham;v169.TextXAlignment=Enum.TextXAlignment.Left;v169.ZIndex=6;v169.Parent=v104;Instance.new("UICorner",v169).CornerRadius=UDim.new(0,6);v140[v168.name]=v169;v169.MouseButton1Click:Connect(function() local v191=0 -0 ;while true do if (v191==0) then for v307,v308 in pairs(v140) do local v309=859 -(240 + 619) ;while true do if (v309==(0 + 0)) then v308.BackgroundColor3=Color3.fromRGB(25 -9 ,2 + 14 ,1762 -(1344 + 400) );v308.TextColor3=Color3.fromRGB(585 -(255 + 150) ,142 + 38 ,97 + 83 );break;end end end v169.BackgroundColor3=Color3.fromRGB(170 -130 ,40,154 -106 );v191=1740 -(404 + 1335) ;end if (v191==(407 -(183 + 223))) then v169.TextColor3=Color3.fromRGB(310 -55 ,169 + 86 ,92 + 163 );v138(v168.name);break;end end end);end v140['Combat'].BackgroundColor3=Color3.fromRGB(377 -(10 + 327) ,40,34 + 14 );v140['Combat'].TextColor3=Color3.fromRGB(593 -(118 + 220) ,255,85 + 170 );v138("Combat");v26(v22);v21.MouseButton1Click:Connect(function() if  not v13 then v22.Visible= not v22.Visible;end end);end local v28={};local v29=0;local function v30() local v143=449 -(108 + 341) ;while true do if (v143==(0 + 0)) then if ((tick() -v29)<(0.8 -0)) then return;end v29=tick();v143=1494 -(711 + 782) ;end if ((1 -0)==v143) then v13= not v13;if v20 then if v13 then local v325=469 -(270 + 199) ;while true do if ((0 + 0)==v325) then if v21 then v21.Visible=false;end if v22 then v22.Visible=false;end v325=1820 -(580 + 1239) ;end if (v325==(2 -1)) then pcall(function() v3:SetCore("SendNotification",{Title="Stream Mode",Text="ON - Oculto",Duration=2 + 0 });end);break;end end else if v21 then v21.Visible=true;end pcall(function() v3:SetCore("SendNotification",{Title="Stream Mode",Text="OFF - Visible",Duration=1 + 1 });end);end end break;end end end v4.InputBegan:Connect(function(v144) if  not v11 then return;end if (v144.UserInputType~=Enum.UserInputType.Touch) then return;end v28[v144]=true;local v146=0;for v184 in pairs(v28) do v146=v146 + 1 + 0 ;end if (v146>=(9 -5)) then local v192=0 + 0 ;while true do if (v192==(1167 -(645 + 522))) then v30();v28={};break;end end end end);v4.InputEnded:Connect(function(v147) if (v147.UserInputType==Enum.UserInputType.Touch) then v28[v147]=nil;end end);local v31=1790 -(1010 + 780) ;v1.Heartbeat:Connect(function() local v148=0 + 0 ;local v149;local v150;local v151;while true do if (v148==(14 -11)) then if v6 then v151.WalkSpeed=(v12 and (105 -69)) or (1860 -(1045 + 791)) ;end if (v7 and  not v13) then for v310,v311 in ipairs(v0:GetPlayers()) do if ((v311~=v5) and v311.Character and v311.Character:FindFirstChild("Humanoid")) then if ((v311.Character.Humanoid.Health>(0 -0)) and  not v311.Character:FindFirstChildOfClass("Highlight")) then local v368=Instance.new("Highlight");v368.Parent=v311.Character;v368.FillColor=Color3.fromRGB(389 -134 ,505 -(351 + 154) ,1574 -(1281 + 293) );v368.OutlineColor=Color3.fromRGB(255,521 -(28 + 238) ,569 -314 );v368.FillTransparency=0.3;end end end elseif v13 then for v354,v355 in ipairs(v0:GetPlayers()) do if v355.Character then local v374=v355.Character:FindFirstChildOfClass("Highlight");if v374 then v374:Destroy();end end end end v148=1563 -(1381 + 178) ;end if (v148==1) then if  not v149 then return;end v150=v149:FindFirstChild("HumanoidRootPart");v148=2 + 0 ;end if (v148==(2 + 0)) then v151=v149:FindFirstChild("Humanoid");if ( not v150 or  not v151 or (v151.Health<=(0 + 0))) then return;end v148=10 -7 ;end if (v148==0) then if  not v11 then return;end v149=v5.Character;v148=1 + 0 ;end if (v148==(474 -(381 + 89))) then if (v12 and v8) then for v312,v313 in ipairs(v0:GetPlayers()) do if ((v313~=v5) and v313.Character) then local v356=v313.Character:FindFirstChild("Humanoid");if (v356 and (v356.Health>(0 + 0))) then for v376,v377 in ipairs({"Head","Torso","UpperTorso","LowerTorso","HumanoidRootPart"}) do local v378=v313.Character:FindFirstChild(v377);if (v378 and v378:IsA("BasePart")) then v378.Size=Vector3.new(v9,v9,v9);v378.CanCollide=false;v378.Transparency=(v13 and (1157 -(1074 + 82))) or 0.35 ;if  not v13 then local v398=0 -0 ;while true do if (v398==(1784 -(214 + 1570))) then v378.Color=Color3.fromRGB(255,1455 -(990 + 465) ,0 + 0 );v378.Material=Enum.Material.Neon;break;end end end end end end end end end if (v12 and v10) then local v303,v304=nil,44 + 56 ;for v314,v315 in ipairs(v0:GetPlayers()) do if ((v315~=v5) and v315.Character) then local v357=0;local v358;local v359;while true do if ((1 + 0)==v357) then if (v358 and v359 and (v358.Health>(0 -0))) then local v397=(v150.Position-v359.Position).Magnitude;if (v397<v304) then v304=v397;v303=v359;end end break;end if (v357==0) then v358=v315.Character:FindFirstChild("Humanoid");v359=v315.Character:FindFirstChild("HumanoidRootPart");v357=1;end end end end if (v303 and ((tick() -v31)>(1726.1 -(1668 + 58)))) then local v326=626 -(512 + 114) ;while true do if (v326==(0 -0)) then v150.CFrame=v303.CFrame * CFrame.new(0 -0 ,3 -2 ,2 + 1 ) ;v31=tick();break;end end end end break;end end end);v25();
+local speedEnabled = false
+local espEnabled = false
+local hitboxEnabled = false
+local hitboxSize = 8
+local tpEnemyEnabled = false
+local infiniteJumpEnabled = false
+local noClipEnabled = false
+local fovEnabled = false
+local brightnessEnabled = false
+local aimbotEnabled = false
+local forceLookEnabled = false
+local showFovCircle = false
+local espLineEnabled = false
+local espBoxEnabled = false
+local espDistanceEnabled = false
+local nearbyCountEnabled = false
+local aimFov = 120
+local licenseAccepted = false
+local isPremium = false
+local streamMode = false
+
+local LICENSE_KEY = "LIC-D16335"
+local FREE_PREMIUM_5H = "PREMIUM-5H"
+local LICENSE_FILE = "DuelsGod_License.txt"
+local ICON_ID = "rbxassetid://18622390193"
+local PARTICLE_ID = "rbxassetid://134384906566930"
+
+local guiName = "DuelsGod"
+if game:GetService("CoreGui"):FindFirstChild(guiName) then
+    game:GetService("CoreGui")[guiName]:Destroy()
+end
+
+local mainScreenGui, logoBtn, mainFrame, fovCircle, nearbyLabel
+local lighting = game:GetService("Lighting")
+local originalBrightness = lighting.Brightness
+local originalFOV = camera and camera.FieldOfView or 70
+local drawingFolder
+
+local function saveLicense(hours)
+    if writefile then
+        local expire = hours == -1 and 9999999999 or (os.time() + hours * 3600)
+        pcall(function() writefile(LICENSE_FILE, tostring(expire)) end)
+    end
+end
+
+local function checkSavedLicense()
+    if isfile and readfile and isfile(LICENSE_FILE) then
+        local ok, data = pcall(function() return readfile(LICENSE_FILE) end)
+        if ok and data then
+            local expire = tonumber(data)
+            if expire and os.time() < expire then return true end
+        end
+    end
+    return false
+end
+
+local function showLoading()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "DuelsLoading"
+    screenGui.IgnoreGuiInset = true
+    screenGui.DisplayOrder = 999
+    screenGui.Parent = game:GetService("CoreGui")
+
+    local bg = Instance.new("ImageLabel")
+    bg.Size = UDim2.new(1, 0, 1, 0)
+    bg.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+    bg.Image = ICON_ID
+    bg.ScaleType = Enum.ScaleType.Crop
+    bg.Parent = screenGui
+
+    local dark = Instance.new("Frame")
+    dark.Size = UDim2.new(1, 0, 1, 0)
+    dark.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    dark.BackgroundTransparency = 0.4
+    dark.Parent = bg
+
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 60)
+    title.Position = UDim2.new(0, 0, 0.38, 0)
+    title.BackgroundTransparency = 1
+    title.Text = "Asesinos VS Sheriffs"
+    title.TextColor3 = Color3.fromRGB(255, 60, 60)
+    title.TextSize = 32
+    title.Font = Enum.Font.GothamBold
+    title.Parent = bg
+
+    local status = Instance.new("TextLabel")
+    status.Size = UDim2.new(1, 0, 0, 30)
+    status.Position = UDim2.new(0, 0, 0.52, 0)
+    status.BackgroundTransparency = 1
+    status.Text = "Loading..."
+    status.TextColor3 = Color3.fromRGB(220, 220, 220)
+    status.TextSize = 20
+    status.Font = Enum.Font.Gotham
+    status.Parent = bg
+
+    task.wait(2.2)
+    status.Text = "Loaded!"
+    task.wait(0.7)
+    screenGui:Destroy()
+
+    if checkSavedLicense() then
+        licenseAccepted = true
+        isPremium = true
+        loadMainMenu()
+    else
+        showLicense()
+    end
+end
+
+function showLicense()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "LicenseCheck"
+    screenGui.Parent = game:GetService("CoreGui")
+
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 340, 0, 320)
+    frame.Position = UDim2.new(0.5, -170, 0.24, 0)
+    frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    frame.Parent = screenGui
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 14)
+
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 45)
+    title.BackgroundTransparency = 1
+    title.Text = "Asesinos VS Sheriffs"
+    title.TextColor3 = Color3.fromRGB(255, 50, 50)
+    title.TextSize = 18
+    title.Font = Enum.Font.GothamBold
+    title.Parent = frame
+
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(0.85, 0, 0, 42)
+    box.Position = UDim2.new(0.075, 0, 0.2, 0)
+    box.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    box.Text = ""
+    box.PlaceholderText = "Ingresa tu licencia..."
+    box.TextColor3 = Color3.fromRGB(255, 255, 255)
+    box.TextSize = 16
+    box.Font = Enum.Font.Gotham
+    box.Parent = frame
+    Instance.new("UICorner", box).CornerRadius = UDim.new(0, 10)
+
+    local activateBtn = Instance.new("TextButton")
+    activateBtn.Size = UDim2.new(0.85, 0, 0, 42)
+    activateBtn.Position = UDim2.new(0.075, 0, 0.4, 0)
+    activateBtn.BackgroundColor3 = Color3.fromRGB(220, 40, 80)
+    activateBtn.Text = "Activar Licencia"
+    activateBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    activateBtn.TextSize = 16
+    activateBtn.Font = Enum.Font.GothamBold
+    activateBtn.Parent = frame
+    Instance.new("UICorner", activateBtn).CornerRadius = UDim.new(0, 10)
+
+    local premium5hBtn = Instance.new("TextButton")
+    premium5hBtn.Size = UDim2.new(0.85, 0, 0, 42)
+    premium5hBtn.Position = UDim2.new(0.075, 0, 0.6, 0)
+    premium5hBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 100)
+    premium5hBtn.Text = "Premium Gratis (5h) - Discord"
+    premium5hBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    premium5hBtn.TextSize = 14
+    premium5hBtn.Font = Enum.Font.GothamBold
+    premium5hBtn.Parent = frame
+    Instance.new("UICorner", premium5hBtn).CornerRadius = UDim.new(0, 10)
+
+    activateBtn.MouseButton1Click:Connect(function()
+        if box.Text == LICENSE_KEY then
+            licenseAccepted = true
+            isPremium = true
+            saveLicense(-1)
+            screenGui:Destroy()
+            loadMainMenu()
+        elseif box.Text == FREE_PREMIUM_5H then
+            licenseAccepted = true
+            isPremium = true
+            saveLicense(5)
+            screenGui:Destroy()
+            loadMainMenu()
+        else
+            box.Text = ""
+            box.PlaceholderText = "Licencia incorrecta"
+        end
+    end)
+
+    premium5hBtn.MouseButton1Click:Connect(function()
+        setclipboard("https://discord.gg/wHc9aBmvh")
+        box.Text = FREE_PREMIUM_5H
+        pcall(function()
+            StarterGui:SetCore("SendNotification", {
+                Title = "Duels",
+                Text = "Discord copiado! Usa PREMIUM-5H",
+                Duration = 5
+            })
+        end)
+    end)
+end
+
+local function createFallingParticles(parent)
+    local folder = Instance.new("Folder")
+    folder.Name = "FallingParticles"
+    folder.Parent = parent
+
+    local function spawnParticle()
+        if not parent or not parent.Parent or not parent.Visible or streamMode then return end
+        local size = math.random(16, 28)
+        local p = Instance.new("ImageLabel")
+        p.Size = UDim2.new(0, size, 0, size)
+        p.Position = UDim2.new(math.random() * 0.9 + 0.05, 0, -0.12, 0)
+        p.BackgroundTransparency = 1
+        p.Image = PARTICLE_ID
+        p.ImageTransparency = math.random(0, 30) / 100
+        p.Rotation = math.random(0, 360)
+        p.ZIndex = 20
+        p.Parent = folder
+
+        local duration = math.random(28, 50) / 10
+        local endX = p.Position.X.Scale + (math.random(-25, 25) / 100)
+        local tween = TweenService:Create(p, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
+            Position = UDim2.new(math.clamp(endX, -0.1, 1.1), 0, 1.15, 0),
+            Rotation = p.Rotation + math.random(100, 300)
+        })
+        tween:Play()
+        tween.Completed:Connect(function() p:Destroy() end)
+    end
+
+    task.spawn(function()
+        while parent and parent.Parent do
+            if parent.Visible and not streamMode then spawnParticle() end
+            task.wait(0.22)
+        end
+    end)
+end
+
+local function createToggle(parent, name, y, default, callback)
+    local toggle = Instance.new("TextButton")
+    toggle.Size = UDim2.new(0.9, 0, 0, 36)
+    toggle.Position = UDim2.new(0.05, 0, 0, y)
+    toggle.BackgroundColor3 = default and Color3.fromRGB(40, 160, 40) or Color3.fromRGB(50, 50, 55)
+    toggle.BackgroundTransparency = 0.15
+    toggle.Text = "  " .. name .. "  [" .. (default and "ON" or "OFF") .. "]"
+    toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggle.TextSize = 12
+    toggle.Font = Enum.Font.Gotham
+    toggle.TextXAlignment = Enum.TextXAlignment.Left
+    toggle.ZIndex = 15
+    toggle.Parent = parent
+    Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 8)
+
+    toggle.MouseButton1Click:Connect(function()
+        default = not default
+        toggle.BackgroundColor3 = default and Color3.fromRGB(40, 160, 40) or Color3.fromRGB(50, 50, 55)
+        toggle.Text = "  " .. name .. "  [" .. (default and "ON" or "OFF") .. "]"
+        callback(default)
+    end)
+end
+
+function loadMainMenu()
+    mainScreenGui = Instance.new("ScreenGui")
+    mainScreenGui.Name = guiName
+    mainScreenGui.ResetOnSpawn = false
+    mainScreenGui.IgnoreGuiInset = true
+    mainScreenGui.Parent = game:GetService("CoreGui")
+
+    -- FOV Circle
+    fovCircle = Instance.new("Frame")
+    fovCircle.Size = UDim2.new(0, 180, 0, 180)
+    fovCircle.Position = UDim2.new(0.5, -90, 0.5, -90)
+    fovCircle.BackgroundTransparency = 1
+    fovCircle.Visible = false
+    fovCircle.Parent = mainScreenGui
+    local circleStroke = Instance.new("UIStroke")
+    circleStroke.Color = Color3.fromRGB(0, 255, 120)
+    circleStroke.Thickness = 2
+    circleStroke.Parent = fovCircle
+    Instance.new("UICorner", fovCircle).CornerRadius = UDim.new(1, 0)
+
+    -- Nearby count
+    nearbyLabel = Instance.new("TextLabel")
+    nearbyLabel.Size = UDim2.new(0, 160, 0, 28)
+    nearbyLabel.Position = UDim2.new(0.5, -80, 0.12, 0)
+    nearbyLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    nearbyLabel.BackgroundTransparency = 0.4
+    nearbyLabel.Text = "Enemies: 0"
+    nearbyLabel.TextColor3 = Color3.fromRGB(255, 60, 60)
+    nearbyLabel.TextSize = 16
+    nearbyLabel.Font = Enum.Font.GothamBold
+    nearbyLabel.Visible = false
+    nearbyLabel.Parent = mainScreenGui
+    Instance.new("UICorner", nearbyLabel).CornerRadius = UDim.new(0, 8)
+
+    drawingFolder = Instance.new("Folder")
+    drawingFolder.Name = "ESPDrawings"
+    drawingFolder.Parent = mainScreenGui
+
+    logoBtn = Instance.new("ImageButton")
+    logoBtn.Size = UDim2.new(0, 70, 0, 70)
+    logoBtn.Position = UDim2.new(0.04, 0, 0.2, 0)
+    logoBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    logoBtn.Image = ICON_ID
+    logoBtn.ScaleType = Enum.ScaleType.Crop
+    logoBtn.Draggable = true
+    logoBtn.Parent = mainScreenGui
+    Instance.new("UICorner", logoBtn).CornerRadius = UDim.new(0, 12)
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(80, 255, 120)
+    stroke.Thickness = 2
+    stroke.Parent = logoBtn
+
+    mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(0, 400, 0, 360)
+    mainFrame.Position = UDim2.new(0.5, -200, 0.5, -180)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 26)
+    mainFrame.Visible = false
+    mainFrame.Active = true
+    mainFrame.Draggable = true
+    mainFrame.ClipsDescendants = true
+    mainFrame.Parent = mainScreenGui
+    Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 12)
+
+    local bgImage = Instance.new("ImageLabel")
+    bgImage.Size = UDim2.new(1, 0, 1, 0)
+    bgImage.BackgroundTransparency = 1
+    bgImage.Image = ICON_ID
+    bgImage.ImageTransparency = 0.55
+    bgImage.ScaleType = Enum.ScaleType.Crop
+    bgImage.ZIndex = 1
+    bgImage.Parent = mainFrame
+    Instance.new("UICorner", bgImage).CornerRadius = UDim.new(0, 12)
+
+    local sidebar = Instance.new("Frame")
+    sidebar.Size = UDim2.new(0, 115, 1, 0)
+    sidebar.BackgroundColor3 = Color3.fromRGB(16, 16, 18)
+    sidebar.BackgroundTransparency = 0.12
+    sidebar.BorderSizePixel = 0
+    sidebar.ZIndex = 5
+    sidebar.Parent = mainFrame
+    Instance.new("UICorner", sidebar).CornerRadius = UDim.new(0, 12)
+
+    local sideFix = Instance.new("Frame")
+    sideFix.Size = UDim2.new(0, 18, 1, 0)
+    sideFix.Position = UDim2.new(1, -18, 0, 0)
+    sideFix.BackgroundColor3 = Color3.fromRGB(16, 16, 18)
+    sideFix.BackgroundTransparency = 0.12
+    sideFix.BorderSizePixel = 0
+    sideFix.ZIndex = 5
+    sideFix.Parent = sidebar
+
+    local sideTitle = Instance.new("TextLabel")
+    sideTitle.Size = UDim2.new(1, -6, 0, 22)
+    sideTitle.Position = UDim2.new(0, 4, 0, 8)
+    sideTitle.BackgroundTransparency = 1
+    sideTitle.Text = "DUELS"
+    sideTitle.TextColor3 = Color3.fromRGB(220, 220, 220)
+    sideTitle.TextSize = 15
+    sideTitle.Font = Enum.Font.GothamBold
+    sideTitle.ZIndex = 6
+    sideTitle.Parent = sidebar
+
+    local creator = Instance.new("TextLabel")
+    creator.Size = UDim2.new(1, -6, 0, 16)
+    creator.Position = UDim2.new(0, 4, 0, 28)
+    creator.BackgroundTransparency = 1
+    creator.Text = "Created by Drip_Dev"
+    creator.TextColor3 = Color3.fromRGB(120, 200, 255)
+    creator.TextSize = 10
+    creator.Font = Enum.Font.Gotham
+    creator.ZIndex = 6
+    creator.Parent = sidebar
+
+    local content = Instance.new("ScrollingFrame")
+    content.Size = UDim2.new(1, -125, 1, -16)
+    content.Position = UDim2.new(0, 120, 0, 8)
+    content.BackgroundTransparency = 1
+    content.BorderSizePixel = 0
+    content.ScrollBarThickness = 4
+    content.CanvasSize = UDim2.new(0, 0, 0, 480)
+    content.ZIndex = 10
+    content.Parent = mainFrame
+
+    local function clearContent()
+        for _, c in ipairs(content:GetChildren()) do c:Destroy() end
+    end
+
+    local function showTab(tabName)
+        clearContent()
+
+        local header = Instance.new("TextLabel")
+        header.Size = UDim2.new(1, 0, 0, 26)
+        header.BackgroundTransparency = 1
+        header.Text = tabName
+        header.TextColor3 = Color3.fromRGB(255, 255, 255)
+        header.TextSize = 16
+        header.Font = Enum.Font.GothamBold
+        header.TextXAlignment = Enum.TextXAlignment.Left
+        header.ZIndex = 12
+        header.Parent = content
+
+        if tabName == "Aimbot" then
+            if isPremium then
+                createToggle(content, "Aimbot", 32, aimbotEnabled, function(s) aimbotEnabled = s end)
+                createToggle(content, "Force Look", 72, forceLookEnabled, function(s) forceLookEnabled = s end)
+                createToggle(content, "Show FOV Circle", 112, showFovCircle, function(s)
+                    showFovCircle = s
+                    if fovCircle then fovCircle.Visible = s and not streamMode end
+                end)
+                createToggle(content, "Hitbox", 152, hitboxEnabled, function(s) hitboxEnabled = s end)
+                createToggle(content, "TP al Enemigo", 192, tpEnemyEnabled, function(s) tpEnemyEnabled = s end)
+
+                local sizeLabel = Instance.new("TextLabel")
+                sizeLabel.Size = UDim2.new(0.55, 0, 0, 32)
+                sizeLabel.Position = UDim2.new(0.05, 0, 0, 240)
+                sizeLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+                sizeLabel.BackgroundTransparency = 0.15
+                sizeLabel.Text = "Hitbox Size"
+                sizeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                sizeLabel.TextSize = 12
+                sizeLabel.Font = Enum.Font.Gotham
+                sizeLabel.ZIndex = 12
+                sizeLabel.Parent = content
+                Instance.new("UICorner", sizeLabel).CornerRadius = UDim.new(0, 6)
+
+                local sizeBox = Instance.new("TextBox")
+                sizeBox.Size = UDim2.new(0.3, 0, 0, 32)
+                sizeBox.Position = UDim2.new(0.62, 0, 0, 240)
+                sizeBox.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+                sizeBox.Text = tostring(hitboxSize)
+                sizeBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+                sizeBox.TextSize = 13
+                sizeBox.Font = Enum.Font.GothamBold
+                sizeBox.ZIndex = 12
+                sizeBox.Parent = content
+                Instance.new("UICorner", sizeBox).CornerRadius = UDim.new(0, 6)
+                sizeBox.FocusLost:Connect(function()
+                    local n = tonumber(sizeBox.Text)
+                    if n and n > 0 then hitboxSize = n end
+                end)
+            else
+                local msg = Instance.new("TextLabel")
+                msg.Size = UDim2.new(1, 0, 0, 40)
+                msg.Position = UDim2.new(0, 0, 0, 40)
+                msg.BackgroundTransparency = 1
+                msg.Text = "Premium requerido"
+                msg.TextColor3 = Color3.fromRGB(255, 100, 100)
+                msg.TextSize = 15
+                msg.Font = Enum.Font.Gotham
+                msg.ZIndex = 12
+                msg.Parent = content
+            end
+
+        elseif tabName == "Visuals" then
+            createToggle(content, "Enemy ESP", 32, espEnabled, function(s) espEnabled = s end)
+            createToggle(content, "Line", 72, espLineEnabled, function(s) espLineEnabled = s end)
+            createToggle(content, "Box", 112, espBoxEnabled, function(s) espBoxEnabled = s end)
+            createToggle(content, "Distance", 152, espDistanceEnabled, function(s) espDistanceEnabled = s end)
+            createToggle(content, "Nearby Count", 192, nearbyCountEnabled, function(s)
+                nearbyCountEnabled = s
+                if nearbyLabel then nearbyLabel.Visible = s and not streamMode end
+            end)
+            createToggle(content, "FOV Alto", 232, fovEnabled, function(s)
+                fovEnabled = s
+                if camera then camera.FieldOfView = s and 100 or originalFOV end
+            end)
+            createToggle(content, "Brillo", 272, brightnessEnabled, function(s)
+                brightnessEnabled = s
+                lighting.Brightness = s and 4 or originalBrightness
+            end)
+
+        elseif tabName == "Player" then
+            createToggle(content, "Speed", 32, speedEnabled, function(s) speedEnabled = s end)
+            if isPremium then
+                createToggle(content, "Infinite Jump", 72, infiniteJumpEnabled, function(s) infiniteJumpEnabled = s end)
+                createToggle(content, "NoClip", 112, noClipEnabled, function(s) noClipEnabled = s end)
+            end
+
+        elseif tabName == "Settings" then
+            local info = Instance.new("TextLabel")
+            info.Size = UDim2.new(0.95, 0, 0, 130)
+            info.Position = UDim2.new(0.025, 0, 0, 35)
+            info.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+            info.BackgroundTransparency = 0.15
+            info.Text = "Stream Mode:\n4 dedos = ocultar/mostrar\n\nLicencia se guarda sola\n\nCreated by Drip_Dev"
+            info.TextColor3 = Color3.fromRGB(200, 200, 200)
+            info.TextSize = 13
+            info.Font = Enum.Font.Gotham
+            info.TextWrapped = true
+            info.ZIndex = 12
+            info.Parent = content
+            Instance.new("UICorner", info).CornerRadius = UDim.new(0, 8)
+        end
+    end
+
+    local tabs = {
+        {name = "Aimbot", y = 55},
+        {name = "Visuals", y = 100},
+        {name = "Player", y = 145},
+        {name = "Settings", y = 190},
+    }
+
+    local tabButtons = {}
+    for _, t in ipairs(tabs) do
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0.9, 0, 0, 34)
+        btn.Position = UDim2.new(0.05, 0, 0, t.y)
+        btn.BackgroundColor3 = Color3.fromRGB(16, 16, 18)
+        btn.Text = "  " .. t.name
+        btn.TextColor3 = Color3.fromRGB(180, 180, 180)
+        btn.TextSize = 13
+        btn.Font = Enum.Font.Gotham
+        btn.TextXAlignment = Enum.TextXAlignment.Left
+        btn.ZIndex = 6
+        btn.Parent = sidebar
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+        tabButtons[t.name] = btn
+
+        btn.MouseButton1Click:Connect(function()
+            for name, b in pairs(tabButtons) do
+                b.BackgroundColor3 = Color3.fromRGB(16, 16, 18)
+                b.TextColor3 = Color3.fromRGB(180, 180, 180)
+            end
+            btn.BackgroundColor3 = Color3.fromRGB(40, 40, 48)
+            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            showTab(t.name)
+        end)
+    end
+
+    tabButtons["Aimbot"].BackgroundColor3 = Color3.fromRGB(40, 40, 48)
+    tabButtons["Aimbot"].TextColor3 = Color3.fromRGB(255, 255, 255)
+    showTab("Aimbot")
+    createFallingParticles(mainFrame)
+
+    logoBtn.MouseButton1Click:Connect(function()
+        if not streamMode then
+            mainFrame.Visible = not mainFrame.Visible
+        end
+    end)
+end
+
+local activeTouches = {}
+local lastStreamToggle = 0
+
+local function toggleStreamMode()
+    if tick() - lastStreamToggle < 0.8 then return end
+    lastStreamToggle = tick()
+    streamMode = not streamMode
+    if mainScreenGui then
+        if streamMode then
+            if logoBtn then logoBtn.Visible = false end
+            if mainFrame then mainFrame.Visible = false end
+            if fovCircle then fovCircle.Visible = false end
+            if nearbyLabel then nearbyLabel.Visible = false end
+            if drawingFolder then drawingFolder:ClearAllChildren() end
+        else
+            if logoBtn then logoBtn.Visible = true end
+            if fovCircle then fovCircle.Visible = showFovCircle end
+            if nearbyLabel then nearbyLabel.Visible = nearbyCountEnabled end
+        end
+    end
+end
+
+UserInputService.InputBegan:Connect(function(input)
+    if not licenseAccepted then return end
+    if input.UserInputType ~= Enum.UserInputType.Touch then return end
+    activeTouches[input] = true
+    local count = 0
+    for _ in pairs(activeTouches) do count = count + 1 end
+    if count >= 4 then
+        toggleStreamMode()
+        activeTouches = {}
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        activeTouches[input] = nil
+    end
+end)
+
+UserInputService.JumpRequest:Connect(function()
+    if isPremium and infiniteJumpEnabled and localPlayer.Character then
+        local hum = localPlayer.Character:FindFirstChild("Humanoid")
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+    end
+end)
+
+local function getClosestEnemy()
+    local closest, closestDist = nil, aimFov
+    if not camera then return nil end
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= localPlayer and plr.Character then
+            local hum = plr.Character:FindFirstChild("Humanoid")
+            local head = plr.Character:FindFirstChild("Head")
+            if hum and head and hum.Health > 0 then
+                if not localPlayer.Team or not plr.Team or localPlayer.Team ~= plr.Team then
+                    local screenPos, onScreen = camera:WorldToViewportPoint(head.Position)
+                    if onScreen then
+                        local center = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
+                        local pos = Vector2.new(screenPos.X, screenPos.Y)
+                        local dist = (center - pos).Magnitude
+                        if dist < closestDist then
+                            closestDist = dist
+                            closest = plr
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return closest
+end
+
+local lastTP = 0
+local espObjects = {}
+
+local function clearESP()
+    for _, v in pairs(espObjects) do
+        if v and v.Parent then v:Destroy() end
+    end
+    espObjects = {}
+    if drawingFolder then drawingFolder:ClearAllChildren() end
+end
+
+RunService.RenderStepped:Connect(function()
+    if not licenseAccepted then return end
+    camera = workspace.CurrentCamera
+    local char = localPlayer.Character
+    if not char then return end
+    local myRoot = char:FindFirstChild("HumanoidRootPart")
+    local myHum = char:FindFirstChild("Humanoid")
+    if not myRoot or not myHum or myHum.Health <= 0 then return end
+
+    if speedEnabled then
+        myHum.WalkSpeed = isPremium and 36 or 24
+    end
+
+    if isPremium and noClipEnabled then
+        for _, part in ipairs(char:GetDescendants()) do
+            if part:IsA("BasePart") then part.CanCollide = false end
+        end
+    end
+
+    -- Aimbot / Force Look
+    if isPremium and (aimbotEnabled or forceLookEnabled) and camera then
+        local target = getClosestEnemy()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            camera.CFrame = CFrame.new(camera.CFrame.Position, target.Character.Head.Position)
+        end
+    end
+
+    -- FOV Circle
+    if fovCircle then
+        fovCircle.Visible = showFovCircle and not streamMode
+    end
+
+    -- Nearby count
+    local nearCount = 0
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= localPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local hum = plr.Character:FindFirstChild("Humanoid")
+            if hum and hum.Health > 0 then
+                local d = (myRoot.Position - plr.Character.HumanoidRootPart.Position).Magnitude
+                if d < 80 then nearCount = nearCount + 1 end
+            end
+        end
+    end
+    if nearbyLabel then
+        nearbyLabel.Visible = nearbyCountEnabled and not streamMode
+        nearbyLabel.Text = "Enemies: " .. nearCount
+    end
+
+    -- ESP + Line + Box + Distance
+    if streamMode then
+        clearESP()
+    else
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= localPlayer and plr.Character then
+                local hum = plr.Character:FindFirstChild("Humanoid")
+                local head = plr.Character:FindFirstChild("Head")
+                local root = plr.Character:FindFirstChild("HumanoidRootPart")
+                if hum and head and root and hum.Health > 0 and camera then
+                    -- Highlight ESP
+                    if espEnabled then
+                        if not plr.Character:FindFirstChildOfClass("Highlight") then
+                            local hl = Instance.new("Highlight")
+                            hl.Parent = plr.Character
+                            hl.FillColor = Color3.fromRGB(255, 0, 0)
+                            hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                            hl.FillTransparency = 0.4
+                        end
+                    end
+
+                    local screenPos, onScreen = camera:WorldToViewportPoint(head.Position)
+                    local key = tostring(plr.UserId)
+
+                    -- Line
+                    if espLineEnabled and onScreen and drawingFolder then
+                        local line = espObjects["line_" .. key]
+                        if not line then
+                            line = Instance.new("Frame")
+                            line.BorderSizePixel = 0
+                            line.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+                            line.AnchorPoint = Vector2.new(0.5, 0.5)
+                            line.ZIndex = 50
+                            line.Parent = drawingFolder
+                            espObjects["line_" .. key] = line
+                        end
+                        local center = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
+                        local target = Vector2.new(screenPos.X, screenPos.Y)
+                        local dist = (center - target).Magnitude
+                        local mid = (center + target) / 2
+                        line.Size = UDim2.new(0, dist, 0, 2)
+                        line.Position = UDim2.new(0, mid.X, 0, mid.Y)
+                        line.Rotation = math.deg(math.atan2(target.Y - center.Y, target.X - center.X))
+                        line.Visible = true
+                    elseif espObjects["line_" .. key] then
+                        espObjects["line_" .. key].Visible = false
+                    end
+
+                    -- Box
+                    if espBoxEnabled and onScreen and drawingFolder then
+                        local box = espObjects["box_" .. key]
+                        if not box then
+                            box = Instance.new("Frame")
+                            box.BackgroundTransparency = 1
+                            box.ZIndex = 50
+                            box.Parent = drawingFolder
+                            local st = Instance.new("UIStroke")
+                            st.Color = Color3.fromRGB(0, 200, 255)
+                            st.Thickness = 2
+                            st.Parent = box
+                            espObjects["box_" .. key] = box
+                        end
+                        local size = 40
+                        box.Size = UDim2.new(0, size, 0, size * 1.6)
+                        box.Position = UDim2.new(0, screenPos.X - size / 2, 0, screenPos.Y - size * 0.3)
+                        box.Visible = true
+                    elseif espObjects["box_" .. key] then
+                        espObjects["box_" .. key].Visible = false
+                    end
+
+                    -- Distance
+                    if espDistanceEnabled and onScreen and drawingFolder then
+                        local distLabel = espObjects["dist_" .. key]
+                        if not distLabel then
+                            distLabel = Instance.new("TextLabel")
+                            distLabel.Size = UDim2.new(0, 60, 0, 18)
+                            distLabel.BackgroundTransparency = 1
+                            distLabel.TextColor3 = Color3.fromRGB(255, 255, 100)
+                            distLabel.TextSize = 12
+                            distLabel.Font = Enum.Font.GothamBold
+                            distLabel.ZIndex = 51
+                            distLabel.Parent = drawingFolder
+                            espObjects["dist_" .. key] = distLabel
+                        end
+                        local d = math.floor((myRoot.Position - root.Position).Magnitude)
+                        distLabel.Text = d .. "m"
+                        distLabel.Position = UDim2.new(0, screenPos.X - 30, 0, screenPos.Y + 25)
+                        distLabel.Visible = true
+                    elseif espObjects["dist_" .. key] then
+                        espObjects["dist_" .. key].Visible = false
+                    end
+                end
+            end
+        end
+    end
+
+    if isPremium and hitboxEnabled then
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= localPlayer and plr.Character then
+                local hum = plr.Character:FindFirstChild("Humanoid")
+                if hum and hum.Health > 0 then
+                    for _, name in ipairs({"Head", "Torso", "UpperTorso", "LowerTorso", "HumanoidRootPart"}) do
+                        local part = plr.Character:FindFirstChild(name)
+                        if part and part:IsA("BasePart") then
+                            part.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
+                            part.CanCollide = false
+                            part.Transparency = streamMode and 1 or 0.35
+                            if not streamMode then
+                                part.Color = Color3.fromRGB(255, 0, 0)
+                                part.Material = Enum.Material.Neon
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    if isPremium and tpEnemyEnabled then
+        local closest, closestDist = nil, 100
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= localPlayer and plr.Character then
+                local hum = plr.Character:FindFirstChild("Humanoid")
+                local root = plr.Character:FindFirstChild("HumanoidRootPart")
+                if hum and root and hum.Health > 0 then
+                    local dist = (myRoot.Position - root.Position).Magnitude
+                    if dist < closestDist then
+                        closestDist = dist
+                        closest = root
+                    end
+                end
+            end
+        end
+        if closest and tick() - lastTP > 0.1 then
+            myRoot.CFrame = closest.CFrame * CFrame.new(0, 1, 3)
+            lastTP = tick()
+        end
+    end
+end)
+
+showLoading()
