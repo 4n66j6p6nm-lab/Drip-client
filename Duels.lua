@@ -1,9 +1,10 @@
-print("✅ Asesinos VS Sheriffs - Premium 5h Guardado")
+print("✅ Asesinos VS Sheriffs - Stream 4 Fingers")
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local StarterGui = game:GetService("StarterGui")
+local UserInputService = game:GetService("UserInputService")
 local localPlayer = Players.LocalPlayer
 
 local speedEnabled = false
@@ -14,6 +15,7 @@ local autoShootEnabled = false
 local tpEnemyEnabled = false
 local licenseAccepted = false
 local isPremium = false
+local streamMode = false
 
 local LICENSE_KEY = "LIC-D16335"
 local FREE_PREMIUM_5H = "PREMIUM-5H"
@@ -27,15 +29,13 @@ if game:GetService("CoreGui"):FindFirstChild(guiName) then
     game:GetService("CoreGui")[guiName]:Destroy()
 end
 
--- Guardar / cargar licencia
+local mainScreenGui = nil
+local logoBtn = nil
+local menu = nil
+
 local function saveLicense(hours)
     if writefile then
-        local expire
-        if hours == -1 then
-            expire = 9999999999 -- infinita
-        else
-            expire = os.time() + (hours * 3600)
-        end
+        local expire = hours == -1 and 9999999999 or (os.time() + hours * 3600)
         pcall(function()
             writefile(LICENSE_FILE, tostring(expire))
         end)
@@ -102,7 +102,6 @@ local function showLoading()
     task.wait(0.8)
     screenGui:Destroy()
 
-    -- Si ya tiene licencia guardada y válida → entra directo
     if checkSavedLicense() then
         licenseAccepted = true
         isPremium = true
@@ -171,13 +170,13 @@ function showLicense()
         if box.Text == LICENSE_KEY then
             licenseAccepted = true
             isPremium = true
-            saveLicense(-1) -- infinita
+            saveLicense(-1)
             screenGui:Destroy()
             loadMainMenu()
         elseif box.Text == FREE_PREMIUM_5H then
             licenseAccepted = true
             isPremium = true
-            saveLicense(5) -- 5 horas
+            saveLicense(5)
             screenGui:Destroy()
             loadMainMenu()
         else
@@ -231,7 +230,7 @@ local function createFallingParticles(parent)
 
     task.spawn(function()
         while parent and parent.Parent do
-            if parent.Visible then
+            if parent.Visible and not streamMode then
                 spawnParticle()
             end
             task.wait(0.2)
@@ -240,19 +239,19 @@ local function createFallingParticles(parent)
 end
 
 function loadMainMenu()
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = guiName
-    screenGui.ResetOnSpawn = false
-    screenGui.Parent = game:GetService("CoreGui")
+    mainScreenGui = Instance.new("ScreenGui")
+    mainScreenGui.Name = guiName
+    mainScreenGui.ResetOnSpawn = false
+    mainScreenGui.Parent = game:GetService("CoreGui")
 
-    local logoBtn = Instance.new("ImageButton")
+    logoBtn = Instance.new("ImageButton")
     logoBtn.Size = UDim2.new(0, 80, 0, 80)
     logoBtn.Position = UDim2.new(0.05, 0, 0.2, 0)
     logoBtn.BackgroundTransparency = 1
     logoBtn.Image = ICON_ID
     logoBtn.ScaleType = Enum.ScaleType.Crop
     logoBtn.Draggable = true
-    logoBtn.Parent = screenGui
+    logoBtn.Parent = mainScreenGui
     Instance.new("UICorner", logoBtn).CornerRadius = UDim.new(1, 0)
 
     local logoText = Instance.new("TextLabel")
@@ -264,7 +263,7 @@ function loadMainMenu()
     logoText.Font = Enum.Font.GothamBold
     logoText.Parent = logoBtn
 
-    local menu = Instance.new("Frame")
+    menu = Instance.new("Frame")
     menu.Size = UDim2.new(0, 290, 0, isPremium and 450 or 260)
     menu.Position = UDim2.new(0.5, -145, 0.15, 0)
     menu.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
@@ -272,7 +271,7 @@ function loadMainMenu()
     menu.Active = true
     menu.Draggable = true
     menu.ClipsDescendants = true
-    menu.Parent = screenGui
+    menu.Parent = mainScreenGui
     Instance.new("UICorner", menu).CornerRadius = UDim.new(0, 14)
 
     local bgImage = Instance.new("ImageLabel")
@@ -361,10 +360,70 @@ function loadMainMenu()
     createFallingParticles(menu)
 
     logoBtn.MouseButton1Click:Connect(function()
-        menu.Visible = not menu.Visible
+        if not streamMode then
+            menu.Visible = not menu.Visible
+        end
     end)
 end
 
+-- ============ STREAM MODE: 4 DEDOS ============
+local activeTouches = {}
+local lastStreamToggle = 0
+
+local function toggleStreamMode()
+    if tick() - lastStreamToggle < 0.8 then return end -- anti spam
+    lastStreamToggle = tick()
+
+    streamMode = not streamMode
+
+    if mainScreenGui then
+        if streamMode then
+            if logoBtn then logoBtn.Visible = false end
+            if menu then menu.Visible = false end
+            pcall(function()
+                StarterGui:SetCore("SendNotification", {
+                    Title = "Stream Mode",
+                    Text = "ON - Todo oculto (4 dedos)",
+                    Duration = 2
+                })
+            end)
+        else
+            if logoBtn then logoBtn.Visible = true end
+            pcall(function()
+                StarterGui:SetCore("SendNotification", {
+                    Title = "Stream Mode",
+                    Text = "OFF - Visible",
+                    Duration = 2
+                })
+            end)
+        end
+    end
+end
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not licenseAccepted then return end
+    if input.UserInputType ~= Enum.UserInputType.Touch then return end
+
+    activeTouches[input] = true
+
+    local count = 0
+    for _ in pairs(activeTouches) do
+        count = count + 1
+    end
+
+    if count >= 4 then
+        toggleStreamMode()
+        activeTouches = {}
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        activeTouches[input] = nil
+    end
+end)
+
+-- Features
 local lastTP = 0
 
 RunService.Heartbeat:Connect(function()
@@ -380,7 +439,7 @@ RunService.Heartbeat:Connect(function()
         myHum.WalkSpeed = isPremium and 36 or 24
     end
 
-    if espEnabled then
+    if espEnabled and not streamMode then
         for _, plr in ipairs(Players:GetPlayers()) do
             if plr ~= localPlayer and plr.Character and plr.Character:FindFirstChild("Humanoid") then
                 if plr.Character.Humanoid.Health > 0 then
@@ -394,6 +453,13 @@ RunService.Heartbeat:Connect(function()
                 end
             end
         end
+    elseif streamMode then
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr.Character then
+                local hl = plr.Character:FindFirstChildOfClass("Highlight")
+                if hl then hl:Destroy() end
+            end
+        end
     end
 
     if isPremium and hitboxEnabled then
@@ -405,10 +471,14 @@ RunService.Heartbeat:Connect(function()
                         local part = plr.Character:FindFirstChild(name)
                         if part and part:IsA("BasePart") then
                             part.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
-                            part.Transparency = 0.35
-                            part.Color = Color3.fromRGB(255, 0, 0)
-                            part.Material = Enum.Material.Neon
                             part.CanCollide = false
+                            if streamMode then
+                                part.Transparency = 1
+                            else
+                                part.Transparency = 0.35
+                                part.Color = Color3.fromRGB(255, 0, 0)
+                                part.Material = Enum.Material.Neon
+                            end
                         end
                     end
                 end
