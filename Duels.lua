@@ -1,9 +1,8 @@
-print("✅ Duels - Loading + Music IDs")
+print("✅ DUELS FULL - Color Wheel + 2v2 Filter | Created by Drip_Dev")
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
-local StarterGui = game:GetService("StarterGui")
 local UserInputService = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
 local SoundService = game:GetService("SoundService")
@@ -18,7 +17,8 @@ local infiniteJumpEnabled = false
 local noClipEnabled = false
 local fovEnabled = false
 local brightnessEnabled = false
-local aimbotEnabled = false
+local aimbotCameraEnabled = false
+local silentAimEnabled = false
 local forceLookEnabled = false
 local showFovCircle = false
 local espLineEnabled = false
@@ -28,18 +28,37 @@ local nearbyCountEnabled = false
 local skeletonEnabled = false
 local spinEnabled = false
 local spinSpeed = 15
-local lineColor = Color3.fromRGB(255, 40, 40)
-local boxColor = Color3.fromRGB(0, 200, 255)
-local skeletonColor = Color3.fromRGB(255, 255, 255)
+local silentFov = 160
+local filterTeams = true -- ON para 2v2 / 4v4
+
+local COLOR_PALETTE = {
+    Color3.fromRGB(255, 40, 40),
+    Color3.fromRGB(255, 120, 40),
+    Color3.fromRGB(255, 220, 40),
+    Color3.fromRGB(40, 255, 80),
+    Color3.fromRGB(40, 220, 255),
+    Color3.fromRGB(40, 100, 255),
+    Color3.fromRGB(180, 40, 255),
+    Color3.fromRGB(255, 40, 180),
+    Color3.fromRGB(255, 255, 255),
+    Color3.fromRGB(0, 0, 0),
+    Color3.fromRGB(255, 0, 128),
+    Color3.fromRGB(0, 255, 200),
+}
+
+local lineColorIndex = 1
+local boxColorIndex = 5
+local skeletonColorIndex = 9
+local lineColor = COLOR_PALETTE[lineColorIndex]
+local boxColor = COLOR_PALETTE[boxColorIndex]
+local skeletonColor = COLOR_PALETTE[skeletonColorIndex]
+
 local licenseAccepted = false
-local isPremium = false
 local streamMode = false
 local lockedTarget = nil
 
--- Música (cambia este ID si quieres otra en la carga)
 local LOADING_MUSIC_ID = "116888428582801"
 local currentMusic = nil
-
 local LICENSE_KEY = "LIC-D16335"
 local FREE_PREMIUM_5H = "PREMIUM-5H"
 local LICENSE_FILE = "DuelsGod_License.txt"
@@ -59,16 +78,14 @@ local espObjects = {}
 local lastTP = 0
 
 local SKELETON_BONES = {
-    {"Head", "UpperTorso"}, {"Head", "Torso"},
-    {"UpperTorso", "LowerTorso"},
+    {"Head", "UpperTorso"}, {"Head", "Torso"}, {"UpperTorso", "LowerTorso"},
     {"UpperTorso", "LeftUpperArm"}, {"UpperTorso", "RightUpperArm"},
     {"LeftUpperArm", "LeftLowerArm"}, {"RightUpperArm", "RightLowerArm"},
     {"LeftLowerArm", "LeftHand"}, {"RightLowerArm", "RightHand"},
     {"LowerTorso", "LeftUpperLeg"}, {"LowerTorso", "RightUpperLeg"},
     {"LeftUpperLeg", "LeftLowerLeg"}, {"RightUpperLeg", "RightLowerLeg"},
     {"LeftLowerLeg", "LeftFoot"}, {"RightLowerLeg", "RightFoot"},
-    {"Torso", "Left Arm"}, {"Torso", "Right Arm"},
-    {"Torso", "Left Leg"}, {"Torso", "Right Leg"},
+    {"Torso", "Left Arm"}, {"Torso", "Right Arm"}, {"Torso", "Left Leg"}, {"Torso", "Right Leg"},
 }
 
 local function saveLicense(hours)
@@ -91,10 +108,7 @@ end
 
 local function stopMusic()
     if currentMusic then
-        pcall(function()
-            currentMusic:Stop()
-            currentMusic:Destroy()
-        end)
+        pcall(function() currentMusic:Stop() currentMusic:Destroy() end)
         currentMusic = nil
     end
 end
@@ -103,18 +117,43 @@ local function playMusic(id, looped)
     stopMusic()
     id = tostring(id or ""):gsub("%s", "")
     if id == "" then return end
-    if not id:find("rbxassetid://") then
-        id = "rbxassetid://" .. id
-    end
+    if not id:find("rbxassetid://") then id = "rbxassetid://" .. id end
     local s = Instance.new("Sound")
     s.Name = "DripMusic"
     s.SoundId = id
     s.Volume = 2
-    s.Looped = looped and true or false
+    s.Looped = looped == true
     s.Parent = SoundService
     currentMusic = s
     pcall(function() s:Play() end)
-    return s
+end
+
+local function getTeamId(plr)
+    if not plr then return nil end
+    if plr.Team then return "TEAM:" .. plr.Team.Name end
+    pcall(function()
+        if plr.TeamColor then return "COLOR:" .. plr.TeamColor.Name end
+    end)
+    for _, name in ipairs({"Team", "Side", "Faction", "Group", "Squad", "Party", "Role", "Alliance"}) do
+        local a = plr:GetAttribute(name)
+        if a ~= nil and tostring(a) ~= "" then return "ATTR:" .. name .. ":" .. tostring(a) end
+    end
+    local c = plr.Character
+    if c then
+        for _, name in ipairs({"Team", "Side", "Faction", "Group", "Squad", "Party", "Role"}) do
+            local a = c:GetAttribute(name)
+            if a ~= nil and tostring(a) ~= "" then return "CATTR:" .. name .. ":" .. tostring(a) end
+            local v = c:FindFirstChild(name) or plr:FindFirstChild(name)
+            if v and (v:IsA("StringValue") or v:IsA("IntValue") or v:IsA("NumberValue")) then
+                return "VAL:" .. name .. ":" .. tostring(v.Value)
+            end
+        end
+        local torso = c:FindFirstChild("UpperTorso") or c:FindFirstChild("Torso")
+        if torso and torso:IsA("BasePart") then
+            return "TORSO:" .. tostring(torso.BrickColor)
+        end
+    end
+    return nil
 end
 
 local function isEnemy(plr)
@@ -123,42 +162,94 @@ local function isEnemy(plr)
     if not c then return false end
     local hum = c:FindFirstChildOfClass("Humanoid")
     if not hum or hum.Health <= 0 then return false end
-    if localPlayer.Team and plr.Team and localPlayer.Team == plr.Team then
-        return false
+
+    if not filterTeams then return true end
+
+    local ok, isFriend = pcall(function()
+        return localPlayer:IsFriendsWith(plr.UserId)
+    end)
+    if ok and isFriend then return false end
+
+    local myTeam = getTeamId(localPlayer)
+    local theirTeam = getTeamId(plr)
+    if myTeam and theirTeam then
+        return myTeam ~= theirTeam
     end
     return true
 end
 
+local function isInFov(head)
+    local cam = workspace.CurrentCamera
+    if not cam or not head then return false end
+    local sp, onScreen = cam:WorldToViewportPoint(head.Position)
+    if not onScreen then return false end
+    local center = Vector2.new(cam.ViewportSize.X / 2, cam.ViewportSize.Y / 2)
+    return (center - Vector2.new(sp.X, sp.Y)).Magnitude <= silentFov
+end
+
 local function getClosestEnemy()
-    local char = localPlayer.Character
-    local myRoot = char and char:FindFirstChild("HumanoidRootPart")
-    if not myRoot then
-        lockedTarget = nil
-        return nil
-    end
+    local myRoot = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not myRoot then lockedTarget = nil return nil end
     if lockedTarget and isEnemy(lockedTarget) then
         local root = lockedTarget.Character and lockedTarget.Character:FindFirstChild("HumanoidRootPart")
-        if root and (myRoot.Position - root.Position).Magnitude < 300 then
-            return lockedTarget
-        end
+        if root and (myRoot.Position - root.Position).Magnitude < 300 then return lockedTarget end
     end
     lockedTarget = nil
-    local best, bestDist = nil, 300
+    local best, bestDist = nil, 400
     for _, plr in ipairs(Players:GetPlayers()) do
         if isEnemy(plr) then
             local root = plr.Character:FindFirstChild("HumanoidRootPart")
             local head = plr.Character:FindFirstChild("Head")
             if root and head then
                 local d = (myRoot.Position - root.Position).Magnitude
-                if d < bestDist then
-                    bestDist = d
-                    best = plr
-                end
+                if d < bestDist then bestDist = d best = plr end
             end
         end
     end
     lockedTarget = best
     return best
+end
+
+local function getFarthestEnemy()
+    local myRoot = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return nil end
+    local best, bestDist = nil, 0
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if isEnemy(plr) then
+            local root = plr.Character:FindFirstChild("HumanoidRootPart")
+            if root then
+                local d = (myRoot.Position - root.Position).Magnitude
+                if d > bestDist and d < 500 then bestDist = d best = root end
+            end
+        end
+    end
+    return best
+end
+
+local function getSilentTargetHead()
+    local myRoot = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return nil end
+    local best, bestDist = nil, 400
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if isEnemy(plr) and plr.Character then
+            local head = plr.Character:FindFirstChild("Head")
+            local root = plr.Character:FindFirstChild("HumanoidRootPart")
+            if head and root and isInFov(head) then
+                local d = (myRoot.Position - root.Position).Magnitude
+                if d < bestDist then bestDist = d best = head end
+            end
+        end
+    end
+    return best
+end
+
+local function onShoot()
+    if not silentAimEnabled then return end
+    local head = getSilentTargetHead()
+    local cam = workspace.CurrentCamera
+    if head and cam then
+        cam.CFrame = CFrame.new(cam.CFrame.Position, head.Position)
+    end
 end
 
 local function createToggle(parent, name, y, getState, setState)
@@ -185,35 +276,86 @@ local function createToggle(parent, name, y, getState, setState)
     end)
 end
 
-local function createColorBox(parent, label, y, getColor, setColor)
+-- Ruedita de color (flechas + preview + paleta)
+local function createColorWheel(parent, label, y, getIndex, setIndex, getColor, setColor)
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(0.45, 0, 0, 28)
+    lbl.Size = UDim2.new(0.9, 0, 0, 20)
     lbl.Position = UDim2.new(0.05, 0, 0, y)
-    lbl.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
-    lbl.BackgroundTransparency = 0.15
+    lbl.BackgroundTransparency = 1
     lbl.Text = label
-    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-    lbl.TextSize = 11
-    lbl.Font = Enum.Font.Gotham
+    lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
+    lbl.TextSize = 12
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.ZIndex = 12
     lbl.Parent = parent
-    Instance.new("UICorner", lbl).CornerRadius = UDim.new(0, 6)
-    local c = getColor()
-    local box = Instance.new("TextBox")
-    box.Size = UDim2.new(0.4, 0, 0, 28)
-    box.Position = UDim2.new(0.52, 0, 0, y)
-    box.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
-    box.Text = string.format("%d,%d,%d", c.R * 255, c.G * 255, c.B * 255)
-    box.TextColor3 = Color3.fromRGB(255, 255, 255)
-    box.TextSize = 11
-    box.Font = Enum.Font.Gotham
-    box.ZIndex = 12
-    box.Parent = parent
-    Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
-    box.FocusLost:Connect(function()
-        local r, g, b = box.Text:match("(%d+)%s*,%s*(%d+)%s*,%s*(%d+)")
-        if r then setColor(Color3.fromRGB(tonumber(r), tonumber(g), tonumber(b))) end
+
+    local prev = Instance.new("TextButton")
+    prev.Size = UDim2.new(0, 34, 0, 34)
+    prev.Position = UDim2.new(0.05, 0, 0, y + 22)
+    prev.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+    prev.Text = "<"
+    prev.TextColor3 = Color3.fromRGB(255, 255, 255)
+    prev.TextSize = 18
+    prev.Font = Enum.Font.GothamBold
+    prev.ZIndex = 12
+    prev.Parent = parent
+    Instance.new("UICorner", prev).CornerRadius = UDim.new(0, 8)
+
+    local preview = Instance.new("Frame")
+    preview.Size = UDim2.new(0, 50, 0, 34)
+    preview.Position = UDim2.new(0.05, 42, 0, y + 22)
+    preview.BackgroundColor3 = getColor()
+    preview.ZIndex = 12
+    preview.Parent = parent
+    Instance.new("UICorner", preview).CornerRadius = UDim.new(0, 8)
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(255, 255, 255)
+    stroke.Thickness = 1
+    stroke.Parent = preview
+
+    local nextBtn = Instance.new("TextButton")
+    nextBtn.Size = UDim2.new(0, 34, 0, 34)
+    nextBtn.Position = UDim2.new(0.05, 100, 0, y + 22)
+    nextBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+    nextBtn.Text = ">"
+    nextBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nextBtn.TextSize = 18
+    nextBtn.Font = Enum.Font.GothamBold
+    nextBtn.ZIndex = 12
+    nextBtn.Parent = parent
+    Instance.new("UICorner", nextBtn).CornerRadius = UDim.new(0, 8)
+
+    local function apply(i)
+        i = ((i - 1) % #COLOR_PALETTE) + 1
+        setIndex(i)
+        setColor(COLOR_PALETTE[i])
+        preview.BackgroundColor3 = COLOR_PALETTE[i]
+    end
+
+    prev.MouseButton1Click:Connect(function()
+        apply(getIndex() - 1)
     end)
+    nextBtn.MouseButton1Click:Connect(function()
+        apply(getIndex() + 1)
+    end)
+
+    -- Paleta de circulitos
+    for i, col in ipairs(COLOR_PALETTE) do
+        local dot = Instance.new("TextButton")
+        dot.Size = UDim2.new(0, 18, 0, 18)
+        local row = math.floor((i - 1) / 6)
+        local coln = (i - 1) % 6
+        dot.Position = UDim2.new(0.05, coln * 22, 0, y + 62 + row * 22)
+        dot.BackgroundColor3 = col
+        dot.Text = ""
+        dot.ZIndex = 12
+        dot.Parent = parent
+        Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
+        dot.MouseButton1Click:Connect(function()
+            apply(i)
+        end)
+    end
 end
 
 local function makeLine(name)
@@ -248,7 +390,7 @@ local function showLoadingScreen(onFinish)
 
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(1, 0, 0, 50)
-    title.Position = UDim2.new(0, 0, 0.28, 0)
+    title.Position = UDim2.new(0, 0, 0.32, 0)
     title.BackgroundTransparency = 1
     title.Text = "Asesinos VS Sheriffs"
     title.TextColor3 = Color3.fromRGB(255, 60, 60)
@@ -258,7 +400,7 @@ local function showLoadingScreen(onFinish)
 
     local sub = Instance.new("TextLabel")
     sub.Size = UDim2.new(1, 0, 0, 22)
-    sub.Position = UDim2.new(0, 0, 0.36, 0)
+    sub.Position = UDim2.new(0, 0, 0.40, 0)
     sub.BackgroundTransparency = 1
     sub.Text = "Created by Drip_Dev"
     sub.TextColor3 = Color3.fromRGB(120, 200, 255)
@@ -266,48 +408,9 @@ local function showLoadingScreen(onFinish)
     sub.Font = Enum.Font.Gotham
     sub.Parent = bg
 
-    -- Música en carga
-    local musicLabel = Instance.new("TextLabel")
-    musicLabel.Size = UDim2.new(0.7, 0, 0, 20)
-    musicLabel.Position = UDim2.new(0.15, 0, 0.42, 0)
-    musicLabel.BackgroundTransparency = 1
-    musicLabel.Text = "Music ID (opcional):"
-    musicLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-    musicLabel.TextSize = 12
-    musicLabel.Font = Enum.Font.Gotham
-    musicLabel.Parent = bg
-
-    local musicBox = Instance.new("TextBox")
-    musicBox.Size = UDim2.new(0.5, 0, 0, 32)
-    musicBox.Position = UDim2.new(0.15, 0, 0.46, 0)
-    musicBox.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
-    musicBox.Text = LOADING_MUSIC_ID
-    musicBox.PlaceholderText = "Sound ID..."
-    musicBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-    musicBox.TextSize = 13
-    musicBox.Font = Enum.Font.Gotham
-    musicBox.Parent = bg
-    Instance.new("UICorner", musicBox).CornerRadius = UDim.new(0, 8)
-
-    local playBtn = Instance.new("TextButton")
-    playBtn.Size = UDim2.new(0.18, 0, 0, 32)
-    playBtn.Position = UDim2.new(0.67, 0, 0.46, 0)
-    playBtn.BackgroundColor3 = Color3.fromRGB(0, 160, 100)
-    playBtn.Text = "PLAY"
-    playBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    playBtn.TextSize = 13
-    playBtn.Font = Enum.Font.GothamBold
-    playBtn.Parent = bg
-    Instance.new("UICorner", playBtn).CornerRadius = UDim.new(0, 8)
-
-    playBtn.MouseButton1Click:Connect(function()
-        playMusic(musicBox.Text, true)
-    end)
-
-    -- Barra
     local barBg = Instance.new("Frame")
     barBg.Size = UDim2.new(0.6, 0, 0, 18)
-    barBg.Position = UDim2.new(0.2, 0, 0.58, 0)
+    barBg.Position = UDim2.new(0.2, 0, 0.55, 0)
     barBg.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
     barBg.BorderSizePixel = 0
     barBg.Parent = bg
@@ -322,7 +425,7 @@ local function showLoadingScreen(onFinish)
 
     local percentLabel = Instance.new("TextLabel")
     percentLabel.Size = UDim2.new(1, 0, 0, 26)
-    percentLabel.Position = UDim2.new(0, 0, 0.63, 0)
+    percentLabel.Position = UDim2.new(0, 0, 0.60, 0)
     percentLabel.BackgroundTransparency = 1
     percentLabel.Text = "0%"
     percentLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -330,37 +433,12 @@ local function showLoadingScreen(onFinish)
     percentLabel.Font = Enum.Font.GothamBold
     percentLabel.Parent = bg
 
-    local statusLabel = Instance.new("TextLabel")
-    statusLabel.Size = UDim2.new(1, 0, 0, 20)
-    statusLabel.Position = UDim2.new(0, 0, 0.69, 0)
-    statusLabel.BackgroundTransparency = 1
-    statusLabel.Text = "Loading..."
-    statusLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
-    statusLabel.TextSize = 14
-    statusLabel.Font = Enum.Font.Gotham
-    statusLabel.Parent = bg
-
-    -- Auto-play música de carga
-    playMusic(musicBox.Text, true)
+    playMusic(LOADING_MUSIC_ID, true)
 
     task.spawn(function()
-        local steps = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100}
-        local messages = {
-            [10] = "Loading modules...",
-            [20] = "Loading UI...",
-            [30] = "Loading visuals...",
-            [40] = "Loading aimbot...",
-            [50] = "Loading combat...",
-            [60] = "Loading player...",
-            [70] = "Loading settings...",
-            [80] = "Almost ready...",
-            [90] = "Finishing...",
-            [100] = "Loaded!",
-        }
-        for _, pct in ipairs(steps) do
+        for _, pct in ipairs({10, 20, 30, 40, 50, 60, 70, 80, 90, 100}) do
             barFill.Size = UDim2.new(pct / 100, 0, 1, 0)
             percentLabel.Text = pct .. "%"
-            statusLabel.Text = messages[pct] or "Loading..."
             task.wait(0.07)
         end
         task.wait(0.2)
@@ -377,8 +455,8 @@ function loadMainMenu()
     mainScreenGui.Parent = game:GetService("CoreGui")
 
     fovCircle = Instance.new("Frame")
-    fovCircle.Size = UDim2.new(0, 180, 0, 180)
-    fovCircle.Position = UDim2.new(0.5, -90, 0.5, -90)
+    fovCircle.Size = UDim2.new(0, silentFov * 2, 0, silentFov * 2)
+    fovCircle.Position = UDim2.new(0.5, -silentFov, 0.5, -silentFov)
     fovCircle.BackgroundTransparency = 1
     fovCircle.Visible = false
     fovCircle.Parent = mainScreenGui
@@ -420,8 +498,8 @@ function loadMainMenu()
     st.Parent = logoBtn
 
     mainFrame = Instance.new("Frame")
-    mainFrame.Size = UDim2.new(0, 410, 0, 380)
-    mainFrame.Position = UDim2.new(0.5, -205, 0.5, -190)
+    mainFrame.Size = UDim2.new(0, 410, 0, 420)
+    mainFrame.Position = UDim2.new(0.5, -205, 0.5, -210)
     mainFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 26)
     mainFrame.Visible = false
     mainFrame.Active = true
@@ -486,7 +564,7 @@ function loadMainMenu()
     content.BackgroundTransparency = 1
     content.BorderSizePixel = 0
     content.ScrollBarThickness = 4
-    content.CanvasSize = UDim2.new(0, 0, 0, 580)
+    content.CanvasSize = UDim2.new(0, 0, 0, 900)
     content.ZIndex = 10
     content.Parent = mainFrame
 
@@ -508,18 +586,20 @@ function loadMainMenu()
         header.Parent = content
 
         if tabName == "Aimbot" then
-            createToggle(content, "Aimbot", 30, function() return aimbotEnabled end, function(v) aimbotEnabled = v if not v then lockedTarget = nil end end)
-            createToggle(content, "Force Look", 68, function() return forceLookEnabled end, function(v) forceLookEnabled = v if not v then lockedTarget = nil end end)
-            createToggle(content, "Show FOV Circle", 106, function() return showFovCircle end, function(v)
+            createToggle(content, "Silent Aim (FOV)", 30, function() return silentAimEnabled end, function(v) silentAimEnabled = v end)
+            createToggle(content, "Aimbot Camera", 68, function() return aimbotCameraEnabled end, function(v) aimbotCameraEnabled = v if not v then lockedTarget = nil end end)
+            createToggle(content, "Force Look", 106, function() return forceLookEnabled end, function(v) forceLookEnabled = v if not v then lockedTarget = nil end end)
+            createToggle(content, "Show FOV Circle", 144, function() return showFovCircle end, function(v)
                 showFovCircle = v
                 if fovCircle then fovCircle.Visible = v and not streamMode end
             end)
-            createToggle(content, "Hitbox", 144, function() return hitboxEnabled end, function(v) hitboxEnabled = v end)
-            createToggle(content, "TP al Enemigo", 182, function() return tpEnemyEnabled end, function(v) tpEnemyEnabled = v end)
+            createToggle(content, "Hitbox", 182, function() return hitboxEnabled end, function(v) hitboxEnabled = v end)
+            createToggle(content, "TP Farthest Enemy", 220, function() return tpEnemyEnabled end, function(v) tpEnemyEnabled = v end)
+            createToggle(content, "Filter Teams 2v2/4v4", 258, function() return filterTeams end, function(v) filterTeams = v lockedTarget = nil end)
 
             local sizeLabel = Instance.new("TextLabel")
             sizeLabel.Size = UDim2.new(0.55, 0, 0, 30)
-            sizeLabel.Position = UDim2.new(0.05, 0, 0, 225)
+            sizeLabel.Position = UDim2.new(0.05, 0, 0, 300)
             sizeLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
             sizeLabel.BackgroundTransparency = 0.15
             sizeLabel.Text = "Hitbox Size"
@@ -532,7 +612,7 @@ function loadMainMenu()
 
             local sizeBox = Instance.new("TextBox")
             sizeBox.Size = UDim2.new(0.3, 0, 0, 30)
-            sizeBox.Position = UDim2.new(0.62, 0, 0, 225)
+            sizeBox.Position = UDim2.new(0.62, 0, 0, 300)
             sizeBox.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
             sizeBox.Text = tostring(hitboxSize)
             sizeBox.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -565,9 +645,25 @@ function loadMainMenu()
                 brightnessEnabled = v
                 Lighting.Brightness = v and 4 or originalBrightness
             end)
-            createColorBox(content, "Color Lineas", 340, function() return lineColor end, function(c) lineColor = c end)
-            createColorBox(content, "Color Box", 378, function() return boxColor end, function(c) boxColor = c end)
-            createColorBox(content, "Color Skeleton", 416, function() return skeletonColor end, function(c) skeletonColor = c end)
+
+            -- Rueditas de color
+            createColorWheel(content, "Color Lineas", 340,
+                function() return lineColorIndex end,
+                function(i) lineColorIndex = i end,
+                function() return lineColor end,
+                function(c) lineColor = c end)
+
+            createColorWheel(content, "Color Box", 460,
+                function() return boxColorIndex end,
+                function(i) boxColorIndex = i end,
+                function() return boxColor end,
+                function(c) boxColor = c end)
+
+            createColorWheel(content, "Color Skeleton", 580,
+                function() return skeletonColorIndex end,
+                function(i) skeletonColorIndex = i end,
+                function() return skeletonColor end,
+                function(c) skeletonColor = c end)
 
         elseif tabName == "Player" then
             createToggle(content, "Speed", 30, function() return speedEnabled end, function(v) speedEnabled = v end)
@@ -610,7 +706,7 @@ function loadMainMenu()
             info.Position = UDim2.new(0.025, 0, 0, 30)
             info.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
             info.BackgroundTransparency = 0.15
-            info.Text = "Stream: 4 dedos  |  Created by Drip_Dev"
+            info.Text = "Stream: 4 dedos | Created by Drip_Dev"
             info.TextColor3 = Color3.fromRGB(200, 200, 200)
             info.TextSize = 12
             info.Font = Enum.Font.Gotham
@@ -618,7 +714,6 @@ function loadMainMenu()
             info.Parent = content
             Instance.new("UICorner", info).CornerRadius = UDim.new(0, 8)
 
-            -- MUSIC
             local mTitle = Instance.new("TextLabel")
             mTitle.Size = UDim2.new(0.9, 0, 0, 24)
             mTitle.Position = UDim2.new(0.05, 0, 0, 90)
@@ -636,7 +731,7 @@ function loadMainMenu()
             mBox.Position = UDim2.new(0.05, 0, 0, 118)
             mBox.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
             mBox.Text = LOADING_MUSIC_ID
-            mBox.PlaceholderText = "Pon el ID del sonido..."
+            mBox.PlaceholderText = "Sound ID..."
             mBox.TextColor3 = Color3.fromRGB(255, 255, 255)
             mBox.TextSize = 13
             mBox.Font = Enum.Font.Gotham
@@ -668,12 +763,8 @@ function loadMainMenu()
             stopB.Parent = content
             Instance.new("UICorner", stopB).CornerRadius = UDim.new(0, 8)
 
-            playB.MouseButton1Click:Connect(function()
-                playMusic(mBox.Text, true)
-            end)
-            stopB.MouseButton1Click:Connect(function()
-                stopMusic()
-            end)
+            playB.MouseButton1Click:Connect(function() playMusic(mBox.Text, true) end)
+            stopB.MouseButton1Click:Connect(function() stopMusic() end)
         end
     end
 
@@ -802,7 +893,6 @@ function showLicense()
     activateBtn.MouseButton1Click:Connect(function()
         if box.Text == LICENSE_KEY or box.Text == FREE_PREMIUM_5H then
             licenseAccepted = true
-            isPremium = true
             saveLicense(box.Text == LICENSE_KEY and -1 or 5)
             screenGui:Destroy()
             loadMainMenu()
@@ -816,6 +906,26 @@ function showLicense()
         box.Text = FREE_PREMIUM_5H
     end)
 end
+
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp or not licenseAccepted then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then onShoot() end
+end)
+
+local function hookTool(tool)
+    if tool:IsA("Tool") then
+        tool.Activated:Connect(function() onShoot() end)
+    end
+end
+if localPlayer.Character then
+    for _, t in ipairs(localPlayer.Character:GetChildren()) do hookTool(t) end
+end
+localPlayer.CharacterAdded:Connect(function(char)
+    char.ChildAdded:Connect(hookTool)
+    task.wait(0.3)
+    for _, t in ipairs(char:GetChildren()) do hookTool(t) end
+end)
+pcall(function() localPlayer.Backpack.ChildAdded:Connect(hookTool) end)
 
 local activeTouches = {}
 local lastStream = 0
@@ -833,16 +943,11 @@ UserInputService.InputBegan:Connect(function(input)
         if mainFrame and streamMode then mainFrame.Visible = false end
         if fovCircle then fovCircle.Visible = showFovCircle and not streamMode end
         if nearbyLabel then nearbyLabel.Visible = nearbyCountEnabled and not streamMode end
-        if streamMode and drawingFolder then
-            drawingFolder:ClearAllChildren()
-            espObjects = {}
-        end
+        if streamMode and drawingFolder then drawingFolder:ClearAllChildren() espObjects = {} end
     end
 end)
 UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch then
-        activeTouches[input] = nil
-    end
+    if input.UserInputType == Enum.UserInputType.Touch then activeTouches[input] = nil end
 end)
 
 UserInputService.JumpRequest:Connect(function()
@@ -871,16 +976,14 @@ RunService.RenderStepped:Connect(function()
         myRoot.CFrame = myRoot.CFrame * CFrame.Angles(0, math.rad(spinSpeed), 0)
     end
 
-    if (aimbotEnabled or forceLookEnabled) and cam then
+    if (aimbotCameraEnabled or forceLookEnabled) and cam then
         local target = getClosestEnemy()
         if target and target.Character then
             local head = target.Character:FindFirstChild("Head")
-            if head then
-                cam.CFrame = CFrame.new(cam.CFrame.Position, head.Position)
-            end
+            if head then cam.CFrame = CFrame.new(cam.CFrame.Position, head.Position) end
         end
     else
-        lockedTarget = nil
+        if not aimbotCameraEnabled and not forceLookEnabled then lockedTarget = nil end
     end
 
     if fovCircle then fovCircle.Visible = showFovCircle and not streamMode end
@@ -906,8 +1009,9 @@ RunService.RenderStepped:Connect(function()
                 local root = plr.Character:FindFirstChild("HumanoidRootPart")
                 if hum and head and root and hum.Health > 0 then
                     if espEnabled then
-                        if not plr.Character:FindFirstChildOfClass("Highlight") then
-                            local hl = Instance.new("Highlight")
+                        local hl = plr.Character:FindFirstChildOfClass("Highlight")
+                        if not hl then
+                            hl = Instance.new("Highlight")
                             hl.FillColor = Color3.fromRGB(255, 0, 0)
                             hl.OutlineColor = Color3.fromRGB(255, 255, 255)
                             hl.FillTransparency = 0.4
@@ -1036,23 +1140,18 @@ RunService.RenderStepped:Connect(function()
     end
 
     if tpEnemyEnabled and tick() - lastTP > 0.12 then
-        local t = getClosestEnemy()
-        if t and t.Character then
-            local root = t.Character:FindFirstChild("HumanoidRootPart")
-            if root then
-                myRoot.CFrame = root.CFrame * CFrame.new(0, 1, 3)
-                lastTP = tick()
-            end
+        local farRoot = getFarthestEnemy()
+        if farRoot then
+            myRoot.CFrame = farRoot.CFrame * CFrame.new(0, 1, 3)
+            lastTP = tick()
         end
     end
 end)
 
--- START
 task.spawn(function()
     showLoadingScreen(function()
         if checkSavedLicense() then
             licenseAccepted = true
-            isPremium = true
             loadMainMenu()
         else
             showLicense()
