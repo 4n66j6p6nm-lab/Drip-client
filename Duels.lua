@@ -14,8 +14,8 @@ local DISCORD_LINK = "https://discord.gg/xWPp9kxTs"
 local TIKTOK_USER = "@kaisen_x2"
 local DISCORD_IMG = "rbxassetid://16584754883"
 local TIKTOK_IMG = "rbxassetid://140658929749855"
+local MENU_BG = "rbxassetid://109301686331001"
 
--- Language
 local LANG = "en"
 local function loadLang()
 	pcall(function()
@@ -42,8 +42,7 @@ local STR = {
 		speed = "Speed", walkspeed = "WalkSpeed", inf_jump = "Infinite Jump", noclip = "Noclip",
 		theme = "Menu Theme", language = "Language", lang_hint = "Re-execute to apply language",
 		link_copied = "Link copied!", hitbox = "Hitbox", hitbox_size = "Hitbox Size",
-		knife_tp = "Knife TP (Under Enemy)",
-		knife_tp_warn = "⚠️ HIGH RISK OF KICK / BAN. Use at your own risk.",
+		mark_ally = "Mark Ally (key T)", clear_allies = "Clear Allies",
 	},
 	es = {
 		home = "Inicio", aimbot = "Aimbot", visuals = "Visuales", misc = "Misc", settings = "Ajustes", shaders = "Shaders",
@@ -56,8 +55,7 @@ local STR = {
 		speed = "Velocidad", walkspeed = "WalkSpeed", inf_jump = "Salto infinito", noclip = "Noclip",
 		theme = "Tema", language = "Idioma", lang_hint = "Vuelve a ejecutar para aplicar",
 		link_copied = "¡Link copiado!", hitbox = "Hitbox", hitbox_size = "Tamaño Hitbox",
-		knife_tp = "Knife TP (Debajo del enemigo)",
-		knife_tp_warn = "⚠️ ALTO RIESGO DE KICK / BAN. Úsalo bajo tu responsabilidad.",
+		mark_ally = "Marcar aliado (tecla T)", clear_allies = "Limpiar aliados",
 	},
 }
 
@@ -66,7 +64,6 @@ local function t(key)
 	return pack[key] or STR.en[key] or key
 end
 
--- AIM
 local silentOn = false
 local showFov = false
 local aimPartName = "Head"
@@ -75,10 +72,8 @@ local maxDist = 450
 local MATCH_DIST = 250
 local filterTeams = true
 local aimOffset = Vector3.new(0, -0.2, 0)
-local knifeTP = false
-local lastKnifeTP = 0
+local allies = {}
 
--- GUN
 local GUN_GUID = "501fb32e-88ee-4941-b677-ab1cd9e0b2eb"
 local lastGunFire = 0
 local gunFireDelay = 0.09
@@ -96,7 +91,6 @@ local function fireGunRemote(pos)
 	end)
 end
 
--- HITBOX
 local hitboxEnabled = false
 local hitboxSize = 6
 local maxHitboxSize = 35
@@ -119,29 +113,129 @@ local function clearHitboxes()
 	table.clear(hitboxParts)
 end
 
+-- Detecta equipo del jugador (TeamRed / TeamBlue / Team / Side)
+local function getPlayerTeam(plr)
+	if not plr then return nil end
+
+	local function normalize(v)
+		if v == nil then return nil end
+		local s = string.lower(tostring(v))
+		if s:find("red") then return "red" end
+		if s:find("blue") then return "blue" end
+		if s ~= "" and s ~= "nil" and s ~= "none" then return s end
+		return nil
+	end
+
+	-- Attributes en Player
+	for _, name in ipairs({"Team", "Side", "TeamName", "TeamId", "TeamColor", "Faction"}) do
+		local n = normalize(plr:GetAttribute(name))
+		if n then return n end
+	end
+
+	-- Values en Player
+	for _, name in ipairs({"Team", "Side", "TeamName", "TeamId", "TeamRed", "TeamBlue"}) do
+		local obj = plr:FindFirstChild(name)
+		if obj and obj:IsA("ValueBase") then
+			local n = normalize(obj.Value)
+			if n then return n end
+			-- BoolValue TeamRed / TeamBlue
+			if obj:IsA("BoolValue") and obj.Value == true then
+				if name:lower():find("red") then return "red" end
+				if name:lower():find("blue") then return "blue" end
+			end
+		end
+	end
+
+	-- Character
+	local char = plr.Character
+	if char then
+		for _, name in ipairs({"Team", "Side", "TeamName", "TeamId", "TeamColor", "Faction"}) do
+			local n = normalize(char:GetAttribute(name))
+			if n then return n end
+		end
+		for _, name in ipairs({"Team", "Side", "TeamName", "TeamId", "TeamRed", "TeamBlue"}) do
+			local obj = char:FindFirstChild(name, true)
+			if obj and obj:IsA("ValueBase") then
+				local n = normalize(obj.Value)
+				if n then return n end
+				if obj:IsA("BoolValue") and obj.Value == true then
+					if name:lower():find("red") then return "red" end
+					if name:lower():find("blue") then return "blue" end
+				end
+			end
+		end
+	end
+
+	-- Roblox Team
+	if plr.Team then
+		local n = normalize(plr.Team.Name)
+		if n then return n end
+	end
+	if plr.TeamColor then
+		local n = normalize(plr.TeamColor.Name)
+		if n then return n end
+	end
+
+	return nil
+end
+
 local function isTeammate(plr)
 	if not plr or plr == localPlayer then return true end
-	if localPlayer.Team ~= nil and plr.Team ~= nil then
-		return localPlayer.Team == plr.Team
+	if allies[plr.UserId] then return true end
+
+	local myTeam = getPlayerTeam(localPlayer)
+	local hisTeam = getPlayerTeam(plr)
+	if myTeam and hisTeam and myTeam == hisTeam then
+		return true
 	end
+
+	-- Fallback clásico
+	if localPlayer.Team ~= nil and plr.Team ~= nil and localPlayer.Team == plr.Team then
+		return true
+	end
+	if localPlayer.Neutral == false and plr.Neutral == false then
+		if localPlayer.TeamColor and plr.TeamColor and localPlayer.TeamColor == plr.TeamColor then
+			return true
+		end
+	end
+
 	return false
 end
 
+local function getClosestPlayerToMouse()
+	local closest, closestDist = nil, 80
+	local center = camera.ViewportSize * 0.5
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr ~= localPlayer and plr.Character then
+			local head = plr.Character:FindFirstChild("Head")
+			local hum = plr.Character:FindFirstChildOfClass("Humanoid")
+			if head and hum and hum.Health > 0 then
+				local sp, on = camera:WorldToViewportPoint(head.Position)
+				if on then
+					local d = (Vector2.new(sp.X, sp.Y) - center).Magnitude
+					if d < closestDist then
+						closestDist = d
+						closest = plr
+					end
+				end
+			end
+		end
+	end
+	return closest
+end
+
 local function createHitboxFor(player)
-	if not hitboxEnabled then return end
-	if player == localPlayer then return end
+	if not hitboxEnabled or player == localPlayer then return end
 	local char = player.Character
 	if not char then return end
 	local root = char:FindFirstChild("HumanoidRootPart")
 	local hum = char:FindFirstChildOfClass("Humanoid")
 	if not root or not hum or hum.Health <= 0 then return end
 	if filterTeams and isTeammate(player) then return end
-
 	if hitboxParts[player] then
 		pcall(function() hitboxParts[player]:Destroy() end)
 		hitboxParts[player] = nil
 	end
-
 	local size = math.clamp(hitboxSize, 2, maxHitboxSize)
 	local part = Instance.new("Part")
 	part.Name = "KX_Hitbox"
@@ -155,7 +249,6 @@ local function createHitboxFor(player)
 	part.Color = getRGBColor()
 	part.Size = Vector3.new(size, size, size)
 	part.Parent = char
-
 	local weld = Instance.new("Weld")
 	weld.Part0 = root
 	weld.Part1 = part
@@ -164,10 +257,7 @@ local function createHitboxFor(player)
 end
 
 local function updateHitboxes()
-	if not hitboxEnabled then
-		clearHitboxes()
-		return
-	end
+	if not hitboxEnabled then clearHitboxes() return end
 	local currentColor = getRGBColor()
 	local size = math.clamp(hitboxSize, 2, maxHitboxSize)
 	for _, player in ipairs(Players:GetPlayers()) do
@@ -198,18 +288,25 @@ local function updateHitboxes()
 	end
 end
 
+local espObjects = {}
+
 local function hookCharacter(player)
 	player.CharacterAdded:Connect(function()
 		task.wait(0.7)
 		if hitboxEnabled then createHitboxFor(player) end
+		local key = tostring(player.UserId)
+		if espObjects[key] then
+			pcall(function()
+				if espObjects[key].billboard then espObjects[key].billboard:Destroy() end
+			end)
+			espObjects[key] = nil
+		end
 	end)
 end
 for _, plr in ipairs(Players:GetPlayers()) do hookCharacter(plr) end
 Players.PlayerAdded:Connect(hookCharacter)
 
--- VISUALS (ESP Marker + Nombre + Distancia)
 local espOn, nameOn, distOn = false, false, false
-local espObjects = {} -- [key] = {billboard, marker, label}
 local speedOn, jumpOn, noclipOn = false, false, false
 local walkSpeed = 28
 local cachedPos, cachedPart = nil, nil
@@ -218,7 +315,6 @@ local originalWalkSpeed = nil
 local originalCollision = {}
 local espColor = Color3.fromRGB(255, 50, 70)
 
--- SHADERS
 local originalLighting = {}
 local colorEffect, bloomEffect, blurEffect = nil, nil, nil
 
@@ -468,42 +564,6 @@ local function updateTarget()
 	end
 end
 
-local function doKnifeTP()
-	if not knifeTP then return end
-	if tick() - lastKnifeTP < 0.35 then return end
-	local myRoot = getRoot()
-	local myHum = getHum()
-	if not myRoot or not myHum or myHum.Health <= 0 then return end
-	local preferred, preferredDist = nil, 9999
-	local fallback, fallbackDist = nil, 9999
-	for _, plr in ipairs(Players:GetPlayers()) do
-		if isEnemy(plr) then
-			local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
-			local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
-			if root and hum and hum.Health > 0 then
-				local dist = (root.Position - myRoot.Position).Magnitude
-				if dist >= 18 and dist <= 45 and dist < preferredDist then
-					preferredDist = dist
-					preferred = root
-				end
-				if dist < fallbackDist and dist > 6 then
-					fallbackDist = dist
-					fallback = root
-				end
-			end
-		end
-	end
-	local target = preferred or fallback
-	if not target then return end
-	local targetCF = target.CFrame * CFrame.new(0, -3.1, 0)
-	for i = 1, 4 do
-		myRoot.CFrame = targetCF
-		myRoot.AssemblyLinearVelocity = Vector3.zero
-		myRoot.AssemblyAngularVelocity = Vector3.zero
-	end
-	lastKnifeTP = tick()
-end
-
 local function setupSilent()
 	if type(getrawmetatable) ~= "function" then return end
 	local ok, mt = pcall(function() return getrawmetatable(mouse) end)
@@ -525,7 +585,6 @@ local function setupSilent()
 	end)
 end
 
--- ESP MARKER (reemplazo seguro de Highlight)
 local function clearVisuals()
 	for _, data in pairs(espObjects) do
 		pcall(function()
@@ -536,25 +595,20 @@ local function clearVisuals()
 end
 
 local function updateVisuals()
-	if not (espOn or nameOn or distOn) then
-		clearVisuals()
-		return
-	end
-
+	if not (espOn or nameOn or distOn) then clearVisuals() return end
 	local myRoot = getRoot()
 	local seen = {}
-
 	for _, plr in ipairs(Players:GetPlayers()) do
 		if isEnemy(plr) and plr.Character then
 			local root = plr.Character:FindFirstChild("HumanoidRootPart")
 			local head = plr.Character:FindFirstChild("Head")
 			local hum = plr.Character:FindFirstChildOfClass("Humanoid")
-			if root and head and hum then
+			if root and head and hum and hum.Health > 0 then
 				local key = tostring(plr.UserId)
 				seen[key] = true
-
 				local data = espObjects[key]
-				if not data or not data.billboard or not data.billboard.Parent then
+				if not data or not data.billboard or not data.billboard.Parent or data.billboard.Adornee ~= head then
+					if data and data.billboard then pcall(function() data.billboard:Destroy() end) end
 					local bb = Instance.new("BillboardGui")
 					bb.Name = "KX_ESP"
 					bb.AlwaysOnTop = true
@@ -562,7 +616,6 @@ local function updateVisuals()
 					bb.StudsOffset = Vector3.new(0, 3.2, 0)
 					bb.Adornee = head
 					bb.Parent = head
-
 					local marker = Instance.new("Frame")
 					marker.Name = "Marker"
 					marker.Size = UDim2.fromOffset(12, 12)
@@ -575,7 +628,6 @@ local function updateVisuals()
 					stroke.Thickness = 1.5
 					stroke.Color = Color3.fromRGB(255, 255, 255)
 					stroke.Parent = marker
-
 					local label = Instance.new("TextLabel")
 					label.Name = "Info"
 					label.BackgroundTransparency = 1
@@ -586,19 +638,14 @@ local function updateVisuals()
 					label.TextColor3 = Color3.fromRGB(255, 255, 255)
 					label.TextStrokeTransparency = 0.2
 					label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-					label.Text = ""
 					label.Parent = bb
-
 					data = { billboard = bb, marker = marker, label = label }
 					espObjects[key] = data
 				end
-
-				-- actualizar color y texto
 				if data.marker then
 					data.marker.BackgroundColor3 = espColor
 					data.marker.Visible = espOn
 				end
-
 				if data.label then
 					local dist = myRoot and math.floor((root.Position - myRoot.Position).Magnitude) or 0
 					local txt = ""
@@ -610,7 +657,6 @@ local function updateVisuals()
 			end
 		end
 	end
-
 	for key, data in pairs(espObjects) do
 		if not seen[key] then
 			pcall(function() if data.billboard then data.billboard:Destroy() end end)
@@ -644,6 +690,23 @@ local function updateFovCircle()
 	fovCircle.Visible = true
 end
 
+UserInputService.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+	if input.KeyCode == Enum.KeyCode.T then
+		local plr = getClosestPlayerToMouse()
+		if plr then
+			if allies[plr.UserId] then
+				allies[plr.UserId] = nil
+				print("[KAISENX] Aliado quitado:", plr.Name)
+			else
+				allies[plr.UserId] = true
+				print("[KAISENX] Aliado marcado:", plr.Name)
+			end
+			cachedPos, cachedPart = nil, nil
+		end
+	end
+end)
+
 UserInputService.JumpRequest:Connect(function()
 	if jumpOn then
 		local h = getHum()
@@ -669,6 +732,32 @@ local function loadWindUI()
 	return nil
 end
 
+local function applyMenuBackground()
+	task.spawn(function()
+		for i = 1, 30 do
+			local parent = CoreGui
+			pcall(function() if gethui then parent = gethui() end end)
+			for _, gui in ipairs(parent:GetDescendants()) do
+				if gui:IsA("Frame") and (gui.Name:lower():find("window") or (gui.Size.X.Offset >= 400 and gui.Size.Y.Offset >= 400)) then
+					if not gui:FindFirstChild("KX_MenuBG") then
+						local img = Instance.new("ImageLabel")
+						img.Name = "KX_MenuBG"
+						img.BackgroundTransparency = 1
+						img.Image = MENU_BG
+						img.ScaleType = Enum.ScaleType.Crop
+						img.Size = UDim2.fromScale(1, 1)
+						img.Position = UDim2.fromScale(0, 0)
+						img.ZIndex = 0
+						img.Parent = gui
+						return
+					end
+				end
+			end
+			task.wait(0.15)
+		end
+	end)
+end
+
 local function startHub()
 	local WindUI = loadWindUI()
 	if not WindUI then return end
@@ -678,12 +767,14 @@ local function startHub()
 		Title = "KAISENX DUELS",
 		Author = "created by KAISEN",
 		Folder = "KaisenXDuels",
-		Size = UDim2.fromOffset(520, 580),
+		Size = UDim2.fromOffset(520, 560),
 		Transparent = true,
 		Theme = "Crimson",
 		Resizable = true,
 		SideBarWidth = 140,
 	})
+
+	applyMenuBackground()
 
 	local function notify(title, content)
 		pcall(function() WindUI:Notify({Title = title, Content = content, Duration = 3}) end)
@@ -712,16 +803,25 @@ local function startHub()
 	Aim:Toggle({ Title = t("filter_team"), Default = true, Callback = function(v) filterTeams = v end })
 	Aim:Slider({ Title = t("fov"), Value = {Min=80, Max=200, Default=160}, Callback = function(v) silentFov = v end })
 	Aim:Slider({ Title = t("match_dist"), Value = {Min=80, Max=500, Default=250}, Callback = function(v) MATCH_DIST = v end })
-
-	Aim:Paragraph({ Title = t("knife_tp"), Desc = t("knife_tp_warn") })
-	Aim:Toggle({
-		Title = t("knife_tp") .. " (20-40m)",
-		Default = false,
-		Callback = function(v)
-			knifeTP = v
-			if v then notify("⚠️ WARNING", t("knife_tp_warn")) end
+	Aim:Button({ Title = t("mark_ally") .. " [T]", Callback = function()
+		local plr = getClosestPlayerToMouse()
+		if plr then
+			if allies[plr.UserId] then
+				allies[plr.UserId] = nil
+				notify("Ally", "Quitado: " .. plr.Name)
+			else
+				allies[plr.UserId] = true
+				notify("Ally", "Marcado: " .. plr.Name)
+			end
+			cachedPos, cachedPart = nil, nil
+		else
+			notify("Ally", "No hay jugador cerca del centro")
 		end
-	})
+	end })
+	Aim:Button({ Title = t("clear_allies"), Callback = function()
+		table.clear(allies)
+		notify("Ally", "Lista de aliados limpia")
+	end })
 
 	local Hitbox = Window:Tab({ Title = t("hitbox"), Icon = "box" })
 	Hitbox:Toggle({
@@ -800,7 +900,6 @@ local function startHub()
 				lastGunFire = tick()
 			end
 		end
-		if knifeTP then doKnifeTP() end
 	end)
 
 	RunService.Heartbeat:Connect(function()
