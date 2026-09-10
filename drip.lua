@@ -2,10 +2,10 @@ print("KAISENX | Speed Draw! | loading...")
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local Lighting = game:GetService("Lighting")
 local VirtualInputManager = game:GetService("VirtualInputManager")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local localPlayer = Players.LocalPlayer
 
 local DISCORD_LINK = "https://discord.gg/xWPp9kxTs"
@@ -20,13 +20,14 @@ local walkSpeed = 28
 local antiAfk = true
 local fullbright = false
 local showFps = false
-local drawSpeed = 0.010
+local drawSpeed = 0.008
 local drawBusy = false
 
 local themeLabel, fpsLabel = nil, nil
 local originalWalkSpeed = nil
 local originalLighting = {}
 local lastVote = 0
+local recordedBuffers = {}
 
 local function getHum()
 	local c = localPlayer.Character
@@ -92,9 +93,7 @@ local function findThemeText()
 		for _, c in ipairs(obj:GetChildren()) do scan(c) end
 	end
 	pcall(function()
-		if localPlayer:FindFirstChild("PlayerGui") then
-			scan(localPlayer.PlayerGui)
-		end
+		if localPlayer:FindFirstChild("PlayerGui") then scan(localPlayer.PlayerGui) end
 	end)
 	return found
 end
@@ -181,12 +180,9 @@ local function updateFpsHud()
 	fpsLabel.Visible = true
 end
 
--- Canvas exacto de Dex: Drawing.Canvas
 local function findCanvas()
 	local pg = localPlayer:FindFirstChild("PlayerGui")
 	if not pg then return nil end
-
-	-- 1) ruta directa
 	for _, gui in ipairs(pg:GetChildren()) do
 		local drawing = gui:FindFirstChild("Drawing")
 		if drawing then
@@ -196,59 +192,54 @@ local function findCanvas()
 			end
 		end
 	end
-
-	-- 2) cualquier descendant llamado Canvas bajo Drawing
 	for _, obj in ipairs(pg:GetDescendants()) do
 		if obj.Name == "Canvas" and obj:IsA("GuiObject") then
 			local p = obj.Parent
-			if p and p.Name == "Drawing" then
-				return obj
-			end
+			if p and p.Name == "Drawing" then return obj end
 		end
 	end
-
-	-- 3) fallback por nombre
 	for _, obj in ipairs(pg:GetDescendants()) do
 		if obj.Name == "Canvas" and obj:IsA("GuiObject") then
 			local s = obj.AbsoluteSize
-			if s.X > 150 and s.Y > 100 then
-				return obj
-			end
+			if s.X > 150 and s.Y > 100 then return obj end
 		end
 	end
 	return nil
 end
 
+-- Mouse CORRECTO (con coordenadas)
 local function mouseMove(x, y)
 	pcall(function()
 		VirtualInputManager:SendMouseMoveEvent(x, y, game)
 	end)
 end
 
-local function mouseDown()
+local function mouseDown(x, y)
 	pcall(function()
-		VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+		VirtualInputManager:SendMouseButtonEvent(x, y, 0, true, game, 0)
 	end)
 end
 
-local function mouseUp()
+local function mouseUp(x, y)
 	pcall(function()
-		VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+		VirtualInputManager:SendMouseButtonEvent(x, y, 0, false, game, 0)
 	end)
 end
 
 local function stroke(x1, y1, x2, y2, steps)
-	steps = steps or 8
+	steps = math.max(3, steps or 10)
 	mouseMove(x1, y1)
-	task.wait(0.008)
-	mouseDown()
+	task.wait(0.01)
+	mouseDown(x1, y1)
 	for i = 1, steps do
 		local t = i / steps
-		mouseMove(x1 + (x2 - x1) * t, y1 + (y2 - y1) * t)
+		local x = x1 + (x2 - x1) * t
+		local y = y1 + (y2 - y1) * t
+		mouseMove(x, y)
 		task.wait(drawSpeed)
 	end
-	mouseUp()
-	task.wait(0.008)
+	mouseUp(x2, y2)
+	task.wait(0.01)
 end
 
 local function doAutoDraw()
@@ -257,76 +248,141 @@ local function doAutoDraw()
 	task.spawn(function()
 		local canvas = findCanvas()
 		if not canvas then
-			warn("[KAISENX] Canvas not found (Drawing.Canvas)")
+			warn("[KAISENX] Canvas not found")
 			drawBusy = false
 			return
 		end
-
-		-- forzar visibilidad/update de AbsolutePosition
-		task.wait(0.05)
+		task.wait(0.08)
 		local pos = canvas.AbsolutePosition
 		local size = canvas.AbsoluteSize
-		if size.X < 50 or size.Y < 50 then
-			warn("[KAISENX] Canvas size invalid")
+		if size.X < 40 or size.Y < 40 then
+			warn("[KAISENX] Canvas too small")
 			drawBusy = false
 			return
 		end
 
-		local pad = 16
+		local pad = 20
 		local x0, y0 = pos.X + pad, pos.Y + pad
 		local x1, y1 = pos.X + size.X - pad, pos.Y + size.Y - pad
 		local w, h = x1 - x0, y1 - y0
-
-		print("[KAISENX] Drawing on canvas", math.floor(w), "x", math.floor(h))
+		print("[KAISENX] Draw", math.floor(w), "x", math.floor(h), "at", math.floor(x0), math.floor(y0))
 
 		-- borde
-		stroke(x0, y0, x1, y0, 14)
-		stroke(x1, y0, x1, y1, 14)
-		stroke(x1, y1, x0, y1, 14)
-		stroke(x0, y1, x0, y0, 14)
+		stroke(x0, y0, x1, y0, 16)
+		stroke(x1, y0, x1, y1, 16)
+		stroke(x1, y1, x0, y1, 16)
+		stroke(x0, y1, x0, y0, 16)
 
 		-- rejilla
 		for i = 1, 5 do
 			local x = x0 + w * (i / 6)
-			stroke(x, y0 + 6, x, y1 - 6, 10)
+			stroke(x, y0 + 4, x, y1 - 4, 12)
 		end
 		for j = 1, 4 do
 			local y = y0 + h * (j / 5)
-			stroke(x0 + 6, y, x1 - 6, y, 10)
+			stroke(x0 + 4, y, x1 - 4, y, 12)
 		end
 
 		-- diagonales
-		stroke(x0 + 8, y0 + 8, x1 - 8, y1 - 8, 16)
-		stroke(x1 - 8, y0 + 8, x0 + 8, y1 - 8, 16)
+		stroke(x0 + 6, y0 + 6, x1 - 6, y1 - 6, 18)
+		stroke(x1 - 6, y0 + 6, x0 + 6, y1 - 6, 18)
 
-		-- circulos (octagono)
+		-- circulos
 		local function circle(cx, cy, r)
 			local pts = {}
-			for a = 0, 10 do
-				local ang = (a / 10) * math.pi * 2
+			for a = 0, 12 do
+				local ang = (a / 12) * math.pi * 2
 				table.insert(pts, { cx + math.cos(ang) * r, cy + math.sin(ang) * r })
 			end
 			for i = 1, #pts - 1 do
-				stroke(pts[i][1], pts[i][2], pts[i + 1][1], pts[i + 1][2], 3)
+				stroke(pts[i][1], pts[i][2], pts[i + 1][1], pts[i + 1][2], 4)
 			end
 		end
-		circle(x0 + w * 0.5, y0 + h * 0.5, math.min(w, h) * 0.20)
-		circle(x0 + w * 0.30, y0 + h * 0.32, math.min(w, h) * 0.09)
-		circle(x0 + w * 0.70, y0 + h * 0.32, math.min(w, h) * 0.09)
+		circle(x0 + w * 0.5, y0 + h * 0.5, math.min(w, h) * 0.18)
+		circle(x0 + w * 0.3, y0 + h * 0.35, math.min(w, h) * 0.08)
+		circle(x0 + w * 0.7, y0 + h * 0.35, math.min(w, h) * 0.08)
 
-		-- garabatos
-		for i = 1, 10 do
-			local ax = x0 + w * math.random()
-			local ay = y0 + h * math.random()
-			local bx = x0 + w * math.random()
-			local by = y0 + h * math.random()
-			stroke(ax, ay, bx, by, 5)
+		for i = 1, 12 do
+			stroke(
+				x0 + w * math.random(),
+				y0 + h * math.random(),
+				x0 + w * math.random(),
+				y0 + h * math.random(),
+				6
+			)
 		end
 
 		drawBusy = false
 		print("[KAISENX] Auto Draw done")
 	end)
 end
+
+-- Remote DrawingToolReplication
+local function getDrawRemote()
+	local remotes = ReplicatedStorage:FindFirstChild("Remotes")
+	if not remotes then return nil end
+	return remotes:FindFirstChild("DrawingToolReplication")
+end
+
+local function fireDrawBuffer(buf)
+	local rem = getDrawRemote()
+	if not rem or not buf then return false end
+	local ok = pcall(function()
+		rem:FireServer(buf)
+	end)
+	return ok
+end
+
+-- Hook: graba buffers cuando dibujas UNA vez a mano
+local hookOn = false
+local function startRecordHook()
+	if hookOn then return end
+	local rem = getDrawRemote()
+	if not rem then
+		warn("[KAISENX] Remote not found")
+		return
+	end
+	hookOn = true
+	local old = rem.FireServer
+	rem.FireServer = newcclosure(function(self, ...)
+		local args = {...}
+		for _, v in ipairs(args) do
+			if typeof(v) == "buffer" then
+				table.insert(recordedBuffers, v)
+				print("[KAISENX] Recorded stroke #", #recordedBuffers, "len", buffer.len(v))
+			end
+		end
+		return old(self, ...)
+	end)
+	print("[KAISENX] Record ON - draw 1-2 lines with pencil")
+end
+
+local function replayRecorded()
+	if #recordedBuffers == 0 then
+		warn("[KAISENX] No recorded strokes - use Record first")
+		return
+	end
+	task.spawn(function()
+		for i, buf in ipairs(recordedBuffers) do
+			fireDrawBuffer(buf)
+			task.wait(0.05)
+		end
+		-- repetir varias veces para llenar
+		for r = 1, 8 do
+			for _, buf in ipairs(recordedBuffers) do
+				fireDrawBuffer(buf)
+				task.wait(0.03)
+			end
+		end
+		print("[KAISENX] Replay done")
+	end)
+end
+
+-- buffer que capturaste antes (prueba)
+local sampleBuf = nil
+pcall(function()
+	sampleBuf = buffer.fromstring("S<\227o%\136\147#\253\227\164\133\194M\244\174z\234P2\181\151\238\149\222\240")
+end)
 
 task.spawn(function()
 	while true do
@@ -395,7 +451,7 @@ local function startHub()
 		Title = "KAISENX | Speed Draw!",
 		Author = "created by KAISEN",
 		Folder = "KaisenXSpeedDraw",
-		Size = UDim2.fromOffset(500, 540),
+		Size = UDim2.fromOffset(500, 560),
 		Transparent = true,
 		Theme = "Crimson",
 		Resizable = true,
@@ -407,7 +463,7 @@ local function startHub()
 	local Home = Window:Tab({ Title = "Home", Icon = "star" })
 	Home:Paragraph({
 		Title = "KAISENX Speed Draw",
-		Desc = "Canvas: Drawing.Canvas\nAuto Draw · Reveal Theme · Auto Vote"
+		Desc = "Auto Draw (mouse fixed) · Record/Replay remote · Theme · Vote"
 	})
 	Home:Button({
 		Title = "Copy Discord",
@@ -424,9 +480,24 @@ local function startHub()
 
 	local Draw = Window:Tab({ Title = "Draw", Icon = "pencil" })
 	Draw:Button({
-		Title = "AUTO DRAW (once)",
+		Title = "1) AUTO DRAW Mouse",
+		Callback = function() doAutoDraw() end
+	})
+	Draw:Button({
+		Title = "2) RECORD strokes (draw 1 line)",
+		Callback = function() startRecordHook() end
+	})
+	Draw:Button({
+		Title = "3) REPLAY recorded (spam)",
+		Callback = function() replayRecorded() end
+	})
+	Draw:Button({
+		Title = "Test sample buffer",
 		Callback = function()
-			doAutoDraw()
+			if sampleBuf then
+				fireDrawBuffer(sampleBuf)
+				print("[KAISENX] sample buffer fired")
+			end
 		end
 	})
 	Draw:Button({
@@ -434,7 +505,7 @@ local function startHub()
 		Callback = function()
 			local c = findCanvas()
 			if c then
-				print("[KAISENX] Found:", c:GetFullName(), c.AbsoluteSize)
+				print("[KAISENX] Found:", c:GetFullName(), c.AbsoluteSize, c.AbsolutePosition)
 			else
 				print("[KAISENX] Canvas NOT found")
 			end
@@ -442,7 +513,7 @@ local function startHub()
 	})
 	Draw:Slider({
 		Title = "Draw Speed (lower = faster)",
-		Value = { Min = 0.003, Max = 0.035, Default = 0.010 },
+		Value = { Min = 0.002, Max = 0.03, Default = 0.008 },
 		Step = 0.001,
 		Callback = function(v) drawSpeed = v end
 	})
@@ -465,8 +536,8 @@ local function startHub()
 		Callback = function(v) voteStars = v end
 	})
 	Draw:Paragraph({
-		Title = "Tip",
-		Desc = "1) Equip any pencil\n2) Wait until canvas is visible\n3) Press AUTO DRAW"
+		Title = "How to use",
+		Desc = "Try button 1 first.\nIf nothing: press 2, draw ONE line yourself, then press 3."
 	})
 
 	local Misc = Window:Tab({ Title = "Misc", Icon = "settings" })
