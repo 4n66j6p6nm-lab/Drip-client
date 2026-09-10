@@ -1,373 +1,540 @@
-print("✅ Drip Client - Rivals Full")
+print("KAISENX | Speed Draw! | loading...")
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local SoundService = game:GetService("SoundService")
-local StarterGui = game:GetService("StarterGui")
 local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+local Lighting = game:GetService("Lighting")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 local localPlayer = Players.LocalPlayer
-local camera = workspace.CurrentCamera
 
-local aimbotEnabled = false
-local speedEnabled = false
-local espEnabled = false
-local flyEnabled = false
-local infiniteJumpEnabled = false
-local licenseAccepted = false
-local isPremium = false
+local DISCORD_LINK = "https://discord.gg/xWPp9kxTs"
+local TIKTOK_USER = "@kaisen_x2"
+local MENU_BG = "rbxassetid://133435869312714"
 
-local LICENSE_KEY = "LIC-D16335"
-local FREE_LICENSE = "FREE-12H"
-local FREE_PREMIUM_5H = "PREMIUM-5H"
+local revealTheme = false
+local autoVote = false
+local voteStars = 5
+local speedOn = false
+local walkSpeed = 28
+local antiAfk = true
+local fullbright = false
+local showFps = false
+local drawSpeed = 0.010
+local drawBusy = false
 
-local guiName = "DripClient"
-if game:GetService("CoreGui"):FindFirstChild(guiName) then
-    game:GetService("CoreGui")[guiName]:Destroy()
+local themeLabel, fpsLabel = nil, nil
+local originalWalkSpeed = nil
+local originalLighting = {}
+local lastVote = 0
+
+local function getHum()
+	local c = localPlayer.Character
+	return c and c:FindFirstChildOfClass("Humanoid")
 end
 
-local songs = {
-    "rbxassetid://116888428582801",
-    "rbxassetid://76463442516219",
-    "rbxassetid://102605327652034",
-    "rbxassetid://78074422495421"
-}
-local currentSong = 1
-
-local function playNextSong()
-    local sound = SoundService:FindFirstChild("DripMusic")
-    if sound then
-        sound:Stop()
-        sound:Destroy()
-    end
-
-    sound = Instance.new("Sound")
-    sound.Name = "DripMusic"
-    sound.SoundId = songs[currentSong]
-    sound.Volume = 1
-    sound.Looped = false
-    sound.Parent = SoundService
-    sound:Play()
-
-    sound.Ended:Connect(function()
-        currentSong = currentSong + 1
-        if currentSong > #songs then currentSong = 1 end
-        playNextSong()
-    end)
+local function setSpeed(on, spd)
+	local h = getHum()
+	if not h then return end
+	if on then
+		originalWalkSpeed = originalWalkSpeed or h.WalkSpeed
+		h.WalkSpeed = spd
+	elseif originalWalkSpeed then
+		h.WalkSpeed = originalWalkSpeed
+		originalWalkSpeed = nil
+	end
 end
 
--- ==================== LOADING SCREEN ====================
-local function showLoading()
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "DripLoading"
-    screenGui.IgnoreGuiInset = true
-    screenGui.DisplayOrder = 999
-    screenGui.Parent = game:GetService("CoreGui")
-
-    local bg = Instance.new("ImageLabel")
-    bg.Size = UDim2.new(1, 0, 1, 0)
-    bg.BackgroundColor3 = Color3.fromRGB(10, 10, 20)
-    bg.Image = "rbxassetid://8064764164"
-    bg.ScaleType = Enum.ScaleType.Crop
-    bg.Parent = screenGui
-
-    local dark = Instance.new("Frame")
-    dark.Size = UDim2.new(1, 0, 1, 0)
-    dark.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    dark.BackgroundTransparency = 0.4
-    dark.Parent = bg
-
-    local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1, 0, 0, 70)
-    title.Position = UDim2.new(0, 0, 0.38, 0)
-    title.BackgroundTransparency = 1
-    title.Text = "Drip Client"
-    title.TextColor3 = Color3.fromRGB(0, 220, 255)
-    title.TextSize = 48
-    title.Font = Enum.Font.SourceSansBold
-    title.Parent = bg
-
-    local status = Instance.new("TextLabel")
-    status.Size = UDim2.new(1, 0, 0, 30)
-    status.Position = UDim2.new(0, 0, 0.52, 0)
-    status.BackgroundTransparency = 1
-    status.Text = "Loading..."
-    status.TextColor3 = Color3.fromRGB(220, 220, 220)
-    status.TextSize = 22
-    status.Parent = bg
-
-    playNextSong()
-    task.wait(2.8)
-    status.Text = "Loaded!"
-    task.wait(0.9)
-    screenGui:Destroy()
-    showLicense()
+local function saveLighting()
+	if next(originalLighting) then return end
+	originalLighting = {
+		Brightness = Lighting.Brightness,
+		ClockTime = Lighting.ClockTime,
+		FogEnd = Lighting.FogEnd,
+		Ambient = Lighting.Ambient,
+		OutdoorAmbient = Lighting.OutdoorAmbient,
+	}
 end
 
--- ==================== LICENSE ====================
-function showLicense()
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "LicenseCheck"
-    screenGui.Parent = game:GetService("CoreGui")
-
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 340, 0, 340)
-    frame.Position = UDim2.new(0.5, -170, 0.22, 0)
-    frame.BackgroundColor3 = Color3.fromRGB(20, 20, 35)
-    frame.Parent = screenGui
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 14)
-
-    local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1, 0, 0, 45)
-    title.BackgroundTransparency = 1
-    title.Text = "Drip Client - Licencia"
-    title.TextColor3 = Color3.fromRGB(0, 220, 255)
-    title.TextSize = 20
-    title.Font = Enum.Font.SourceSansBold
-    title.Parent = frame
-
-    local box = Instance.new("TextBox")
-    box.Size = UDim2.new(0.85, 0, 0, 42)
-    box.Position = UDim2.new(0.075, 0, 0.18, 0)
-    box.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-    box.Text = ""
-    box.PlaceholderText = "Ingresa tu licencia..."
-    box.TextColor3 = Color3.fromRGB(255, 255, 255)
-    box.TextSize = 16
-    box.Parent = frame
-    Instance.new("UICorner", box).CornerRadius = UDim.new(0, 8)
-
-    local activateBtn = Instance.new("TextButton")
-    activateBtn.Size = UDim2.new(0.85, 0, 0, 42)
-    activateBtn.Position = UDim2.new(0.075, 0, 0.35, 0)
-    activateBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 220)
-    activateBtn.Text = "Activar Licencia"
-    activateBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    activateBtn.TextSize = 16
-    activateBtn.Font = Enum.Font.SourceSansBold
-    activateBtn.Parent = frame
-    Instance.new("UICorner", activateBtn).CornerRadius = UDim.new(0, 8)
-
-    local freeBtn = Instance.new("TextButton")
-    freeBtn.Size = UDim2.new(0.85, 0, 0, 42)
-    freeBtn.Position = UDim2.new(0.075, 0, 0.52, 0)
-    freeBtn.BackgroundColor3 = Color3.fromRGB(40, 120, 180)
-    freeBtn.Text = "Licencia Gratis (12h)"
-    freeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    freeBtn.TextSize = 15
-    freeBtn.Font = Enum.Font.SourceSansBold
-    freeBtn.Parent = frame
-    Instance.new("UICorner", freeBtn).CornerRadius = UDim.new(0, 8)
-
-    local premium5hBtn = Instance.new("TextButton")
-    premium5hBtn.Size = UDim2.new(0.85, 0, 0, 42)
-    premium5hBtn.Position = UDim2.new(0.075, 0, 0.69, 0)
-    premium5hBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 100)
-    premium5hBtn.Text = "Premium Gratis (5h) - Discord"
-    premium5hBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    premium5hBtn.TextSize = 14
-    premium5hBtn.Font = Enum.Font.SourceSansBold
-    premium5hBtn.Parent = frame
-    Instance.new("UICorner", premium5hBtn).CornerRadius = UDim.new(0, 8)
-
-    activateBtn.MouseButton1Click:Connect(function()
-        if box.Text == LICENSE_KEY or box.Text == FREE_PREMIUM_5H then
-            licenseAccepted = true
-            isPremium = true
-            screenGui:Destroy()
-            loadMainMenu()
-        elseif box.Text == FREE_LICENSE then
-            licenseAccepted = true
-            isPremium = false
-            screenGui:Destroy()
-            loadMainMenu()
-        else
-            box.Text = ""
-            box.PlaceholderText = "Licencia incorrecta"
-        end
-    end)
-
-    freeBtn.MouseButton1Click:Connect(function()
-        box.Text = FREE_LICENSE
-    end)
-
-    premium5hBtn.MouseButton1Click:Connect(function()
-        setclipboard("https://discord.gg/wHc9aBmvh")
-        box.Text = FREE_PREMIUM_5H
-        pcall(function()
-            StarterGui:SetCore("SendNotification", {
-                Title = "Drip Client",
-                Text = "Discord copiado! Usa PREMIUM-5H",
-                Duration = 5
-            })
-        end)
-    end)
+local function applyFullbright(on)
+	saveLighting()
+	if on then
+		Lighting.Brightness = 2
+		Lighting.ClockTime = 14
+		Lighting.FogEnd = 100000
+		Lighting.Ambient = Color3.fromRGB(200, 200, 200)
+		Lighting.OutdoorAmbient = Color3.fromRGB(200, 200, 200)
+	else
+		for k, v in pairs(originalLighting) do
+			pcall(function() Lighting[k] = v end)
+		end
+	end
 end
 
--- ==================== MAIN MENU ====================
-function loadMainMenu()
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = guiName
-    screenGui.ResetOnSpawn = false
-    screenGui.Parent = game:GetService("CoreGui")
-
-    -- ICONO CIRCULAR CON IMAGEN
-    local logoBtn = Instance.new("ImageButton")
-    logoBtn.Size = UDim2.new(0, 75, 0, 75)
-    logoBtn.Position = UDim2.new(0.05, 0, 0.2, 0)
-    logoBtn.BackgroundTransparency = 1
-    logoBtn.Image = "rbxassetid://8064764164"
-    logoBtn.ScaleType = Enum.ScaleType.Crop
-    logoBtn.Draggable = true
-    logoBtn.Parent = screenGui
-
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(1, 0)
-    corner.Parent = logoBtn
-
-    local logoText = Instance.new("TextLabel")
-    logoText.Size = UDim2.new(1, 0, 1, 0)
-    logoText.BackgroundTransparency = 1
-    logoText.Text = "DC"
-    logoText.TextColor3 = Color3.fromRGB(255, 255, 255)
-    logoText.TextSize = 22
-    logoText.Font = Enum.Font.SourceSansBold
-    logoText.Parent = logoBtn
-
-    local menu = Instance.new("Frame")
-    menu.Size = UDim2.new(0, 300, 0, isPremium and 420 or 300)
-    menu.Position = UDim2.new(0.5, -150, 0.18, 0)
-    menu.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
-    menu.Visible = false
-    menu.Active = true
-    menu.Draggable = true
-    menu.Parent = screenGui
-    Instance.new("UICorner", menu).CornerRadius = UDim.new(0, 14)
-
-    -- Fondo del menú
-    local bgImage = Instance.new("ImageLabel")
-    bgImage.Size = UDim2.new(1, 0, 1, 0)
-    bgImage.BackgroundTransparency = 1
-    bgImage.Image = "rbxassetid://8064764164"
-    bgImage.ImageTransparency = 0.55
-    bgImage.ScaleType = Enum.ScaleType.Crop
-    bgImage.Parent = menu
-    Instance.new("UICorner", bgImage).CornerRadius = UDim.new(0, 14)
-
-    local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1, 0, 0, 45)
-    title.BackgroundTransparency = 1
-    title.Text = "Drip Client"
-    title.TextColor3 = Color3.fromRGB(0, 220, 255)
-    title.TextSize = 24
-    title.Font = Enum.Font.SourceSansBold
-    title.Parent = menu
-
-    local function createToggle(name, y, default, callback)
-        local toggle = Instance.new("TextButton")
-        toggle.Size = UDim2.new(0.9, 0, 0, 48)
-        toggle.Position = UDim2.new(0.05, 0, 0, y)
-        toggle.BackgroundColor3 = default and Color3.fromRGB(40, 180, 40) or Color3.fromRGB(220, 50, 90)
-        toggle.BackgroundTransparency = 0.1
-        toggle.Text = name .. ": " .. (default and "ON" or "OFF")
-        toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-        toggle.TextSize = 16
-        toggle.Font = Enum.Font.SourceSansBold
-        toggle.Parent = menu
-        Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 10)
-
-        toggle.MouseButton1Click:Connect(function()
-            default = not default
-            toggle.BackgroundColor3 = default and Color3.fromRGB(40, 180, 40) or Color3.fromRGB(220, 50, 90)
-            toggle.Text = name .. ": " .. (default and "ON" or "OFF")
-            callback(default)
-        end)
-    end
-
-    createToggle("Aimbot", 55, aimbotEnabled, function(s) aimbotEnabled = s end)
-    createToggle("Speed", 110, speedEnabled, function(s) speedEnabled = s end)
-    createToggle("ESP", 165, espEnabled, function(s) espEnabled = s end)
-
-    if isPremium then
-        createToggle("Fly (Joystick)", 220, flyEnabled, function(s) flyEnabled = s end)
-        createToggle("Infinite Jump", 275, infiniteJumpEnabled, function(s) infiniteJumpEnabled = s end)
-    end
-
-    logoBtn.MouseButton1Click:Connect(function()
-        menu.Visible = not menu.Visible
-    end)
+local function findThemeText()
+	local found = nil
+	local function scan(obj)
+		if found then return end
+		if obj:IsA("TextLabel") or obj:IsA("TextButton") then
+			local t = (obj.Text or ""):gsub("%s+", " ")
+			if #t > 2 and #t < 55 then
+				local lower = t:lower()
+				if not lower:find("vote") and not lower:find("star") and not lower:find("coin")
+					and not lower:find("shop") and not lower:find("like") and not lower:find("report")
+					and not lower:find("time") and not lower:find("round") and not lower:find("player")
+					and not lower:find("vip") and not lower:find("undo") and not lower:find("redo") then
+					if obj.TextSize >= 16 or (obj.AbsoluteSize and obj.AbsoluteSize.Y >= 26) then
+						found = t
+					end
+				end
+			end
+		end
+		for _, c in ipairs(obj:GetChildren()) do scan(c) end
+	end
+	pcall(function()
+		if localPlayer:FindFirstChild("PlayerGui") then
+			scan(localPlayer.PlayerGui)
+		end
+	end)
+	return found
 end
 
--- Features
-local bodyVelocity = nil
+local function updateThemeHud()
+	if not revealTheme then
+		if themeLabel then themeLabel.Visible = false end
+		return
+	end
+	local parent = CoreGui
+	pcall(function() if gethui then parent = gethui() end end)
+	if not themeLabel or not themeLabel.Parent then
+		local sg = parent:FindFirstChild("KX_ThemeHud") or Instance.new("ScreenGui")
+		sg.Name = "KX_ThemeHud"
+		sg.IgnoreGuiInset = true
+		sg.ResetOnSpawn = false
+		sg.Parent = parent
+		themeLabel = Instance.new("TextLabel")
+		themeLabel.Size = UDim2.new(0, 420, 0, 36)
+		themeLabel.Position = UDim2.new(0.5, -210, 0, 12)
+		themeLabel.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+		themeLabel.BackgroundTransparency = 0.25
+		themeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+		themeLabel.Font = Enum.Font.GothamBold
+		themeLabel.TextSize = 18
+		themeLabel.Text = "Theme: ..."
+		themeLabel.Parent = sg
+		Instance.new("UICorner", themeLabel).CornerRadius = UDim.new(0, 8)
+		local stroke = Instance.new("UIStroke")
+		stroke.Color = Color3.fromRGB(120, 80, 255)
+		stroke.Thickness = 1.5
+		stroke.Parent = themeLabel
+	end
+	local txt = findThemeText()
+	themeLabel.Visible = true
+	themeLabel.Text = txt and ("Theme: " .. txt) or "Theme: (waiting...)"
+end
 
-RunService.RenderStepped:Connect(function()
-    if not licenseAccepted then return end
+local function tryAutoVote()
+	if not autoVote then return end
+	if tick() - lastVote < 1.2 then return end
+	lastVote = tick()
+	pcall(function()
+		local pg = localPlayer:FindFirstChild("PlayerGui")
+		if not pg then return end
+		for _, obj in ipairs(pg:GetDescendants()) do
+			if obj:IsA("ImageButton") or obj:IsA("TextButton") then
+				local n = (obj.Name .. " " .. (obj.Text or "")):lower()
+				if n:find("star") or n:find("vote") or n:find(tostring(voteStars)) then
+					pcall(function()
+						if firesignal then firesignal(obj.MouseButton1Click) end
+					end)
+				end
+			end
+		end
+	end)
+end
 
-    if speedEnabled and localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
-        localPlayer.Character.Humanoid.WalkSpeed = isPremium and 55 or 35
-    end
+local function updateFpsHud()
+	if not showFps then
+		if fpsLabel then fpsLabel.Visible = false end
+		return
+	end
+	local parent = CoreGui
+	pcall(function() if gethui then parent = gethui() end end)
+	if not fpsLabel or not fpsLabel.Parent then
+		local sg = parent:FindFirstChild("KX_FpsHud") or Instance.new("ScreenGui")
+		sg.Name = "KX_FpsHud"
+		sg.IgnoreGuiInset = true
+		sg.ResetOnSpawn = false
+		sg.Parent = parent
+		fpsLabel = Instance.new("TextLabel")
+		fpsLabel.Size = UDim2.new(0, 90, 0, 28)
+		fpsLabel.Position = UDim2.new(1, -100, 0, 10)
+		fpsLabel.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+		fpsLabel.BackgroundTransparency = 0.3
+		fpsLabel.TextColor3 = Color3.fromRGB(100, 255, 140)
+		fpsLabel.Font = Enum.Font.GothamBold
+		fpsLabel.TextSize = 14
+		fpsLabel.Text = "FPS: --"
+		fpsLabel.Parent = sg
+		Instance.new("UICorner", fpsLabel).CornerRadius = UDim.new(0, 6)
+	end
+	fpsLabel.Visible = true
+end
 
-    if aimbotEnabled then
-        local closest = nil
-        local dist = math.huge
-        for _, plr in ipairs(Players:GetPlayers()) do
-            if plr ~= localPlayer and plr.Character and plr.Character:FindFirstChild("Head") and plr.Character:FindFirstChild("Humanoid") then
-                if plr.Character.Humanoid.Health > 0 then
-                    if plr.Team ~= localPlayer.Team or not plr.Team then
-                        local d = (camera.CFrame.Position - plr.Character.Head.Position).Magnitude
-                        if d < dist then
-                            dist = d
-                            closest = plr.Character.Head
-                        end
-                    end
-                end
-            end
-        end
-        if closest then
-            camera.CFrame = CFrame.new(camera.CFrame.Position, closest.Position)
-        end
-    end
+-- Canvas exacto de Dex: Drawing.Canvas
+local function findCanvas()
+	local pg = localPlayer:FindFirstChild("PlayerGui")
+	if not pg then return nil end
 
-    if espEnabled then
-        for _, plr in ipairs(Players:GetPlayers()) do
-            if plr ~= localPlayer and plr.Character and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health > 0 then
-                local hl = plr.Character:FindFirstChildOfClass("Highlight")
-                if not hl then
-                    hl = Instance.new("Highlight")
-                    hl.Parent = plr.Character
-                    hl.FillColor = Color3.fromRGB(0, 200, 255)
-                    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-                    hl.FillTransparency = 0.4
-                end
-            end
-        end
-    end
+	-- 1) ruta directa
+	for _, gui in ipairs(pg:GetChildren()) do
+		local drawing = gui:FindFirstChild("Drawing")
+		if drawing then
+			local canvas = drawing:FindFirstChild("Canvas")
+			if canvas and canvas:IsA("GuiObject") then
+				return canvas
+			end
+		end
+	end
 
-    if isPremium and flyEnabled and localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local root = localPlayer.Character.HumanoidRootPart
-        local humanoid = localPlayer.Character:FindFirstChild("Humanoid")
-        if not bodyVelocity then
-            bodyVelocity = Instance.new("BodyVelocity")
-            bodyVelocity.MaxForce = Vector3.new(40000, 40000, 40000)
-            bodyVelocity.Parent = root
-        end
-        if humanoid and humanoid.MoveDirection.Magnitude > 0.1 then
-            bodyVelocity.Velocity = humanoid.MoveDirection * 90 + Vector3.new(0, 15, 0)
-        else
-            bodyVelocity.Velocity = Vector3.new(0, 5, 0)
-        end
-    else
-        if bodyVelocity then
-            bodyVelocity:Destroy()
-            bodyVelocity = nil
-        end
-    end
+	-- 2) cualquier descendant llamado Canvas bajo Drawing
+	for _, obj in ipairs(pg:GetDescendants()) do
+		if obj.Name == "Canvas" and obj:IsA("GuiObject") then
+			local p = obj.Parent
+			if p and p.Name == "Drawing" then
+				return obj
+			end
+		end
+	end
+
+	-- 3) fallback por nombre
+	for _, obj in ipairs(pg:GetDescendants()) do
+		if obj.Name == "Canvas" and obj:IsA("GuiObject") then
+			local s = obj.AbsoluteSize
+			if s.X > 150 and s.Y > 100 then
+				return obj
+			end
+		end
+	end
+	return nil
+end
+
+local function mouseMove(x, y)
+	pcall(function()
+		VirtualInputManager:SendMouseMoveEvent(x, y, game)
+	end)
+end
+
+local function mouseDown()
+	pcall(function()
+		VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+	end)
+end
+
+local function mouseUp()
+	pcall(function()
+		VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+	end)
+end
+
+local function stroke(x1, y1, x2, y2, steps)
+	steps = steps or 8
+	mouseMove(x1, y1)
+	task.wait(0.008)
+	mouseDown()
+	for i = 1, steps do
+		local t = i / steps
+		mouseMove(x1 + (x2 - x1) * t, y1 + (y2 - y1) * t)
+		task.wait(drawSpeed)
+	end
+	mouseUp()
+	task.wait(0.008)
+end
+
+local function doAutoDraw()
+	if drawBusy then return end
+	drawBusy = true
+	task.spawn(function()
+		local canvas = findCanvas()
+		if not canvas then
+			warn("[KAISENX] Canvas not found (Drawing.Canvas)")
+			drawBusy = false
+			return
+		end
+
+		-- forzar visibilidad/update de AbsolutePosition
+		task.wait(0.05)
+		local pos = canvas.AbsolutePosition
+		local size = canvas.AbsoluteSize
+		if size.X < 50 or size.Y < 50 then
+			warn("[KAISENX] Canvas size invalid")
+			drawBusy = false
+			return
+		end
+
+		local pad = 16
+		local x0, y0 = pos.X + pad, pos.Y + pad
+		local x1, y1 = pos.X + size.X - pad, pos.Y + size.Y - pad
+		local w, h = x1 - x0, y1 - y0
+
+		print("[KAISENX] Drawing on canvas", math.floor(w), "x", math.floor(h))
+
+		-- borde
+		stroke(x0, y0, x1, y0, 14)
+		stroke(x1, y0, x1, y1, 14)
+		stroke(x1, y1, x0, y1, 14)
+		stroke(x0, y1, x0, y0, 14)
+
+		-- rejilla
+		for i = 1, 5 do
+			local x = x0 + w * (i / 6)
+			stroke(x, y0 + 6, x, y1 - 6, 10)
+		end
+		for j = 1, 4 do
+			local y = y0 + h * (j / 5)
+			stroke(x0 + 6, y, x1 - 6, y, 10)
+		end
+
+		-- diagonales
+		stroke(x0 + 8, y0 + 8, x1 - 8, y1 - 8, 16)
+		stroke(x1 - 8, y0 + 8, x0 + 8, y1 - 8, 16)
+
+		-- circulos (octagono)
+		local function circle(cx, cy, r)
+			local pts = {}
+			for a = 0, 10 do
+				local ang = (a / 10) * math.pi * 2
+				table.insert(pts, { cx + math.cos(ang) * r, cy + math.sin(ang) * r })
+			end
+			for i = 1, #pts - 1 do
+				stroke(pts[i][1], pts[i][2], pts[i + 1][1], pts[i + 1][2], 3)
+			end
+		end
+		circle(x0 + w * 0.5, y0 + h * 0.5, math.min(w, h) * 0.20)
+		circle(x0 + w * 0.30, y0 + h * 0.32, math.min(w, h) * 0.09)
+		circle(x0 + w * 0.70, y0 + h * 0.32, math.min(w, h) * 0.09)
+
+		-- garabatos
+		for i = 1, 10 do
+			local ax = x0 + w * math.random()
+			local ay = y0 + h * math.random()
+			local bx = x0 + w * math.random()
+			local by = y0 + h * math.random()
+			stroke(ax, ay, bx, by, 5)
+		end
+
+		drawBusy = false
+		print("[KAISENX] Auto Draw done")
+	end)
+end
+
+task.spawn(function()
+	while true do
+		task.wait(40)
+		if antiAfk then
+			pcall(function()
+				VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+				task.wait(0.05)
+				VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+			end)
+		end
+	end
 end)
 
-UserInputService.JumpRequest:Connect(function()
-    if isPremium and infiniteJumpEnabled and localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
-        localPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-    end
+localPlayer.CharacterAdded:Connect(function()
+	task.wait(1)
+	originalWalkSpeed = nil
+	if speedOn then setSpeed(true, walkSpeed) end
 end)
 
-showLoading()
+local function loadWindUI()
+	local urls = {
+		"https://github.com/Footagesus/WindUI/releases/latest/download/main.lua",
+		"https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua",
+	}
+	for _, url in ipairs(urls) do
+		local ok, lib = pcall(function() return loadstring(game:HttpGet(url))() end)
+		if ok and lib then return lib end
+	end
+	return nil
+end
+
+local function applyMenuBackground()
+	task.spawn(function()
+		for i = 1, 25 do
+			local parent = CoreGui
+			pcall(function() if gethui then parent = gethui() end end)
+			for _, gui in ipairs(parent:GetDescendants()) do
+				if gui:IsA("Frame") and (gui.Name:lower():find("window") or (gui.Size.X.Offset >= 380 and gui.Size.Y.Offset >= 380)) then
+					if not gui:FindFirstChild("KX_MenuBG") then
+						local img = Instance.new("ImageLabel")
+						img.Name = "KX_MenuBG"
+						img.BackgroundTransparency = 1
+						img.Image = MENU_BG
+						img.ScaleType = Enum.ScaleType.Crop
+						img.Size = UDim2.fromScale(1, 1)
+						img.ZIndex = 0
+						img.Parent = gui
+						return
+					end
+				end
+			end
+			task.wait(0.15)
+		end
+	end)
+end
+
+local function startHub()
+	local WindUI = loadWindUI()
+	if not WindUI then
+		warn("[KAISENX] WindUI failed")
+		return
+	end
+
+	local Window = WindUI:CreateWindow({
+		Title = "KAISENX | Speed Draw!",
+		Author = "created by KAISEN",
+		Folder = "KaisenXSpeedDraw",
+		Size = UDim2.fromOffset(500, 540),
+		Transparent = true,
+		Theme = "Crimson",
+		Resizable = true,
+		SideBarWidth = 140,
+	})
+
+	applyMenuBackground()
+
+	local Home = Window:Tab({ Title = "Home", Icon = "star" })
+	Home:Paragraph({
+		Title = "KAISENX Speed Draw",
+		Desc = "Canvas: Drawing.Canvas\nAuto Draw · Reveal Theme · Auto Vote"
+	})
+	Home:Button({
+		Title = "Copy Discord",
+		Callback = function()
+			pcall(function() setclipboard(DISCORD_LINK) end)
+		end
+	})
+	Home:Button({
+		Title = "Copy TikTok",
+		Callback = function()
+			pcall(function() setclipboard("https://www.tiktok.com/" .. TIKTOK_USER) end)
+		end
+	})
+
+	local Draw = Window:Tab({ Title = "Draw", Icon = "pencil" })
+	Draw:Button({
+		Title = "AUTO DRAW (once)",
+		Callback = function()
+			doAutoDraw()
+		end
+	})
+	Draw:Button({
+		Title = "Find Canvas (test)",
+		Callback = function()
+			local c = findCanvas()
+			if c then
+				print("[KAISENX] Found:", c:GetFullName(), c.AbsoluteSize)
+			else
+				print("[KAISENX] Canvas NOT found")
+			end
+		end
+	})
+	Draw:Slider({
+		Title = "Draw Speed (lower = faster)",
+		Value = { Min = 0.003, Max = 0.035, Default = 0.010 },
+		Step = 0.001,
+		Callback = function(v) drawSpeed = v end
+	})
+	Draw:Toggle({
+		Title = "Reveal Theme (HUD)",
+		Default = false,
+		Callback = function(v)
+			revealTheme = v
+			if not v and themeLabel then themeLabel.Visible = false end
+		end
+	})
+	Draw:Toggle({
+		Title = "Auto Vote Stars",
+		Default = false,
+		Callback = function(v) autoVote = v end
+	})
+	Draw:Slider({
+		Title = "Stars to give",
+		Value = { Min = 1, Max = 5, Default = 5 },
+		Callback = function(v) voteStars = v end
+	})
+	Draw:Paragraph({
+		Title = "Tip",
+		Desc = "1) Equip any pencil\n2) Wait until canvas is visible\n3) Press AUTO DRAW"
+	})
+
+	local Misc = Window:Tab({ Title = "Misc", Icon = "settings" })
+	Misc:Toggle({
+		Title = "Lobby Speed",
+		Default = false,
+		Callback = function(v)
+			speedOn = v
+			setSpeed(v, walkSpeed)
+		end
+	})
+	Misc:Slider({
+		Title = "WalkSpeed",
+		Value = { Min = 16, Max = 50, Default = 28 },
+		Callback = function(v)
+			walkSpeed = v
+			if speedOn then setSpeed(true, walkSpeed) end
+		end
+	})
+	Misc:Toggle({
+		Title = "Anti AFK",
+		Default = true,
+		Callback = function(v) antiAfk = v end
+	})
+	Misc:Toggle({
+		Title = "Fullbright",
+		Default = false,
+		Callback = function(v)
+			fullbright = v
+			applyFullbright(v)
+		end
+	})
+	Misc:Toggle({
+		Title = "Show FPS",
+		Default = false,
+		Callback = function(v)
+			showFps = v
+			if not v and fpsLabel then fpsLabel.Visible = false end
+		end
+	})
+
+	local Set = Window:Tab({ Title = "Settings", Icon = "sliders" })
+	Set:Dropdown({
+		Title = "Theme",
+		Values = { "Dark", "Light", "Rose", "Indigo", "Crimson" },
+		Value = "Crimson",
+		Callback = function(name)
+			pcall(function()
+				if WindUI.SetTheme then WindUI:SetTheme(name) end
+			end)
+		end
+	})
+
+	local fpsCounter, fpsLast = 0, tick()
+	RunService.RenderStepped:Connect(function()
+		updateThemeHud()
+		updateFpsHud()
+		tryAutoVote()
+		if speedOn then setSpeed(true, walkSpeed) end
+		if showFps and fpsLabel then
+			fpsCounter = fpsCounter + 1
+			if tick() - fpsLast >= 1 then
+				fpsLabel.Text = "FPS: " .. tostring(fpsCounter)
+				fpsCounter = 0
+				fpsLast = tick()
+			end
+		end
+	end)
+end
+
+task.spawn(startHub)
