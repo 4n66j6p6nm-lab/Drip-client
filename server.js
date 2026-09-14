@@ -1,26 +1,43 @@
-const http = require('http');
+// server.js
+const express = require("express");
+const app = express();
+app.use(express.json());
 
-let onlineCount = 0;
+// userId -> lastSeen (ms)
+const online = new Map();
+const TTL = 60 * 1000; // 60s sin heartbeat = offline
 
-const server = http.createServer((req, res) => {
-    // Ruta principal
-    if (req.url === '/' || req.url === '/api') {
-        res.writeHead(200, { 'Content-Type': 'text/plain' });
-        res.end('Drip-client API is running!');
-    } 
-    // Ruta de ping / heartbeat / online
-    else if (req.url === '/ping' || req.url === '/heartbeat' || req.url === '/online' || req.url === '/api/online') {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ status: 'ok', online: onlineCount }));
-    } 
-    // Ruta no encontrada
-    else {
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('Endpoint not found');
-    }
+function cleanup() {
+  const now = Date.now();
+  for (const [id, t] of online) {
+    if (now - t > TTL) online.delete(id);
+  }
+}
+
+function count() {
+  cleanup();
+  return online.size;
+}
+
+app.get("/", (req, res) => {
+  res.send("Drip-client API is running!");
+});
+
+app.post("/heartbeat", (req, res) => {
+  const id = String(
+    req.body.userId ?? req.body.id ?? req.body.userid ?? "anon"
+  );
+  online.set(id, Date.now());
+  res.json({ status: "ok", online: count() });
+});
+
+app.get("/online", (req, res) => {
+  res.json({ status: "ok", online: count() });
+});
+
+app.get("/ping", (req, res) => {
+  res.json({ status: "ok", online: count() });
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Server is listening on port ${PORT}`);
-});
+app.listen(PORT, () => console.log("API on", PORT));
