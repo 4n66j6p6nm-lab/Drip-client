@@ -1,43 +1,59 @@
-// server.js
-const express = require("express");
+const express = require('express');
+const axios = require('axios');
 const app = express();
+
 app.use(express.json());
 
-// userId -> lastSeen (ms)
-const online = new Map();
-const TTL = 60 * 1000; // 60s sin heartbeat = offline
+// Tu Webhook de Discord
+const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1549532747075420172/MEX-ygtRDtvT7dOANziKBDoFZZelAVGIaQPcCvb_1tsKl_M_W5ahJepoMfTtpuu21ICE';
 
-function cleanup() {
-  const now = Date.now();
-  for (const [id, t] of online) {
-    if (now - t > TTL) online.delete(id);
-  }
-}
+// Sistema de Heartbeat en Memoria
+const onlineUsers = new Map();
 
-function count() {
-  cleanup();
-  return online.size;
-}
+// Limpiar usuarios inactivosa los 30 segundos
+setInterval(() => {
+    const now = Date.now();
+    for (const [userId, lastSeen] of onlineUsers.entries()) {
+        if (now - lastSeen > 30000) {
+            onlineUsers.delete(userId);
+        }
+    }
+}, 10000);
 
-app.get("/", (req, res) => {
-  res.send("Drip-client API is running!");
+// Endpoint Heartbeat (para contar usuarios activos)
+app.post('/api/heartbeat', (req, res) => {
+    const { userId } = req.body;
+    if (userId) {
+        onlineUsers.set(userId, Date.now());
+    }
+    res.json({ success: true, onlineCount: onlineUsers.size });
 });
 
-app.post("/heartbeat", (req, res) => {
-  const id = String(
-    req.body.userId ?? req.body.id ?? req.body.userid ?? "anon"
-  );
-  online.set(id, Date.now());
-  res.json({ status: "ok", online: count() });
-});
+// Endpoint de Logs (envía notificación a Discord)
+app.post('/api/log', async (req, res) => {
+    const { username, userId, executor } = req.body;
 
-app.get("/online", (req, res) => {
-  res.json({ status: "ok", online: count() });
-});
+    const embed = {
+        title: "🚀 Nueva Ejecución Registrada",
+        color: 0x3498db,
+        fields: [
+            { name: "Usuario", value: username || "Desconocido", inline: true },
+            { name: "User ID", value: String(userId || "0"), inline: true },
+            { name: "Executor", value: executor || "Desconocido", inline: true }
+        ],
+        timestamp: new Date().toISOString()
+    };
 
-app.get("/ping", (req, res) => {
-  res.json({ status: "ok", online: count() });
+    try {
+        await axios.post(DISCORD_WEBHOOK_URL, { embeds: [embed] });
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Error al enviar el webhook:", error.message);
+        res.status(500).json({ error: "No se pudo enviar el registro" });
+    }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("API on", PORT));
+app.listen(PORT, () => {
+    console.log(`Servidor iniciado en el puerto ${PORT}`);
+});
