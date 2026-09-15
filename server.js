@@ -4,13 +4,12 @@ const app = express();
 
 app.use(express.json());
 
-// Tu Webhook de Discord
+// Tu Webhook de Discord configurado
 const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1549532747075420172/MEX-ygtRDtvT7dOANziKBDoFZZelAVGIaQPcCvb_1tsKl_M_W5ahJepoMfTtpuu21ICE';
 
-// Sistema de Heartbeat en Memoria
+// Sistema de Heartbeat para contador de usuarios activos
 const onlineUsers = new Map();
 
-// Limpiar usuarios inactivosa los 30 segundos
 setInterval(() => {
     const now = Date.now();
     for (const [userId, lastSeen] of onlineUsers.entries()) {
@@ -20,7 +19,6 @@ setInterval(() => {
     }
 }, 10000);
 
-// Endpoint Heartbeat (para contar usuarios activos)
 app.post('/api/heartbeat', (req, res) => {
     const { userId } = req.body;
     if (userId) {
@@ -29,10 +27,14 @@ app.post('/api/heartbeat', (req, res) => {
     res.json({ success: true, onlineCount: onlineUsers.size });
 });
 
-// Endpoint de Logs (envía notificación a Discord)
-app.post('/api/log', async (req, res) => {
-    const { username, userId, executor } = req.body;
+// Endpoint de Logs (Registro en consola + Webhook a Discord)
+app.post("/api/log", async (req, res) => {
+    const { username, userId, executor } = req.body || {};
+    
+    // Imprime en la consola de Render
+    console.log("[EXEC]", username, userId, executor);
 
+    // Mensaje formateado para Discord
     const embed = {
         title: "🚀 Nueva Ejecución Registrada",
         color: 0x3498db,
@@ -46,10 +48,10 @@ app.post('/api/log', async (req, res) => {
 
     try {
         await axios.post(DISCORD_WEBHOOK_URL, { embeds: [embed] });
-        res.json({ success: true });
+        res.json({ status: "ok" });
     } catch (error) {
-        console.error("Error al enviar el webhook:", error.message);
-        res.status(500).json({ error: "No se pudo enviar el registro" });
+        console.error("Error al enviar a Discord:", error.message);
+        res.status(500).json({ status: "error", message: error.message });
     }
 });
 
