@@ -1,18 +1,9 @@
 --[[
 	KAISEN X | MM2 | Rayfield
 	created by KAISEN
-	Farm rápido + sin paredes + monedas reales
 ]]
 
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
-
-local Window = Rayfield:CreateWindow({
-	Name = "KAISEN X — MM2",
-	LoadingTitle = "KAISEN X",
-	LoadingSubtitle = "created by KAISEN",
-	ConfigurationSaving = { Enabled = false },
-	KeySystem = false,
-})
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -23,16 +14,72 @@ local UserInputService = game:GetService("UserInputService")
 local VirtualUser = game:GetService("VirtualUser")
 local Lighting = game:GetService("Lighting")
 local TeleportService = game:GetService("TeleportService")
-local PathfindingService = game:GetService("PathfindingService")
 
 local LocalPlayer = Players.LocalPlayer
 local camera = Workspace.CurrentCamera
 local DISCORD_LINK = "https://discord.gg/cs6eGYEGE"
 local TIKTOK_USER = "@kaisen_x2"
 
+-- ===== IDIOMA =====
+local Lang = "ES"
+if getgenv and (getgenv().KAISEN_LANG == "ES" or getgenv().KAISEN_LANG == "EN") then
+	Lang = getgenv().KAISEN_LANG
+end
+
+local T = {
+	ES = {
+		home = "Inicio", combat = "Combate", farm = "Farmeo", visuals = "Visuales",
+		shaders = "Shaders", player = "Jugador", extras = "Extras",
+		title = "KAISEN X — MM2",
+		copyDiscord = "Copiar Discord", copyTikTok = "Copiar TikTok",
+		killAll = "Matar a todos", silent = "Silent Aim (Sheriff)",
+		grabGun = "Agarrar pistola", autoGrab = "Auto agarrar pistola",
+		flingM = "Fling asesino", flingS = "Fling sheriff", flingAll = "Fling a todos",
+		flingTarget = "Objetivo fling", flingSel = "Fling seleccionado",
+		reveal = "Revelar asesino",
+		autoFarm = "Auto farmear monedas", farmSpeed = "Velocidad farm", farmRange = "Rango",
+		roleEsp = "ESP roles", gunEsp = "ESP pistola", fullbright = "Fullbright", xray = "Rayos X",
+		antiFling = "Anti fling", ghost = "Fantasma", godmode = "Godmode",
+		walkSpeed = "Velocidad", jumpPower = "Salto", fly = "Volar",
+		infJump = "Salto infinito", noclip = "Noclip",
+		autoDodge = "Auto esquivar", fakeLag = "Fake lag", antiAfk = "Anti-AFK",
+		fov = "FOV", rejoin = "Reentrar", lang = "Idioma",
+		langSaved = "Idioma guardado. Vuelve a ejecutar el script.",
+	},
+	EN = {
+		home = "Home", combat = "Combat", farm = "Farming", visuals = "Visuals",
+		shaders = "Shaders", player = "Player", extras = "Extras",
+		title = "KAISEN X — MM2",
+		copyDiscord = "Copy Discord", copyTikTok = "Copy TikTok",
+		killAll = "Kill All", silent = "Sheriff Silent Aim",
+		grabGun = "Grab Gun", autoGrab = "Auto-Grab Gun",
+		flingM = "Fling Murderer", flingS = "Fling Sheriff", flingAll = "Fling All",
+		flingTarget = "Fling Target", flingSel = "Fling Selected",
+		reveal = "Reveal Murderer",
+		autoFarm = "Auto-Farm Coins", farmSpeed = "Farm Speed", farmRange = "Range",
+		roleEsp = "Role ESP", gunEsp = "Gun ESP", fullbright = "Fullbright", xray = "X-Ray",
+		antiFling = "Anti-Fling", ghost = "Ghost", godmode = "Godmode",
+		walkSpeed = "WalkSpeed", jumpPower = "JumpPower", fly = "Fly",
+		infJump = "Infinite Jump", noclip = "Noclip",
+		autoDodge = "Auto Dodge", fakeLag = "Fake Lag", antiAfk = "Anti-AFK",
+		fov = "FOV", rejoin = "Rejoin", lang = "Language",
+		langSaved = "Language saved. Re-execute the script.",
+	},
+}
+local function L(k)
+	return (T[Lang] and T[Lang][k]) or k
+end
+
+local Window = Rayfield:CreateWindow({
+	Name = "KAISEN X — MM2",
+	LoadingTitle = "KAISEN X",
+	LoadingSubtitle = "created by KAISEN",
+	ConfigurationSaving = { Enabled = false },
+	KeySystem = false,
+})
+
 local KillAllActive, AutoFarmCoins = false, false
-local FarmRange = 35
-local FarmSpeed = 28 -- walkspeed solo mientras farmea
+local FarmRange, FarmSpeed = 50, 28
 local GodmodeEnabled, InvisibleEnabled = false, false
 local ESP_Enabled, GunESP_Enabled, AutoGrabGunEnabled = false, false, false
 local Noclip_Enabled, SilentAimEnabled, FullbrightEnabled = false, false, false
@@ -41,16 +88,16 @@ local Flying, FlySpeed = false, 50
 local AutoDodgeEnabled, FakeLagEnabled = false, false
 local AntiFlingEnabled = true
 local SavedPositions, Highlights, GunHighlight = {}, {}, nil
-local isGrabbingGun, isFarming = false, false
+local isGrabbingGun = false
 local ghostConn = nil
 local normalWalkSpeed = 16
+local flingBusy = false
+local FlingTargetName = nil
+local farmIndex, farmList, farmRefresh = 1, {}, 0
 
--- SHADERS
 local function wipeFX()
 	for _, v in ipairs(Lighting:GetChildren()) do
-		if v:IsA("BloomEffect") or v:IsA("ColorCorrectionEffect") or v:IsA("SunRaysEffect") or v:IsA("Atmosphere") then
-			if tostring(v.Name):find("Kaisen") then v:Destroy() end
-		end
+		if tostring(v.Name):find("Kaisen") then pcall(function() v:Destroy() end) end
 	end
 end
 local function fx(class, name)
@@ -122,285 +169,232 @@ local function GetRoleColor(p)
 	return Color3.fromRGB(50, 255, 100)
 end
 
+local function playerNames()
+	local t = {}
+	for _, p in ipairs(Players:GetPlayers()) do
+		if p ~= LocalPlayer then table.insert(t, p.Name) end
+	end
+	table.sort(t)
+	if #t == 0 then table.insert(t, "—") end
+	return t
+end
+
+local function findPlayer(name)
+	if not name or name == "—" then return nil end
+	for _, p in ipairs(Players:GetPlayers()) do
+		if p.Name == name or p.DisplayName == name then return p end
+	end
+	return Players:FindFirstChild(name)
+end
+
 local function GetDroppedGun()
-	for _, i in pairs(Workspace:GetChildren()) do
-		if i.Name == "GunDrop" or (i:IsA("Tool") and i.Name == "Gun") then return i end
-	end
-	for _, i in pairs(Workspace:GetDescendants()) do
+	for _, i in ipairs(Workspace:GetChildren()) do
 		if i.Name == "GunDrop" then return i end
+		if i:IsA("Tool") and i.Name == "Gun" and i.Parent == Workspace then return i end
 	end
+	for _, folder in ipairs(Workspace:GetChildren()) do
+		local g = folder:FindFirstChild("GunDrop", true)
+		if g then return g end
+	end
+	return nil
+end
+
+local function hasGunAlready()
+	local char, bp = LocalPlayer.Character, LocalPlayer:FindFirstChild("Backpack")
+	return (char and char:FindFirstChild("Gun")) or (bp and bp:FindFirstChild("Gun"))
 end
 
 local function SafeGrabGun()
-	if isGrabbingGun then return end
+	if isGrabbingGun or hasGunAlready() then return end
 	local gun, char = GetDroppedGun(), LocalPlayer.Character
-	if not (gun and char and char:FindFirstChild("HumanoidRootPart")) then return end
-	local hrp = char.HumanoidRootPart
-	local handle = gun:FindFirstChild("Handle") or gun:FindFirstChildOfClass("BasePart") or gun
-	if not (handle and handle:IsA("BasePart")) then return end
-	if (hrp.Position - handle.Position).Magnitude > 20 then return end
+	if not (gun and char) then return end
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+	local handle = gun:FindFirstChild("Handle") or gun:FindFirstChildWhichIsA("BasePart") or (gun:IsA("BasePart") and gun)
+	if not handle then return end
 	isGrabbingGun = true
-	local hum = char:FindFirstChildOfClass("Humanoid")
-	if hum then
-		hum.WalkSpeed = FarmSpeed
-		hum:MoveTo(handle.Position)
-		local t0 = tick()
-		while tick() - t0 < 2 and (hrp.Position - handle.Position).Magnitude > 4 do task.wait(0.08) end
-	end
+	local returnCF = hrp.CFrame
+	hrp.CFrame = CFrame.new(handle.Position + Vector3.new(0, 2.5, 0))
+	hrp.AssemblyLinearVelocity = Vector3.zero
+	task.wait(0.08)
 	if firetouchinterest then
-		pcall(function()
-			firetouchinterest(hrp, handle, 0) task.wait(0.04) firetouchinterest(hrp, handle, 1)
-		end)
+		for _ = 1, 8 do
+			pcall(function()
+				firetouchinterest(hrp, handle, 0)
+				task.wait(0.025)
+				firetouchinterest(hrp, handle, 1)
+			end)
+			task.wait(0.03)
+			if hasGunAlready() then break end
+		end
 	end
-	if hum then hum.WalkSpeed = normalWalkSpeed end
+	task.wait(0.05)
+	if hrp.Parent then
+		hrp.CFrame = returnCF
+		hrp.AssemblyLinearVelocity = Vector3.zero
+	end
 	isGrabbingGun = false
 end
 
 local function FlingPlayer(targetPlayer)
-	local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-	local targetHrp = targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if flingBusy or not targetPlayer then return end
+	local char = LocalPlayer.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	local targetHrp = targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart")
 	if not hrp or not targetHrp then return end
+	flingBusy = true
 	local oldPos = hrp.CFrame
+	local oldCollide = {}
+	for _, p in ipairs(char:GetDescendants()) do
+		if p:IsA("BasePart") then
+			oldCollide[p] = p.CanCollide
+			p.CanCollide = false
+		end
+	end
+	local bv = Instance.new("BodyAngularVelocity")
+	bv.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+	bv.AngularVelocity = Vector3.new(0, 9e4, 0)
+	bv.Parent = hrp
 	local start = tick()
 	local conn
 	conn = RunService.Heartbeat:Connect(function()
-		if not hrp.Parent or not targetHrp.Parent or tick() - start > 1.2 then
+		if not hrp.Parent or not targetHrp.Parent or tick() - start > 1.4 then
 			if conn then conn:Disconnect() end
-			hrp.CFrame = oldPos
+			pcall(function() bv:Destroy() end)
+			for p, col in pairs(oldCollide) do
+				if p and p.Parent then p.CanCollide = col end
+			end
 			hrp.AssemblyLinearVelocity = Vector3.zero
 			hrp.AssemblyAngularVelocity = Vector3.zero
+			hrp.CFrame = oldPos
+			flingBusy = false
 			return
 		end
-		hrp.CFrame = targetHrp.CFrame
-		hrp.AssemblyLinearVelocity = Vector3.new(99999, 99999, 99999)
-		hrp.AssemblyAngularVelocity = Vector3.new(99999, 99999, 99999)
+		hrp.CFrame = targetHrp.CFrame * CFrame.new(0, 0.5, 0)
+		hrp.AssemblyLinearVelocity = Vector3.new(1, 1, 1) * 12000
 	end)
 end
 
--- GHOST
-local function hideObject(obj)
-	if obj:IsA("BasePart") or obj:IsA("MeshPart") then
-		obj.Transparency = 1
-		obj.LocalTransparencyModifier = 1
-		pcall(function() obj.CastShadow = false end)
-	elseif obj:IsA("Decal") or obj:IsA("Texture") then
-		obj.Transparency = 1
-	elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Fire") or obj:IsA("Smoke") then
-		obj.Enabled = false
-	elseif obj:IsA("Accessory") then
-		for _, h in ipairs(obj:GetDescendants()) do
-			if h:IsA("BasePart") or h:IsA("MeshPart") then
-				h.Transparency = 1
-				h.LocalTransparencyModifier = 1
-			elseif h:IsA("Decal") then h.Transparency = 1 end
+local function FlingAll()
+	task.spawn(function()
+		for _, p in ipairs(Players:GetPlayers()) do
+			if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+				FlingPlayer(p)
+				task.wait(1.6)
+			end
 		end
-	elseif obj:IsA("BillboardGui") or obj:IsA("SurfaceGui") then
-		obj.Enabled = false
-	end
+	end)
 end
 
-local function applyGhost(char)
-	if not char then return end
-	for _, obj in ipairs(char:GetDescendants()) do hideObject(obj) end
-	for _, tool in ipairs(char:GetChildren()) do
-		if tool:IsA("Tool") then
-			for _, o in ipairs(tool:GetDescendants()) do hideObject(o) end
-		end
-	end
-end
-
-local function restoreGhost(char)
-	if not char then return end
-	for _, obj in ipairs(char:GetDescendants()) do
-		if obj:IsA("BasePart") or obj:IsA("MeshPart") then
-			if obj.Name ~= "HumanoidRootPart" then obj.Transparency = 0 end
-			obj.LocalTransparencyModifier = 0
-		elseif obj:IsA("Decal") or obj:IsA("Texture") then
-			obj.Transparency = 0
-		elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then
-			obj.Enabled = true
-		elseif obj:IsA("BillboardGui") or obj:IsA("SurfaceGui") then
-			obj.Enabled = true
-		end
-	end
-end
-
-local function SetGhostState(state)
-	InvisibleEnabled = state
+local function SetGhostState(on)
+	InvisibleEnabled = on
 	if ghostConn then ghostConn:Disconnect() ghostConn = nil end
 	local char = LocalPlayer.Character
-	if state then
-		applyGhost(char)
+	if not char then return end
+	if on then
 		ghostConn = RunService.RenderStepped:Connect(function()
-			if InvisibleEnabled and LocalPlayer.Character then applyGhost(LocalPlayer.Character) end
+			local c = LocalPlayer.Character
+			if not c or not InvisibleEnabled then return end
+			for _, o in ipairs(c:GetDescendants()) do
+				if o:IsA("BasePart") or o:IsA("MeshPart") then
+					o.LocalTransparencyModifier = 1
+					pcall(function() o.CastShadow = false end)
+				elseif o:IsA("Decal") or o:IsA("Texture") then
+					o.Transparency = 1
+				elseif o:IsA("ParticleEmitter") or o:IsA("Trail") or o:IsA("Beam") or o:IsA("Fire") or o:IsA("Smoke") then
+					o.Enabled = false
+				elseif o:IsA("BillboardGui") or o:IsA("SurfaceGui") then
+					o.Enabled = false
+				end
+			end
 		end)
 	else
-		restoreGhost(char)
+		for _, o in ipairs(char:GetDescendants()) do
+			if o:IsA("BasePart") or o:IsA("MeshPart") then
+				o.LocalTransparencyModifier = 0
+				if o.Name ~= "HumanoidRootPart" then o.Transparency = 0 end
+			elseif o:IsA("Decal") or o:IsA("Texture") then
+				o.Transparency = 0
+			elseif o:IsA("ParticleEmitter") or o:IsA("Trail") or o:IsA("Beam") then
+				o.Enabled = true
+			end
+		end
 	end
 end
 
--- ===================== FARM RÁPIDO SIN PAREDES =====================
-local function isRealCoin(obj)
+local function isCoin(obj)
 	if not obj or not obj:IsA("BasePart") or not obj.Parent then return false end
 	local n = string.lower(obj.Name)
-	-- nombres típicos MM2
-	if n ~= "coin" and n ~= "coin_sub" and n ~= "coinserver" and not (n == "handle" and obj.Parent and string.find(string.lower(obj.Parent.Name), "coin")) then
-		if not (string.find(n, "coin") and not string.find(n, "container") and not string.find(n, "gui") and not string.find(n, "spawn")) then
-			return false
-		end
+	if not (n == "coin" or n == "coin_sub" or n == "coinserver" or (string.find(n, "coin") and not string.find(n, "gui") and not string.find(n, "spawn"))) then
+		return false
 	end
-	if obj.Transparency >= 0.9 then return false end
-	if obj.Size.Magnitude < 0.2 or obj.Size.Magnitude > 15 then return false end
+	if obj.Transparency >= 0.95 or obj.Size.Magnitude > 12 or obj.Size.Magnitude < 0.15 then return false end
 	return true
 end
 
--- ¿hay pared entre yo y la moneda?
-local function hasClearPath(fromPos, toPos)
-	local dir = toPos - fromPos
-	local dist = dir.Magnitude
-	if dist < 1 then return true end
-	local params = RaycastParams.new()
-	params.FilterType = Enum.RaycastFilterType.Exclude
-	local filter = { LocalPlayer.Character }
-	-- excluir monedas del raycast
+local function rebuildFarmList(hrp)
+	farmList = {}
 	for _, o in ipairs(Workspace:GetDescendants()) do
-		if isRealCoin(o) then table.insert(filter, o) end
+		if isCoin(o) then
+			local d = (o.Position - hrp.Position).Magnitude
+			if d <= FarmRange and math.abs(o.Position.Y - hrp.Position.Y) < 20 then
+				table.insert(farmList, o)
+			end
+		end
 	end
-	params.FilterDescendantsInstances = filter
-	params.IgnoreWater = true
-	local result = Workspace:Raycast(fromPos + Vector3.new(0, 2, 0), dir.Unit * dist, params)
-	if not result then return true end
-	-- si pegó muy cerca de la moneda, ok
-	if (result.Position - toPos).Magnitude < 4 then return true end
-	return false
+	table.sort(farmList, function(a, b)
+		if math.abs(a.Position.X - b.Position.X) > 2 then return a.Position.X < b.Position.X end
+		return a.Position.Z < b.Position.Z
+	end)
+	farmIndex = 1
+	farmRefresh = tick()
 end
 
-local function getCoinsSorted(hrp)
-	local list = {}
-	for _, obj in ipairs(Workspace:GetDescendants()) do
-		if isRealCoin(obj) then
-			local d = (obj.Position - hrp.Position).Magnitude
-			if d <= FarmRange and d > 1.5 then
-				-- altura similar (no monedas en otro piso absurdo)
-				if math.abs(obj.Position.Y - hrp.Position.Y) < 18 then
-					if hasClearPath(hrp.Position, obj.Position) then
-						table.insert(list, { part = obj, dist = d })
-					end
-				end
-			end
-		end
-	end
-	table.sort(list, function(a, b) return a.dist < b.dist end)
-	return list
-end
-
-local function walkTo(hum, hrp, targetPos, timeout)
-	timeout = timeout or 2.5
-	-- pathfinding corto
-	local path = PathfindingService:CreatePath({
-		AgentRadius = 2,
-		AgentHeight = 5,
-		AgentCanJump = true,
-		WaypointSpacing = 4,
-	})
-	local ok = pcall(function() path:ComputeAsync(hrp.Position, targetPos) end)
-	if ok and path.Status == Enum.PathStatus.Success then
-		local waypoints = path:GetWaypoints()
-		local t0 = tick()
-		for _, wp in ipairs(waypoints) do
-			if not AutoFarmCoins or not hrp.Parent then return false end
-			if tick() - t0 > timeout then return false end
-			hum:MoveTo(wp.Position)
-			local arrived = false
-			local conn
-			conn = hum.MoveToFinished:Connect(function(reached)
-				arrived = true
-				if conn then conn:Disconnect() end
-			end)
-			local w0 = tick()
-			while not arrived and tick() - w0 < 1.2 and AutoFarmCoins do
-				task.wait(0.05)
-				if (hrp.Position - wp.Position).Magnitude < 3.5 then break end
-			end
-			if conn then conn:Disconnect() end
-		end
-		return true
-	else
-		-- fallback: MoveTo directo solo si hay vista clara
-		if hasClearPath(hrp.Position, targetPos) then
-			hum:MoveTo(targetPos)
-			local t0 = tick()
-			while tick() - t0 < timeout and AutoFarmCoins do
-				if (hrp.Position - targetPos).Magnitude < 4 then return true end
-				task.wait(0.05)
-			end
-		end
-	end
-	return false
+local function touch(hrp, coin)
+	if not firetouchinterest or not coin or not coin.Parent then return end
+	pcall(function()
+		firetouchinterest(hrp, coin, 0)
+		task.wait(0.02)
+		firetouchinterest(hrp, coin, 1)
+	end)
 end
 
 task.spawn(function()
 	while true do
-		task.wait(0.05)
-		if AutoFarmCoins and not isGrabbingGun and not isFarming then
-			local char = LocalPlayer.Character
-			local hrp = char and char:FindFirstChild("HumanoidRootPart")
-			local hum = char and char:FindFirstChildOfClass("Humanoid")
-			if hrp and hum and hum.Health > 0 then
-				isFarming = true
-				normalWalkSpeed = hum.WalkSpeed > 0 and math.clamp(hum.WalkSpeed, 16, 30) or 16
-				hum.WalkSpeed = FarmSpeed
-
-				local coins = getCoinsSorted(hrp)
-				if #coins > 0 then
-					local coin = coins[1].part
-					if coin and coin.Parent then
-						local reached = walkTo(hum, hrp, coin.Position, 2.2)
-						if reached or (hrp.Position - coin.Position).Magnitude < 6 then
-							if firetouchinterest then
-								pcall(function()
-									firetouchinterest(hrp, coin, 0)
-									task.wait(0.02)
-									firetouchinterest(hrp, coin, 1)
-								end)
-							end
-							-- segundo toque rápido
-							task.wait(0.05)
-							if firetouchinterest and coin.Parent then
-								pcall(function()
-									firetouchinterest(hrp, coin, 0)
-									firetouchinterest(hrp, coin, 1)
-								end)
-							end
-						end
+		task.wait(0.1)
+		if not AutoFarmCoins or isGrabbingGun then task.wait(0.15) continue end
+		local char = LocalPlayer.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		local hum = char and char:FindFirstChildOfClass("Humanoid")
+		if not hrp or not hum or hum.Health <= 0 then task.wait(0.2) continue end
+		hum.WalkSpeed = FarmSpeed
+		if #farmList == 0 or tick() - farmRefresh > 4 then rebuildFarmList(hrp) end
+		if #farmList == 0 then task.wait(0.3) continue end
+		if farmIndex > #farmList then farmIndex = 1 end
+		local coin = farmList[farmIndex]
+		farmIndex += 1
+		if not coin or not coin.Parent then continue end
+		hum:MoveTo(coin.Position)
+		local t0 = tick()
+		while tick() - t0 < 1.6 and AutoFarmCoins and coin.Parent do
+			if (hrp.Position - coin.Position).Magnitude < 8 then
+				touch(hrp, coin)
+				for _, c2 in ipairs(farmList) do
+					if c2 ~= coin and c2.Parent and (c2.Position - hrp.Position).Magnitude < 9 then
+						touch(hrp, c2)
 					end
 				end
-
-				if not AutoFarmCoins and hum.Parent then
-					hum.WalkSpeed = normalWalkSpeed
-				end
-				isFarming = false
-				task.wait(0.04)
+				break
 			end
-		elseif not AutoFarmCoins then
-			-- restaurar speed si se apagó el farm
-			local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-			if hum and isFarming == false then
-				-- no forzar si el user cambió el slider
-			end
-			task.wait(0.15)
+			task.wait(0.07)
 		end
+		if not AutoFarmCoins then hum.WalkSpeed = normalWalkSpeed end
 	end
 end)
 
--- SILENT
 local function predictPos(part, lead)
 	local vel = Vector3.zero
 	pcall(function() vel = part.AssemblyLinearVelocity end)
-	if vel.Magnitude < 0.5 then
-		local r = part.Parent and part.Parent:FindFirstChild("HumanoidRootPart")
-		if r then pcall(function() vel = r.AssemblyLinearVelocity end) end
-	end
 	return part.Position + vel * lead
 end
 
@@ -412,14 +406,10 @@ local function ShootAtMurderer()
 	if not head or not hrp then return end
 	local gun = char:FindFirstChild("Gun") or (LocalPlayer.Backpack and LocalPlayer.Backpack:FindFirstChild("Gun"))
 	if not gun then return end
-	if gun.Parent == LocalPlayer.Backpack and char:FindFirstChildOfClass("Humanoid") then
-		char.Humanoid:EquipTool(gun)
-		task.wait(0.03)
-	end
+	if gun.Parent == LocalPlayer.Backpack then char.Humanoid:EquipTool(gun) task.wait(0.03) end
 	if not gun:FindFirstChild("Shoot") then return end
 	local dist = (head.Position - hrp.Position).Magnitude
-	local lead = math.clamp(dist / 90, 0.08, 0.35)
-	local pred = predictPos(head, lead) + Vector3.new(0, 0.3, 0)
+	local pred = predictPos(head, math.clamp(dist / 90, 0.08, 0.35)) + Vector3.new(0, 0.3, 0)
 	gun.Shoot:FireServer(CFrame.new(hrp.Position, pred), CFrame.new(pred))
 end
 
@@ -436,7 +426,7 @@ end
 if LocalPlayer.Character then SetupSilentAim(LocalPlayer.Character) end
 LocalPlayer.CharacterAdded:Connect(function(c)
 	SetupSilentAim(c)
-	task.wait(0.5)
+	task.wait(0.4)
 	if InvisibleEnabled then SetGhostState(true) end
 end)
 
@@ -445,12 +435,12 @@ task.spawn(function()
 		RunService.RenderStepped:Wait()
 		if Flying and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
 			local hrp, d = LocalPlayer.Character.HumanoidRootPart, Vector3.zero
-			if UserInputService:IsKeyDown(Enum.KeyCode.W) then d = d + camera.CFrame.LookVector end
-			if UserInputService:IsKeyDown(Enum.KeyCode.S) then d = d - camera.CFrame.LookVector end
-			if UserInputService:IsKeyDown(Enum.KeyCode.A) then d = d - camera.CFrame.RightVector end
-			if UserInputService:IsKeyDown(Enum.KeyCode.D) then d = d + camera.CFrame.RightVector end
-			if UserInputService:IsKeyDown(Enum.KeyCode.Space) then d = d + Vector3.new(0, 1, 0) end
-			if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then d = d - Vector3.new(0, 1, 0) end
+			if UserInputService:IsKeyDown(Enum.KeyCode.W) then d += camera.CFrame.LookVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.S) then d -= camera.CFrame.LookVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.A) then d -= camera.CFrame.RightVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.D) then d += camera.CFrame.RightVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.Space) then d += Vector3.new(0, 1, 0) end
+			if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then d -= Vector3.new(0, 1, 0) end
 			hrp.AssemblyLinearVelocity = d * FlySpeed
 		end
 	end
@@ -531,7 +521,9 @@ RunService.RenderStepped:Connect(function()
 			GunHighlight:Destroy()
 			GunHighlight = nil
 		end
-		if AutoGrabGunEnabled and not isGrabbingGun then SafeGrabGun() end
+		if AutoGrabGunEnabled and not isGrabbingGun and not hasGunAlready() then
+			task.defer(SafeGrabGun)
+		end
 	elseif GunHighlight then
 		GunHighlight:Destroy()
 		GunHighlight = nil
@@ -580,21 +572,50 @@ UserInputService.JumpRequest:Connect(function()
 	end
 end)
 
--- UI
-local TabHome = Window:CreateTab("Home", 4483362458)
-TabHome:CreateParagraph({ Title = "KAISEN X — MM2", Content = "created by KAISEN" })
-TabHome:CreateButton({ Name = "Copy Discord", Callback = function() pcall(function() if setclipboard then setclipboard(DISCORD_LINK) end end) end })
-TabHome:CreateButton({ Name = "Copy TikTok", Callback = function() pcall(function() if setclipboard then setclipboard(TIKTOK_USER) end end) end })
+-- ===== UI (con idioma) =====
+local TabHome = Window:CreateTab(L("home"), 4483362458)
+TabHome:CreateParagraph({ Title = L("title"), Content = "created by KAISEN" })
+TabHome:CreateDropdown({
+	Name = L("lang"),
+	Options = { "ES", "EN" },
+	CurrentOption = { Lang },
+	Flag = "Lang",
+	Callback = function(o)
+		local v = type(o) == "table" and o[1] or o
+		Lang = v
+		if getgenv then getgenv().KAISEN_LANG = v end
+		pcall(function()
+			Rayfield:Notify({ Title = "KAISEN X", Content = L("langSaved"), Duration = 4 })
+		end)
+	end,
+})
+TabHome:CreateButton({ Name = L("copyDiscord"), Callback = function() pcall(function() if setclipboard then setclipboard(DISCORD_LINK) end end) end })
+TabHome:CreateButton({ Name = L("copyTikTok"), Callback = function() pcall(function() if setclipboard then setclipboard(TIKTOK_USER) end end) end })
 
-local TabCombat = Window:CreateTab("Combat", 4483362458)
-TabCombat:CreateToggle({ Name = "Kill All", CurrentValue = false, Flag = "KillAll", Callback = function(v) KillAllActive = v end })
-TabCombat:CreateToggle({ Name = "Sheriff Silent Aim", CurrentValue = false, Flag = "Silent", Callback = function(v) SilentAimEnabled = v end })
-TabCombat:CreateButton({ Name = "Grab Gun", Callback = function() SafeGrabGun() end })
-TabCombat:CreateToggle({ Name = "Auto-Grab Gun", CurrentValue = false, Flag = "AutoGun", Callback = function(v) AutoGrabGunEnabled = v end })
-TabCombat:CreateButton({ Name = "Fling Murderer", Callback = function() local m = GetMurderer() if m then FlingPlayer(m) end end })
-TabCombat:CreateButton({ Name = "Fling Sheriff", Callback = function() local s = GetSheriff() if s then FlingPlayer(s) end end })
+local TabCombat = Window:CreateTab(L("combat"), 4483362458)
+TabCombat:CreateToggle({ Name = L("killAll"), CurrentValue = false, Flag = "KillAll", Callback = function(v) KillAllActive = v end })
+TabCombat:CreateToggle({ Name = L("silent"), CurrentValue = false, Flag = "Silent", Callback = function(v) SilentAimEnabled = v end })
+TabCombat:CreateButton({ Name = L("grabGun"), Callback = function() SafeGrabGun() end })
+TabCombat:CreateToggle({ Name = L("autoGrab"), CurrentValue = false, Flag = "AutoGun", Callback = function(v) AutoGrabGunEnabled = v end })
+TabCombat:CreateButton({ Name = L("flingM"), Callback = function() local m = GetMurderer() if m then FlingPlayer(m) end end })
+TabCombat:CreateButton({ Name = L("flingS"), Callback = function() local s = GetSheriff() if s then FlingPlayer(s) end end })
+TabCombat:CreateButton({ Name = L("flingAll"), Callback = function() FlingAll() end })
+TabCombat:CreateDropdown({
+	Name = L("flingTarget"),
+	Options = playerNames(),
+	CurrentOption = { playerNames()[1] },
+	Flag = "FlingTarget",
+	Callback = function(o) FlingTargetName = type(o) == "table" and o[1] or o end,
+})
 TabCombat:CreateButton({
-	Name = "Reveal Murderer",
+	Name = L("flingSel"),
+	Callback = function()
+		local p = findPlayer(FlingTargetName)
+		if p then FlingPlayer(p) end
+	end,
+})
+TabCombat:CreateButton({
+	Name = L("reveal"),
 	Callback = function()
 		local m = GetMurderer()
 		if m then
@@ -612,45 +633,28 @@ TabCombat:CreateButton({
 	end,
 })
 
-local TabFarm = Window:CreateTab("Farming", 4483362458)
-TabFarm:CreateParagraph({
-	Title = "Farm rápido",
-	Content = "Pathfinding + raycast (no atraviesa paredes). Solo monedas reales. Speed solo al farmear.",
-})
+local TabFarm = Window:CreateTab(L("farm"), 4483362458)
 TabFarm:CreateToggle({
-	Name = "Auto-Farm Coins",
+	Name = L("autoFarm"),
 	CurrentValue = false,
 	Flag = "Farm",
 	Callback = function(v)
 		AutoFarmCoins = v
+		farmList = {}
 		if not v then
 			local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
 			if hum then hum.WalkSpeed = normalWalkSpeed end
 		end
 	end,
 })
-TabFarm:CreateSlider({
-	Name = "Farm Speed",
-	Range = { 20, 40 },
-	Increment = 1,
-	CurrentValue = 28,
-	Flag = "FarmSpeed",
-	Callback = function(v) FarmSpeed = v end,
-})
-TabFarm:CreateSlider({
-	Name = "Rango",
-	Range = { 15, 50 },
-	Increment = 1,
-	CurrentValue = 35,
-	Flag = "FarmRange",
-	Callback = function(v) FarmRange = v end,
-})
+TabFarm:CreateSlider({ Name = L("farmSpeed"), Range = { 20, 40 }, Increment = 1, CurrentValue = 28, Flag = "FarmSpeed", Callback = function(v) FarmSpeed = v end })
+TabFarm:CreateSlider({ Name = L("farmRange"), Range = { 20, 70 }, Increment = 1, CurrentValue = 50, Flag = "FarmRange", Callback = function(v) FarmRange = v end })
 
-local TabVisual = Window:CreateTab("Visuals", 4483362458)
-TabVisual:CreateToggle({ Name = "Role ESP", CurrentValue = false, Flag = "ESP", Callback = function(v) ESP_Enabled = v end })
-TabVisual:CreateToggle({ Name = "Gun ESP", CurrentValue = false, Flag = "GunESP", Callback = function(v) GunESP_Enabled = v end })
+local TabVisual = Window:CreateTab(L("visuals"), 4483362458)
+TabVisual:CreateToggle({ Name = L("roleEsp"), CurrentValue = false, Flag = "ESP", Callback = function(v) ESP_Enabled = v end })
+TabVisual:CreateToggle({ Name = L("gunEsp"), CurrentValue = false, Flag = "GunESP", Callback = function(v) GunESP_Enabled = v end })
 TabVisual:CreateToggle({
-	Name = "Fullbright",
+	Name = L("fullbright"),
 	CurrentValue = false,
 	Flag = "FB",
 	Callback = function(v)
@@ -659,7 +663,7 @@ TabVisual:CreateToggle({
 	end,
 })
 TabVisual:CreateToggle({
-	Name = "X-Ray",
+	Name = L("xray"),
 	CurrentValue = false,
 	Flag = "Xray",
 	Callback = function(state)
@@ -671,19 +675,19 @@ TabVisual:CreateToggle({
 	end,
 })
 
-local TabShaders = Window:CreateTab("Shaders", 4483362458)
+local TabShaders = Window:CreateTab(L("shaders"), 4483362458)
 TabShaders:CreateButton({ Name = "Noir", Callback = Shader_Noir })
 TabShaders:CreateButton({ Name = "Warm Film", Callback = Shader_WarmFilm })
 TabShaders:CreateButton({ Name = "Neon Rain", Callback = Shader_NeonRain })
 TabShaders:CreateButton({ Name = "Clean HQ", Callback = Shader_CleanHQ })
 TabShaders:CreateButton({ Name = "Reset", Callback = Shader_Reset })
 
-local TabPlayer = Window:CreateTab("Player", 4483362458)
-TabPlayer:CreateToggle({ Name = "Anti-Fling", CurrentValue = true, Flag = "AntiFling", Callback = function(v) AntiFlingEnabled = v end })
-TabPlayer:CreateToggle({ Name = "Ghost Mode", CurrentValue = false, Flag = "Ghost", Callback = function(v) SetGhostState(v) end })
-TabPlayer:CreateToggle({ Name = "Godmode", CurrentValue = false, Flag = "God", Callback = function(v) GodmodeEnabled = v end })
+local TabPlayer = Window:CreateTab(L("player"), 4483362458)
+TabPlayer:CreateToggle({ Name = L("antiFling"), CurrentValue = true, Flag = "AntiFling", Callback = function(v) AntiFlingEnabled = v end })
+TabPlayer:CreateToggle({ Name = L("ghost"), CurrentValue = false, Flag = "Ghost", Callback = function(v) SetGhostState(v) end })
+TabPlayer:CreateToggle({ Name = L("godmode"), CurrentValue = false, Flag = "God", Callback = function(v) GodmodeEnabled = v end })
 TabPlayer:CreateSlider({
-	Name = "WalkSpeed", Range = { 16, 120 }, Increment = 1, CurrentValue = 16, Flag = "WS",
+	Name = L("walkSpeed"), Range = { 16, 120 }, Increment = 1, CurrentValue = 16, Flag = "WS",
 	Callback = function(v)
 		normalWalkSpeed = v
 		if not AutoFarmCoins then
@@ -693,19 +697,19 @@ TabPlayer:CreateSlider({
 	end,
 })
 TabPlayer:CreateSlider({
-	Name = "JumpPower", Range = { 50, 200 }, Increment = 1, CurrentValue = 50, Flag = "JP",
+	Name = L("jumpPower"), Range = { 50, 200 }, Increment = 1, CurrentValue = 50, Flag = "JP",
 	Callback = function(v)
 		local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
 		if h then h.JumpPower = v end
 	end,
 })
-TabPlayer:CreateToggle({ Name = "Fly", CurrentValue = false, Flag = "Fly", Callback = function(v) Flying = v end })
-TabPlayer:CreateToggle({ Name = "Infinite Jump", CurrentValue = true, Flag = "InfJ", Callback = function(v) InfJumpEnabled = v end })
-TabPlayer:CreateToggle({ Name = "Noclip", CurrentValue = false, Flag = "Noclip", Callback = function(v) Noclip_Enabled = v end })
+TabPlayer:CreateToggle({ Name = L("fly"), CurrentValue = false, Flag = "Fly", Callback = function(v) Flying = v end })
+TabPlayer:CreateToggle({ Name = L("infJump"), CurrentValue = true, Flag = "InfJ", Callback = function(v) InfJumpEnabled = v end })
+TabPlayer:CreateToggle({ Name = L("noclip"), CurrentValue = false, Flag = "Noclip", Callback = function(v) Noclip_Enabled = v end })
 
-local TabExtras = Window:CreateTab("Extras", 4483362458)
-TabExtras:CreateToggle({ Name = "Auto Dodge", CurrentValue = false, Flag = "Dodge", Callback = function(v) AutoDodgeEnabled = v end })
-TabExtras:CreateToggle({ Name = "Fake Lag", CurrentValue = false, Flag = "Lag", Callback = function(v) FakeLagEnabled = v end })
-TabExtras:CreateToggle({ Name = "Anti-AFK", CurrentValue = true, Flag = "AFK", Callback = function(v) AntiAFKEnabled = v end })
-TabExtras:CreateSlider({ Name = "FOV", Range = { 70, 120 }, Increment = 1, CurrentValue = 70, Flag = "FOV", Callback = function(v) camera.FieldOfView = v end })
-TabExtras:CreateButton({ Name = "Rejoin", Callback = function() TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer) end })
+local TabExtras = Window:CreateTab(L("extras"), 4483362458)
+TabExtras:CreateToggle({ Name = L("autoDodge"), CurrentValue = false, Flag = "Dodge", Callback = function(v) AutoDodgeEnabled = v end })
+TabExtras:CreateToggle({ Name = L("fakeLag"), CurrentValue = false, Flag = "Lag", Callback = function(v) FakeLagEnabled = v end })
+TabExtras:CreateToggle({ Name = L("antiAfk"), CurrentValue = true, Flag = "AFK", Callback = function(v) AntiAFKEnabled = v end })
+TabExtras:CreateSlider({ Name = L("fov"), Range = { 70, 120 }, Increment = 1, CurrentValue = 70, Flag = "FOV", Callback = function(v) camera.FieldOfView = v end })
+TabExtras:CreateButton({ Name = L("rejoin"), Callback = function() TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer) end })
