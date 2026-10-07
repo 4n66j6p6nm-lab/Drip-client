@@ -1,61 +1,62 @@
 const express = require('express');
-const axios = require('axios');
-const app = express();
+const cors = require('cors');
+const sharp = require('sharp');
 
+const app = express();
+app.use(cors());
 app.use(express.json());
 
-// Tu Webhook de Discord configurado
-const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1549532747075420172/MEX-ygtRDtvT7dOANziKBDoFZZelAVGIaQPcCvb_1tsKl_M_W5ahJepoMfTtpuu21ICE';
+// Endpoint para procesar la imagen y convertirla a píxeles
+app.get('/autodraw', async (req, res) => {
+    const imageUrl = req.query.url;
+    // Puedes definir un tamaño estándar acorde a tu canvas, ej: 64x64
+    const width = parseInt(req.query.width) || 64;
+    const height = parseInt(req.query.height) || 64;
 
-// Sistema de Heartbeat para contador de usuarios activos
-const onlineUsers = new Map();
-
-setInterval(() => {
-    const now = Date.now();
-    for (const [userId, lastSeen] of onlineUsers.entries()) {
-        if (now - lastSeen > 30000) {
-            onlineUsers.delete(userId);
-        }
+    if (!imageUrl) {
+        return res.status(400).json({ error: 'Falta el parámetro "url"' });
     }
-}, 10000);
-
-app.post('/api/heartbeat', (req, res) => {
-    const { userId } = req.body;
-    if (userId) {
-        onlineUsers.set(userId, Date.now());
-    }
-    res.json({ success: true, onlineCount: onlineUsers.size });
-});
-
-// Endpoint de Logs (Registro en consola + Webhook a Discord)
-app.post("/api/log", async (req, res) => {
-    const { username, userId, executor } = req.body || {};
-    
-    // Imprime en la consola de Render
-    console.log("[EXEC]", username, userId, executor);
-
-    // Mensaje formateado para Discord
-    const embed = {
-        title: "🚀 Nueva Ejecución Registrada",
-        color: 0x3498db,
-        fields: [
-            { name: "Usuario", value: username || "Desconocido", inline: true },
-            { name: "User ID", value: String(userId || "0"), inline: true },
-            { name: "Executor", value: executor || "Desconocido", inline: true }
-        ],
-        timestamp: new Date().toISOString()
-    };
 
     try {
-        await axios.post(DISCORD_WEBHOOK_URL, { embeds: [embed] });
-        res.json({ status: "ok" });
+        // 1. Descargar y procesar la imagen con Sharp
+        const response = await fetch(imageUrl);
+        if (!response.ok) throw new Error('No se pudo descargar la imagen');
+        
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        // Redimensionar y extraer los canales en bruto (Raw RGBA)
+        const { data, info } = await sharp(buffer)
+            .resize(width, height, { fit: 'fill' })
+            .ensureAlpha() // Asegurar canal alfa (RGBA)
+            .raw()
+            .toBuffer({ resolveWithObject: true });
+
+        // 2. Opcional: Optimizar la estructura para Luau (o enviarla compacta)
+        // Aquí puedes enviar un array plano o comprimido para ahorrar datos
+        const pixels = [];
+        for (let i = 0; i < data.length; i += 4) {
+            pixels.push({
+                r: data[i],
+                g: data[i + 1],
+                b: data[i + 2],
+                a: data[i + 3]
+            });
+        }
+
+        res.json({
+            width: info.width,
+            height: info.height,
+            pixels: pixels
+        });
+
     } catch (error) {
-        console.error("Error al enviar a Discord:", error.message);
-        res.status(500).json({ status: "error", message: error.message });
+        console.error(error);
+        res.status(500).json({ error: 'Error al procesar la imagen', details: error.message });
     }
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Servidor iniciado en el puerto ${PORT}`);
+    console.log(`Servidor de Auto-Draw corriendo en el puerto ${PORT}`);
 });
