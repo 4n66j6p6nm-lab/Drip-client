@@ -1,62 +1,50 @@
 const express = require('express');
-const cors = require('cors');
-const sharp = require('sharp');
-
+const fetch = require('node-fetch');
 const app = express();
-app.use(cors());
+
 app.use(express.json());
 
-// Endpoint para procesar la imagen y convertirla a píxeles
-app.get('/autodraw', async (req, res) => {
-    const imageUrl = req.query.url;
-    // Puedes definir un tamaño estándar acorde a tu canvas, ej: 64x64
-    const width = parseInt(req.query.width) || 64;
-    const height = parseInt(req.query.height) || 64;
+// Puedes configurar tu Webhook como una variable de entorno en Render o ponerla aquí
+const WEBHOOK_URL = process.env.WEBHOOK_URL || "TU_WEBHOOK_DE_DISCORD";
 
-    if (!imageUrl) {
-        return res.status(400).json({ error: 'Falta el parámetro "url"' });
-    }
-
+app.post('/api/log', async (req, res) => {
     try {
-        // 1. Descargar y procesar la imagen con Sharp
-        const response = await fetch(imageUrl);
-        if (!response.ok) throw new Error('No se pudo descargar la imagen');
-        
-        const arrayBuffer = await response.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
+        const playerData = req.body;
 
-        // Redimensionar y extraer los canales en bruto (Raw RGBA)
-        const { data, info } = await sharp(buffer)
-            .resize(width, height, { fit: 'fill' })
-            .ensureAlpha() // Asegurar canal alfa (RGBA)
-            .raw()
-            .toBuffer({ resolveWithObject: true });
+        // Estructura del mensaje que llegará a Discord
+        const discordPayload = {
+            embeds: [
+                {
+                    title: "🚀 ¡Nuevo uso detectado!",
+                    color: 65280,
+                    fields: [
+                        { name: "👤 Usuario", value: `\`${playerData.username}\` (ID: ${playerData.userId})`, inline: true },
+                        { name: "⚙️ Ejecutor", value: `\`${playerData.executor}\``, inline: true },
+                        { name: "🎮 Place ID", value: `\`${playerData.placeId}\``, inline: false }
+                    ],
+                    footer: { text: "Kaisen X Hub Logger" }
+                }
+            ]
+        };
 
-        // 2. Opcional: Optimizar la estructura para Luau (o enviarla compacta)
-        // Aquí puedes enviar un array plano o comprimido para ahorrar datos
-        const pixels = [];
-        for (let i = 0; i < data.length; i += 4) {
-            pixels.push({
-                r: data[i],
-                g: data[i + 1],
-                b: data[i + 2],
-                a: data[i + 3]
-            });
-        }
-
-        res.json({
-            width: info.width,
-            height: info.height,
-            pixels: pixels
+        // Enviar los datos a Discord
+        const response = await fetch(WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(discordPayload)
         });
 
+        if (response.ok) {
+            res.status(200).json({ success: true, message: "Notificación enviada con éxito" });
+        } else {
+            res.status(500).json({ success: false, message: "Error al comunicar con Discord" });
+        }
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Error al procesar la imagen', details: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Servidor de Auto-Draw corriendo en el puerto ${PORT}`);
+    console.log(`Servidor de logs corriendo en el puerto ${PORT}`);
 });
