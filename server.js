@@ -5,7 +5,7 @@ const app = express();
 app.use(express.json());
 
 // Puedes configurar tu Webhook como una variable de entorno en Render o ponerla aquí
-const WEBHOOK_URL = process.env.WEBHOOK_URL || "TU_WEBHOOK_DE_DISCORD";
+const WEBHOOK_URL = process.env.WEBHOOK_URL || "https://discord.com/api/webhooks/1561259901077159946/F9NXMM2apV_YPqG27Z9NVWf2OgkUS0bvundFuD-quDFajJH6eqaeUVpPX7cEyfK5g7SD";
 
 app.post('/api/log', async (req, res) => {
     try {
