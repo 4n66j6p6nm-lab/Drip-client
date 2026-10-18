@@ -4,13 +4,10 @@ const fetch = require('node-fetch');
 const app = express();
 app.use(express.json());
 
-// Acepta tanto WEBHOOK_URL como DISCORD_WEBHOOK_URL
 const WEBHOOK_URL = process.env.WEBHOOK_URL || process.env.DISCORD_WEBHOOK_URL || "https://discord.com/api/webhooks/1561259901077159946/F9NXMM2apV_YPqG27Z9NVWf2OgkUS0bvundFuD-quDFajJH6eqaeUVpPX7cEyfK5g7SD";
 
-// Almacén de usuarios activos en tiempo real (UserId -> Datos)
 const activeUsers = new Map();
 
-// Cambiado a /online para coincidir con la petición de Roblox
 app.post('/online', async (req, res) => {
     try {
         const {
@@ -20,15 +17,12 @@ app.post('/online', async (req, res) => {
             placeId,
             jobId,
             executor,
-            accountAge,
-            membership,
             scriptVersion,
             isPing
         } = req.body;
 
         if (!userId) return res.status(400).json({ error: "Falta userId" });
 
-        // Guardar o actualizar la presencia del usuario
         activeUsers.set(userId, {
             username: username || "Desconocido",
             displayName: displayName || username || "Desconocido",
@@ -42,7 +36,11 @@ app.post('/online', async (req, res) => {
             return res.status(200).json({ status: "pinged", onlineCount: activeUsers.size });
         }
 
-        const joinLink = `roblox://experiences/start?placeId=${placeId}&gameInstanceId=${jobId}`; const profileLink = `https://www.roblox.com/users/${userId}/profile`;
+        const joinLink = (placeId && jobId) 
+            ? `roblox://experiences/start?placeId=${placeId}&gameInstanceId=${jobId}`
+            : `https://www.roblox.com/games/${placeId || ''}`;
+            
+        const profileLink = `https://www.roblox.com/users/${userId}/profile`;
 
         const embedPayload = {
             embeds: [
@@ -50,7 +48,12 @@ app.post('/online', async (req, res) => {
                     title: "🚀 ¡Ejecución de Script Detectada!",
                     color: 0x5865F2,
                     thumbnail: {
-                        url: `https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=420&height=420&format=png` }, fields: [ { name: "👤 Usuario", value: `[${displayName || username} (@${username})](${profileLink})`,
+                        url: `https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=420&height=420&format=png`
+                    },
+                    fields: [
+                        {
+                            name: "👤 Usuario",
+                            value: `**${displayName \vert{}\vert{} username}**\n(@${username})`,
                             inline: true
                         },
                         {
@@ -64,8 +67,23 @@ app.post('/online', async (req, res) => {
                             inline: true
                         },
                         {
+                            name: "🎮 Place ID",
+                            value: `\`${placeId || "N/A"}\``,
+                            inline: true
+                        },
+                        {
+                            name: "📌 Versión",
+                            value: `\`${scriptVersion || "1.3 - FREE"}\``,
+                            inline: true
+                        },
+                        {
                             name: "🟢 Conectados en Tiempo Real",
                             value: `Actualmente hay **${activeUsers.size}** usuario(s) en línea`,
+                            inline: false
+                        },
+                        {
+                            name: "🔗 Acciones Rápidas",
+                            value: `👉 [**🎮 Unirse al Servidor del Jugador**](${joinLink})\n👉 [**👤 Ver Perfil de Roblox**](${profileLink})`,
                             inline: false
                         }
                     ],
@@ -88,7 +106,6 @@ app.post('/online', async (req, res) => {
     }
 });
 
-// Ruta GET /online para ver la lista en el navegador
 app.get('/online', (req, res) => {
     const now = Date.now();
     for (const [id, user] of activeUsers.entries()) {
