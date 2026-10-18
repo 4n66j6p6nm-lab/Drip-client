@@ -4,9 +4,13 @@ const fetch = require('node-fetch');
 const app = express();
 app.use(express.json());
 
-// Reemplaza esto con tu webhook o usa process.env.DISCORD_WEBHOOK_URL en Render
 const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || "https://discord.com/api/webhooks/1561259901077159946/F9NXMM2apV_YPqG27Z9NVWf2OgkUS0bvundFuD-quDFajJH6eqaeUVpPX7cEyfK5g7SD";
 
+// Contador y lista de usuarios activos recientes
+let totalExecutions = 0;
+const activeUsers = new Set();
+
+// Endpoint para recibir los logs desde Roblox
 app.post('/log', async (req, res) => {
     try {
         const {
@@ -21,16 +25,20 @@ app.post('/log', async (req, res) => {
             scriptVersion
         } = req.body;
 
-        // Enlace para unirse al servidor mediante roblox://
+        // Actualizar estadísticas
+        totalExecutions++;
+        if (userId) {
+            activeUsers.add(userId);
+        }
+
         const joinLink = `roblox://experiences/start?placeId=${placeId}&gameInstanceId=${jobId}`;
         const profileLink = `https://www.roblox.com/users/${userId}/profile`;
 
-        // Construcción del Embed para Discord
         const embedPayload = {
             embeds: [
                 {
                     title: "🚀 ¡Ejecución de Script Detectada!",
-                    color: 0x5865F2, // Azul Blurple de Discord
+                    color: 0x5865F2,
                     thumbnail: {
                         url: `https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=420&height=420&format=png`
                     },
@@ -51,33 +59,13 @@ app.post('/log', async (req, res) => {
                             inline: true
                         },
                         {
-                            name: "📅 Antigüedad Cuenta",
-                            value: `${accountAge || 0} días`,
-                            inline: true
-                        },
-                        {
-                            name: "💎 Suscripción",
-                            value: `${membership || "None"}`,
-                            inline: true
-                        },
-                        {
-                            name: "📌 Versión Script",
-                            value: `\`${scriptVersion || "v1.0"}\``,
-                            inline: true
-                        },
-                        {
-                            name: "🎮 Place ID",
-                            value: `\`${placeId}\``,
-                            inline: true
-                        },
-                        {
-                            name: "🔗 Job ID (Servidor)",
-                            value: `\`\`\`${jobId}\`\`\``,
+                            name: "📊 Estadísticas Globales",
+                            value: `Total de ejecuciones: **${totalExecutions}** | Usuarios únicos: **${activeUsers.size}**`,
                             inline: false
                         },
                         {
                             name: "🚀 Unirse al Servidor",
-                            value: `[👉 Haz clic aquí para unirte al juego](${joinLink})`,
+                            value: `[Haz clic aquí para unirte](${joinLink})`,
                             inline: false
                         }
                     ],
@@ -89,18 +77,18 @@ app.post('/log', async (req, res) => {
             ],
             components: [
                 {
-                    type: 1, // ActionRow
+                    type: 1,
                     components: [
                         {
-                            type: 2, // Button
-                            style: 5, // Link Button
+                            type: 2,
+                            style: 5,
                             label: "Unirse al Jugador",
                             url: joinLink
                         },
                         {
-                            type: 2, // Button
-                            style: 5, // Link Button
-                            label: "Ver Perfil de Roblox",
+                            type: 2,
+                            style: 5,
+                            label: "Ver Perfil",
                             url: profileLink
                         }
                     ]
@@ -108,22 +96,30 @@ app.post('/log', async (req, res) => {
             ]
         };
 
-        // Enviar al Webhook de Discord
-        const response = await fetch(WEBHOOK_URL, {
+        await fetch(WEBHOOK_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(embedPayload)
         });
 
-        if (response.ok) {
-            return res.status(200).json({ status: "success", message: "Log enviado correctamente" });
-        } else {
-            const errText = await response.text();
-            return res.status(500).json({ status: "error", details: errText });
-        }
+        return res.status(200).json({ status: "success", totalExecutions, uniqueUsers: activeUsers.size });
     } catch (error) {
         return res.status(500).json({ status: "error", message: error.message });
     }
+});
+
+// Endpoint visual para ver cuántas personas lo usan abriendo la URL en el navegador
+app.get('/stats', (req, res) => {
+    res.send(`
+        <html>
+            <head><title>Estadísticas del Script</title></head>
+            <body style="font-family: Arial; text-align: center; margin-top: 50px; background: #121212; color: #fff;">
+                <h1>📊 Estadísticas de tu Script en Tiempo Real</h1>
+                <p>Total de ejecuciones: <strong>${totalExecutions}</strong></p>
+                <p>Usuarios únicos (User IDs): <strong>${activeUsers.size}</strong></p>
+            </body>
+        </html>
+    `);
 });
 
 const PORT = process.env.PORT || 3000;
