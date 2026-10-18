@@ -4,6 +4,11 @@ const app = express();
 
 app.use(express.json());
 
+// Ruta para verificar desde el navegador que el servidor está en línea
+app.get('/online', (req, res) => {
+    res.status(200).json({ success: true, message: "El servidor está en línea" });
+});
+
 // Puedes configurar tu Webhook como una variable de entorno en Render o ponerla aquí
 const WEBHOOK_URL = process.env.WEBHOOK_URL || "https://discord.com/api/webhooks/1561259901077159946/F9NXMM2apV_YPqG27Z9NVWf2OgkUS0bvundFuD-quDFajJH6eqaeUVpPX7cEyfK5g7SD";
 
