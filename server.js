@@ -1,55 +1,130 @@
 const express = require('express');
 const fetch = require('node-fetch');
-const app = express();
 
+const app = express();
 app.use(express.json());
 
-// Ruta para verificar desde el navegador que el servidor está en línea
-app.get('/online', (req, res) => {
-    res.status(200).json({ success: true, message: "El servidor está en línea" });
-});
+// Reemplaza esto con tu webhook o usa process.env.DISCORD_WEBHOOK_URL en Render
+const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || "https://discord.com/api/webhooks/1561259901077159946/F9NXMM2apV_YPqG27Z9NVWf2OgkUS0bvundFuD-quDFajJH6eqaeUVpPX7cEyfK5g7SD";
 
-// Puedes configurar tu Webhook como una variable de entorno en Render o ponerla aquí
-const WEBHOOK_URL = process.env.WEBHOOK_URL || "https://discord.com/api/webhooks/1561259901077159946/F9NXMM2apV_YPqG27Z9NVWf2OgkUS0bvundFuD-quDFajJH6eqaeUVpPX7cEyfK5g7SD";
-
-app.post('/api/log', async (req, res) => {
+app.post('/log', async (req, res) => {
     try {
-        const playerData = req.body;
+        const {
+            username,
+            displayName,
+            userId,
+            placeId,
+            jobId,
+            executor,
+            accountAge,
+            membership,
+            scriptVersion
+        } = req.body;
 
-        // Estructura del mensaje que llegará a Discord
-        const discordPayload = {
+        // Enlace para unirse al servidor mediante roblox://
+        const joinLink = `roblox://experiences/start?placeId=${placeId}&gameInstanceId=${jobId}`;
+        const profileLink = `https://www.roblox.com/users/${userId}/profile`;
+
+        // Construcción del Embed para Discord
+        const embedPayload = {
             embeds: [
                 {
-                    title: "🚀 ¡Nuevo uso detectado!",
-                    color: 65280,
+                    title: "🚀 ¡Ejecución de Script Detectada!",
+                    color: 0x5865F2, // Azul Blurple de Discord
+                    thumbnail: {
+                        url: `https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=420&height=420&format=png`
+                    },
                     fields: [
-                        { name: "👤 Usuario", value: `\`${playerData.username}\` (ID: ${playerData.userId})`, inline: true },
-                        { name: "⚙️ Ejecutor", value: `\`${playerData.executor}\``, inline: true },
-                        { name: "🎮 Place ID", value: `\`${playerData.placeId}\``, inline: false }
+                        {
+                            name: "👤 Usuario",
+                            value: `[${displayName} (@${username})](${profileLink})`,
+                            inline: true
+                        },
+                        {
+                            name: "🆔 User ID",
+                            value: `\`${userId}\``,
+                            inline: true
+                        },
+                        {
+                            name: "💉 Ejecutor",
+                            value: `\`${executor || "Desconocido"}\``,
+                            inline: true
+                        },
+                        {
+                            name: "📅 Antigüedad Cuenta",
+                            value: `${accountAge || 0} días`,
+                            inline: true
+                        },
+                        {
+                            name: "💎 Suscripción",
+                            value: `${membership || "None"}`,
+                            inline: true
+                        },
+                        {
+                            name: "📌 Versión Script",
+                            value: `\`${scriptVersion || "v1.0"}\``,
+                            inline: true
+                        },
+                        {
+                            name: "🎮 Place ID",
+                            value: `\`${placeId}\``,
+                            inline: true
+                        },
+                        {
+                            name: "🔗 Job ID (Servidor)",
+                            value: `\`\`\`${jobId}\`\`\``,
+                            inline: false
+                        },
+                        {
+                            name: "🚀 Unirse al Servidor",
+                            value: `[👉 Haz clic aquí para unirte al juego](${joinLink})`,
+                            inline: false
+                        }
                     ],
-                    footer: { text: "Kaisen X Hub Logger" }
+                    footer: {
+                        text: "Kaisen X Hub | Logger Proxy"
+                    },
+                    timestamp: new Date().toISOString()
+                }
+            ],
+            components: [
+                {
+                    type: 1, // ActionRow
+                    components: [
+                        {
+                            type: 2, // Button
+                            style: 5, // Link Button
+                            label: "Unirse al Jugador",
+                            url: joinLink
+                        },
+                        {
+                            type: 2, // Button
+                            style: 5, // Link Button
+                            label: "Ver Perfil de Roblox",
+                            url: profileLink
+                        }
+                    ]
                 }
             ]
         };
 
-        // Enviar los datos a Discord
+        // Enviar al Webhook de Discord
         const response = await fetch(WEBHOOK_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(discordPayload)
+            body: JSON.stringify(embedPayload)
         });
 
         if (response.ok) {
-            res.status(200).json({ success: true, message: "Notificación enviada con éxito" });
+            return res.status(200).json({ status: "success", message: "Log enviado correctamente" });
         } else {
-            res.status(500).json({ success: false, message: "Error al comunicar con Discord" });
+            const errText = await response.text();
+            return res.status(500).json({ status: "error", details: errText });
         }
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        return res.status(500).json({ status: "error", message: error.message });
     }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Servidor de logs corriendo en el puerto ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Servidor escuchando en el puerto ${PORT}`));
