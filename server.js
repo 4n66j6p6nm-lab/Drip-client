@@ -8,6 +8,25 @@ const WEBHOOK_URL = process.env.WEBHOOK_URL || process.env.DISCORD_WEBHOOK_URL |
 
 const activeUsers = new Map();
 
+// Función auxiliar para obtener el nombre del juego desde la API de Roblox
+async function getGameName(placeId) {
+    if (!placeId) return "Juego Desconocido";
+    try {
+        const res = await fetch(`https://apis.roblox.com/universes/v1/places/${placeId}/universe`);
+        const data = await res.json();
+        if (data && data.universeId) {
+            const gameRes = await fetch(`https://games.roblox.com/v1/games?universeIds=${data.universeId}`);
+            const gameData = await gameRes.json();
+            if (gameData && gameData.data && gameData.data[0]) {
+                return gameData.data[0].name;
+            }
+        }
+    } catch (e) {
+        console.error("No se pudo obtener el nombre del juego:", e.message);
+    }
+    return `Place ID: ${placeId}`;
+}
+
 app.post('/online', async (req, res) => {
     try {
         const {
@@ -23,11 +42,15 @@ app.post('/online', async (req, res) => {
 
         if (!userId) return res.status(400).json({ error: "Falta userId" });
 
+        // Obtener el nombre real del juego
+        const gameName = await getGameName(placeId);
+
         activeUsers.set(userId, {
             username: username || "Desconocido",
             displayName: displayName || username || "Desconocido",
             executor: executor || "Desconocido",
             placeId: placeId || "N/A",
+            gameName: gameName,
             jobId: jobId || "",
             lastSeen: Date.now()
         });
@@ -67,9 +90,9 @@ app.post('/online', async (req, res) => {
                             inline: true
                         },
                         {
-                            name: "🎮 Place ID",
-                            value: `\`${placeId || "N/A"}\``,
-                            inline: true
+                            name: "🎮 Juego",
+                            value: `**${gameName}**\n(\`${placeId || "N/A"}\`)`,
+                            inline: false
                         },
                         {
                             name: "📌 Versión",
@@ -117,9 +140,10 @@ app.get('/online', (req, res) => {
     let userListHtml = '';
     activeUsers.forEach((user) => {
         userListHtml += `
-            <li style="margin-bottom: 10px; background: #222; padding: 10px; border-radius: 6px; list-style: none;">
+            <li style="margin-bottom: 12px; background: #222; padding: 12px; border-radius: 6px; list-style: none;">
                 <strong>${user.displayName}</strong> (@${user.username}) - <em>${user.executor}</em><br>
-                <small>Place ID: ${user.placeId}</small>
+                🎮 Juega: <span style="color: #5865F2; font-weight: bold;">${user.gameName}</span><br>
+                <small style="color: #888;">Place ID: ${user.placeId}</small>
             </li>
         `;
     });
@@ -133,7 +157,7 @@ app.get('/online', (req, res) => {
             <body style="font-family: Arial, sans-serif; background: #121212; color: #fff; text-align: center; padding: 20px;">
                 <h1>🟢 Personas usando tu script ahora mismo</h1>
                 <h2>Total en línea: <span style="color: #00ff66;">${activeUsers.size}</span></h2>
-                <ul style="max-width: 400px; margin: 0 auto; padding: 0; text-align: left;">
+                <ul style="max-width: 450px; margin: 0 auto; padding: 0; text-align: left;">
                     ${userListHtml || '<p style="text-align:center;">No hay nadie usando el script en este momento.</p>'}
                 </ul>
             </body>
