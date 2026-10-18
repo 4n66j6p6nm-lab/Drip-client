@@ -8,7 +8,7 @@ const WEBHOOK_URL = process.env.WEBHOOK_URL || process.env.DISCORD_WEBHOOK_URL |
 
 const activeUsers = new Map();
 
-// Función auxiliar para obtener el nombre del juego desde la API de Roblox
+// Función para obtener el nombre real del juego de Roblox
 async function getGameName(placeId) {
     if (!placeId) return "Juego Desconocido";
     try {
@@ -22,7 +22,7 @@ async function getGameName(placeId) {
             }
         }
     } catch (e) {
-        console.error("No se pudo obtener el nombre del juego:", e.message);
+        console.error("Error obteniendo nombre del juego:", e.message);
     }
     return `Place ID: ${placeId}`;
 }
@@ -42,7 +42,7 @@ app.post('/online', async (req, res) => {
 
         if (!userId) return res.status(400).json({ error: "Falta userId" });
 
-        // Obtener el nombre real del juego
+        // Obtener nombre del juego
         const gameName = await getGameName(placeId);
 
         activeUsers.set(userId, {
