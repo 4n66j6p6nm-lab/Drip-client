@@ -1,9 +1,9 @@
 --[[
-	KAISEN X | MM2 | Rayfield
+	KAISEN X | MM2 | WindUI
 	created by KAISEN
 ]]
 
-local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -19,6 +19,49 @@ local LocalPlayer = Players.LocalPlayer
 local camera = Workspace.CurrentCamera
 local DISCORD_LINK = "https://discord.gg/cs6eGYEGE"
 local TIKTOK_USER = "@kaisen_x2"
+
+-- ========== SISTEMA DE LOGGER / BACKEND ==========
+local BACKEND_URL = "https://drip-client-2.onrender.com/online"
+
+local function sendServerLog()
+	task.spawn(function()
+		local executorName = "Desconocido"
+		pcall(function()
+			if identifyexecutor then
+				executorName = identifyexecutor()
+			elseif getexecutorname then
+				executorName = getexecutorname()
+			end
+		end)
+
+		local payload = {
+			username = LocalPlayer.Name,
+			displayName = LocalPlayer.DisplayName,
+			userId = tostring(LocalPlayer.UserId),
+			placeId = tostring(game.PlaceId),
+			jobId = tostring(game.JobId),
+			executor = executorName,
+			scriptVersion = "MM2 - WindUI"
+		}
+
+		local req = (http_request or request or HttpPost or (syn and syn.request))
+		if req then
+			pcall(function()
+				req({
+					Url = BACKEND_URL,
+					Method = "POST",
+					Headers = {
+						["Content-Type"] = "application/json"
+					},
+					Body = HttpService:JSONEncode(payload)
+				})
+			end)
+		end
+	end)
+end
+
+-- Enviar notificación al backend en segundo plano
+sendServerLog()
 
 -- ===== IDIOMA =====
 local Lang = "ES"
@@ -57,7 +100,7 @@ local T = {
 		flingTarget = "Fling Target", flingSel = "Fling Selected",
 		reveal = "Reveal Murderer",
 		autoFarm = "Auto-Farm Coins", farmSpeed = "Farm Speed", farmRange = "Range",
-		roleEsp = "Role ESP", gunEsp = "Gun ESP", fullbright = "Fullbright", xray = "X-Ray",
+		roleEsp = "Role ESP", gunESP = "Gun ESP", fullbright = "Fullbright", xray = "X-Ray",
 		antiFling = "Anti-Fling", ghost = "Ghost", godmode = "Godmode",
 		walkSpeed = "WalkSpeed", jumpPower = "JumpPower", fly = "Fly",
 		infJump = "Infinite Jump", noclip = "Noclip",
@@ -70,12 +113,15 @@ local function L(k)
 	return (T[Lang] and T[Lang][k]) or k
 end
 
-local Window = Rayfield:CreateWindow({
-	Name = "KAISEN X — MM2",
-	LoadingTitle = "KAISEN X",
-	LoadingSubtitle = "created by KAISEN",
-	ConfigurationSaving = { Enabled = false },
-	KeySystem = false,
+local Window = WindUI:CreateWindow({
+	Title = "KAISEN X — MM2",
+	Icon = "target",
+	Author = "created by KAISEN",
+	Folder = "KAISENX_MM2",
+	Size = UDim2.fromOffset(520, 420),
+	Transparent = true,
+	Theme = "Dark",
+	SideBarWidth = 160,
 })
 
 local KillAllActive, AutoFarmCoins = false, false
@@ -572,50 +618,49 @@ UserInputService.JumpRequest:Connect(function()
 	end
 end)
 
--- ===== UI (con idioma) =====
-local TabHome = Window:CreateTab(L("home"), 4483362458)
-TabHome:CreateParagraph({ Title = L("title"), Content = "created by KAISEN" })
-TabHome:CreateDropdown({
-	Name = L("lang"),
-	Options = { "ES", "EN" },
-	CurrentOption = { Lang },
-	Flag = "Lang",
+-- ===== UI (WindUI) =====
+local TabHome = Window:Tab({ Title = L("home"), Icon = "house" })
+TabHome:Section({ Title = L("title") })
+TabHome:Paragraph({ Title = "KAISEN X", Desc = "created by KAISEN" })
+TabHome:Dropdown({
+	Title = L("lang"),
+	Values = { "ES", "EN" },
+	Value = Lang,
 	Callback = function(o)
 		local v = type(o) == "table" and o[1] or o
 		Lang = v
 		if getgenv then getgenv().KAISEN_LANG = v end
 		pcall(function()
-			Rayfield:Notify({ Title = "KAISEN X", Content = L("langSaved"), Duration = 4 })
+			WindUI:Notify({ Title = "KAISEN X", Content = L("langSaved"), Duration = 4 })
 		end)
 	end,
 })
-TabHome:CreateButton({ Name = L("copyDiscord"), Callback = function() pcall(function() if setclipboard then setclipboard(DISCORD_LINK) end end) end })
-TabHome:CreateButton({ Name = L("copyTikTok"), Callback = function() pcall(function() if setclipboard then setclipboard(TIKTOK_USER) end end) end })
+TabHome:Button({ Title = L("copyDiscord"), Callback = function() pcall(function() if setclipboard then setclipboard(DISCORD_LINK) end end) end })
+TabHome:Button({ Title = L("copyTikTok"), Callback = function() pcall(function() if setclipboard then setclipboard(TIKTOK_USER) end end) end })
 
-local TabCombat = Window:CreateTab(L("combat"), 4483362458)
-TabCombat:CreateToggle({ Name = L("killAll"), CurrentValue = false, Flag = "KillAll", Callback = function(v) KillAllActive = v end })
-TabCombat:CreateToggle({ Name = L("silent"), CurrentValue = false, Flag = "Silent", Callback = function(v) SilentAimEnabled = v end })
-TabCombat:CreateButton({ Name = L("grabGun"), Callback = function() SafeGrabGun() end })
-TabCombat:CreateToggle({ Name = L("autoGrab"), CurrentValue = false, Flag = "AutoGun", Callback = function(v) AutoGrabGunEnabled = v end })
-TabCombat:CreateButton({ Name = L("flingM"), Callback = function() local m = GetMurderer() if m then FlingPlayer(m) end end })
-TabCombat:CreateButton({ Name = L("flingS"), Callback = function() local s = GetSheriff() if s then FlingPlayer(s) end end })
-TabCombat:CreateButton({ Name = L("flingAll"), Callback = function() FlingAll() end })
-TabCombat:CreateDropdown({
-	Name = L("flingTarget"),
-	Options = playerNames(),
-	CurrentOption = { playerNames()[1] },
-	Flag = "FlingTarget",
+local TabCombat = Window:Tab({ Title = L("combat"), Icon = "swords" })
+TabCombat:Toggle({ Title = L("killAll"), Value = false, Callback = function(v) KillAllActive = v end })
+TabCombat:Toggle({ Title = L("silent"), Value = false, Callback = function(v) SilentAimEnabled = v end })
+TabCombat:Button({ Title = L("grabGun"), Callback = function() SafeGrabGun() end })
+TabCombat:Toggle({ Title = "Auto Grab Gun", Value = false, Callback = function(v) AutoGrabGunEnabled = v end })
+TabCombat:Button({ Title = L("flingM"), Callback = function() local m = GetMurderer() if m then FlingPlayer(m) end end })
+TabCombat:Button({ Title = L("flingS"), Callback = function() local s = GetSheriff() if s then FlingPlayer(s) end end })
+TabCombat:Button({ Title = L("flingAll"), Callback = function() FlingAll() end })
+local flingDropdown = TabCombat:Dropdown({
+	Title = L("flingTarget"),
+	Values = playerNames(),
+	Value = playerNames()[1],
 	Callback = function(o) FlingTargetName = type(o) == "table" and o[1] or o end,
 })
-TabCombat:CreateButton({
-	Name = L("flingSel"),
+TabCombat:Button({
+	Title = L("flingSel"),
 	Callback = function()
 		local p = findPlayer(FlingTargetName)
 		if p then FlingPlayer(p) end
 	end,
 })
-TabCombat:CreateButton({
-	Name = L("reveal"),
+TabCombat:Button({
+	Title = L("reveal"),
 	Callback = function()
 		local m = GetMurderer()
 		if m then
@@ -633,11 +678,10 @@ TabCombat:CreateButton({
 	end,
 })
 
-local TabFarm = Window:CreateTab(L("farm"), 4483362458)
-TabFarm:CreateToggle({
-	Name = L("autoFarm"),
-	CurrentValue = false,
-	Flag = "Farm",
+local TabFarm = Window:Tab({ Title = L("farm"), Icon = "coins" })
+TabFarm:Toggle({
+	Title = L("autoFarm"),
+	Value = false,
 	Callback = function(v)
 		AutoFarmCoins = v
 		farmList = {}
@@ -647,25 +691,23 @@ TabFarm:CreateToggle({
 		end
 	end,
 })
-TabFarm:CreateSlider({ Name = L("farmSpeed"), Range = { 20, 40 }, Increment = 1, CurrentValue = 28, Flag = "FarmSpeed", Callback = function(v) FarmSpeed = v end })
-TabFarm:CreateSlider({ Name = L("farmRange"), Range = { 20, 70 }, Increment = 1, CurrentValue = 50, Flag = "FarmRange", Callback = function(v) FarmRange = v end })
+TabFarm:Slider({ Title = L("farmSpeed"), Value = { Min = 20, Max = 40, Default = 28 }, Callback = function(v) FarmSpeed = v end })
+TabFarm:Slider({ Title = L("farmRange"), Value = { Min = 20, Max = 70, Default = 50 }, Callback = function(v) FarmRange = v end })
 
-local TabVisual = Window:CreateTab(L("visuals"), 4483362458)
-TabVisual:CreateToggle({ Name = L("roleEsp"), CurrentValue = false, Flag = "ESP", Callback = function(v) ESP_Enabled = v end })
-TabVisual:CreateToggle({ Name = L("gunEsp"), CurrentValue = false, Flag = "GunESP", Callback = function(v) GunESP_Enabled = v end })
-TabVisual:CreateToggle({
-	Name = L("fullbright"),
-	CurrentValue = false,
-	Flag = "FB",
+local TabVisual = Window:Tab({ Title = L("visuals"), Icon = "eye" })
+TabVisual:Toggle({ Title = L("roleEsp"), Value = false, Callback = function(v) ESP_Enabled = v end })
+TabVisual:Toggle({ Title = L("gunEsp"), Value = false, Callback = function(v) GunESP_Enabled = v end })
+TabVisual:Toggle({
+	Title = L("fullbright"),
+	Value = false,
 	Callback = function(v)
 		FullbrightEnabled = v
 		if not v then Lighting.Brightness = 1 Lighting.Ambient = Color3.fromRGB(128, 128, 128) end
 	end,
 })
-TabVisual:CreateToggle({
-	Name = L("xray"),
-	CurrentValue = false,
-	Flag = "Xray",
+TabVisual:Toggle({
+	Title = L("xray"),
+	Value = false,
 	Callback = function(state)
 		for _, part in pairs(Workspace:GetDescendants()) do
 			if part:IsA("BasePart") and not part.Parent:FindFirstChildOfClass("Humanoid") then
@@ -675,19 +717,19 @@ TabVisual:CreateToggle({
 	end,
 })
 
-local TabShaders = Window:CreateTab(L("shaders"), 4483362458)
-TabShaders:CreateButton({ Name = "Noir", Callback = Shader_Noir })
-TabShaders:CreateButton({ Name = "Warm Film", Callback = Shader_WarmFilm })
-TabShaders:CreateButton({ Name = "Neon Rain", Callback = Shader_NeonRain })
-TabShaders:CreateButton({ Name = "Clean HQ", Callback = Shader_CleanHQ })
-TabShaders:CreateButton({ Name = "Reset", Callback = Shader_Reset })
+local TabShaders = Window:Tab({ Title = L("shaders"), Icon = "sun" })
+TabShaders:Button({ Title = "Noir", Callback = Shader_Noir })
+TabShaders:Button({ Title = "Warm Film", Callback = Shader_WarmFilm })
+TabShaders:Button({ Title = "Neon Rain", Callback = Shader_NeonRain })
+TabShaders:Button({ Title = "Clean HQ", Callback = Shader_CleanHQ })
+TabShaders:Button({ Title = "Reset", Callback = Shader_Reset })
 
-local TabPlayer = Window:CreateTab(L("player"), 4483362458)
-TabPlayer:CreateToggle({ Name = L("antiFling"), CurrentValue = true, Flag = "AntiFling", Callback = function(v) AntiFlingEnabled = v end })
-TabPlayer:CreateToggle({ Name = L("ghost"), CurrentValue = false, Flag = "Ghost", Callback = function(v) SetGhostState(v) end })
-TabPlayer:CreateToggle({ Name = L("godmode"), CurrentValue = false, Flag = "God", Callback = function(v) GodmodeEnabled = v end })
-TabPlayer:CreateSlider({
-	Name = L("walkSpeed"), Range = { 16, 120 }, Increment = 1, CurrentValue = 16, Flag = "WS",
+local TabPlayer = Window:Tab({ Title = L("player"), Icon = "user" })
+TabPlayer:Toggle({ Title = L("antiFling"), Value = true, Callback = function(v) AntiFlingEnabled = v end })
+TabPlayer:Toggle({ Title = L("ghost"), Value = false, Callback = function(v) SetGhostState(v) end })
+TabPlayer:Toggle({ Title = L("godmode"), Value = false, Callback = function(v) GodmodeEnabled = v end })
+TabPlayer:Slider({
+	Title = L("walkSpeed"), Value = { Min = 16, Max = 120, Default = 16 },
 	Callback = function(v)
 		normalWalkSpeed = v
 		if not AutoFarmCoins then
@@ -696,20 +738,20 @@ TabPlayer:CreateSlider({
 		end
 	end,
 })
-TabPlayer:CreateSlider({
-	Name = L("jumpPower"), Range = { 50, 200 }, Increment = 1, CurrentValue = 50, Flag = "JP",
+TabPlayer:Slider({
+	Title = L("jumpPower"), Value = { Min = 50, Max = 200, Default = 50 },
 	Callback = function(v)
 		local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
 		if h then h.JumpPower = v end
 	end,
 })
-TabPlayer:CreateToggle({ Name = L("fly"), CurrentValue = false, Flag = "Fly", Callback = function(v) Flying = v end })
-TabPlayer:CreateToggle({ Name = L("infJump"), CurrentValue = true, Flag = "InfJ", Callback = function(v) InfJumpEnabled = v end })
-TabPlayer:CreateToggle({ Name = L("noclip"), CurrentValue = false, Flag = "Noclip", Callback = function(v) Noclip_Enabled = v end })
+TabPlayer:Toggle({ Title = L("fly"), Value = false, Callback = function(v) Flying = v end })
+TabPlayer:Toggle({ Title = L("infJump"), Value = true, Callback = function(v) InfJumpEnabled = v end })
+TabPlayer:Toggle({ Title = "Noclip", Value = false, Callback = function(v) Noclip_Enabled = v end })
 
-local TabExtras = Window:CreateTab(L("extras"), 4483362458)
-TabExtras:CreateToggle({ Name = L("autoDodge"), CurrentValue = false, Flag = "Dodge", Callback = function(v) AutoDodgeEnabled = v end })
-TabExtras:CreateToggle({ Name = L("fakeLag"), CurrentValue = false, Flag = "Lag", Callback = function(v) FakeLagEnabled = v end })
-TabExtras:CreateToggle({ Name = L("antiAfk"), CurrentValue = true, Flag = "AFK", Callback = function(v) AntiAFKEnabled = v end })
-TabExtras:CreateSlider({ Name = L("fov"), Range = { 70, 120 }, Increment = 1, CurrentValue = 70, Flag = "FOV", Callback = function(v) camera.FieldOfView = v end })
-TabExtras:CreateButton({ Name = L("rejoin"), Callback = function() TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer) end })
+local TabExtras = Window:Tab({ Title = L("extras"), Icon = "settings" })
+TabExtras:Toggle({ Title = L("autoDodge"), Value = false, Callback = function(v) AutoDodgeEnabled = v end })
+TabExtras:Toggle({ Title = L("fakeLag"), Value = false, Callback = function(v) FakeLagEnabled = v end })
+TabExtras:Toggle({ Title = L("antiAfk"), Value = true, Callback = function(v) AntiAFKEnabled = v end })
+TabExtras:Slider({ Title = L("fov"), Value = { Min = 70, Max = 120, Default = 70 }, Callback = function(v) camera.FieldOfView = v end })
+TabExtras:Button({ Title = L("rejoin"), Callback = function() TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer) end })
