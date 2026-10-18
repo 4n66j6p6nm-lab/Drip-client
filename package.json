@@ -1,14 +1,12 @@
 {
-  "name": "kaixen-autodraw-backend",
+  "name": "roblox-logger-backend",
   "version": "1.0.0",
-  "description": "Backend para procesamiento de imagenes de Auto-Draw",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.19.2",
-    "sharp": "^0.33.3"
+    "express": "^4.18.2",
+    "node-fetch": "^2.6.9"
   }
 }
