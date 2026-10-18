@@ -1,12 +1,13 @@
 {
   "name": "discord-webhook-logger",
   "version": "1.0.0",
-  "description": "Proxy logger para ejecuciones de scripts en Roblox",
+  "description": "Proxy logger para ejecutar en Render",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
+    "discord.js": "^14.14.0",
     "express": "^4.19.2",
     "node-fetch": "^2.7.0"
   },
