@@ -13,22 +13,22 @@ const client = new Client({
 });
 
 client.once('ready', () => {
-    console.log(`¡Bot conectado como ${client.user.tag}!`);
+    console.log(`Bot conectado como ${client.user.tag}`);
 });
 
 client.on('messageCreate', (message) => {
     if (message.content === '!ping') {
-        message.reply('¡Pong!');
+        message.reply('Pong!');
     }
 });
 
 app.get('/', (req, res) => {
-    res.send('¡El servidor y el bot están funcionando!');
+    res.send('El servidor y el bot están activos.');
 });
 
 app.listen(PORT, () => {
     console.log(`Servidor escuchando en el puerto ${PORT}`);
 });
 
-// Usamos la variable de entorno en lugar de escribir el token directamente
+// Utiliza la variable de entorno process.env.DISCORD_TOKEN (asegúrate de que en Render se llame así, o cámbiala por el nombre que uses)
 client.login(process.env.DISCORD_TOKEN);
