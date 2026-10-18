@@ -4,13 +4,14 @@ const fetch = require('node-fetch');
 const app = express();
 app.use(express.json());
 
-const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || "https://discord.com/api/webhooks/1561259901077159946/F9NXMM2apV_YPqG27Z9NVWf2OgkUS0bvundFuD-quDFajJH6eqaeUVpPX7cEyfK5g7SD";
+// Acepta tanto WEBHOOK_URL como DISCORD_WEBHOOK_URL
+const WEBHOOK_URL = process.env.WEBHOOK_URL || process.env.DISCORD_WEBHOOK_URL || "https://discord.com/api/webhooks/1561259901077159946/F9NXMM2apV_YPqG27Z9NVWf2OgkUS0bvundFuD-quDFajJH6eqaeUVpPX7cEyfK5g7SD";
 
 // Almacén de usuarios activos en tiempo real (UserId -> Datos)
 const activeUsers = new Map();
 
-// Endpoint para recibir la ejecución y pings de vida desde Roblox
-app.post('/log', async (req, res) => {
+// Cambiado a /online para coincidir con la petición de Roblox
+app.post('/online', async (req, res) => {
     try {
         const {
             username,
@@ -22,28 +23,26 @@ app.post('/log', async (req, res) => {
             accountAge,
             membership,
             scriptVersion,
-            isPing // Para distinguir entre la primera ejecución y un ping de mantenimiento
+            isPing
         } = req.body;
 
         if (!userId) return res.status(400).json({ error: "Falta userId" });
 
         // Guardar o actualizar la presencia del usuario
         activeUsers.set(userId, {
-            username,
-            displayName,
+            username: username || "Desconocido",
+            displayName: displayName || username || "Desconocido",
             executor: executor || "Desconocido",
-            placeId,
-            jobId,
+            placeId: placeId || "N/A",
+            jobId: jobId || "",
             lastSeen: Date.now()
         });
 
-        // Si es un ping constante, solo actualizamos la hora sin enviar otro mensaje a Discord
         if (isPing) {
             return res.status(200).json({ status: "pinged", onlineCount: activeUsers.size });
         }
 
-        const joinLink = `roblox://experiences/start?placeId=${placeId}&gameInstanceId=${jobId}`;
-        const profileLink = `https://www.roblox.com/users/${userId}/profile`;
+        const joinLink = `roblox://experiences/start?placeId=${placeId}&gameInstanceId=${jobId}`; const profileLink = `https://www.roblox.com/users/${userId}/profile`;
 
         const embedPayload = {
             embeds: [
@@ -51,12 +50,7 @@ app.post('/log', async (req, res) => {
                     title: "🚀 ¡Ejecución de Script Detectada!",
                     color: 0x5865F2,
                     thumbnail: {
-                        url: `https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=420&height=420&format=png`
-                    },
-                    fields: [
-                        {
-                            name: "👤 Usuario",
-                            value: `[${displayName} (@${username})](${profileLink})`,
+                        url: `https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=420&height=420&format=png` }, fields: [ { name: "👤 Usuario", value: `[${displayName || username} (@${username})](${profileLink})`,
                             inline: true
                         },
                         {
@@ -73,24 +67,10 @@ app.post('/log', async (req, res) => {
                             name: "🟢 Conectados en Tiempo Real",
                             value: `Actualmente hay **${activeUsers.size}** usuario(s) en línea`,
                             inline: false
-                        },
-                        {
-                            name: "🚀 Unirse al Servidor",
-                            value: `[Haz clic aquí para unirte](${joinLink})`,
-                            inline: false
                         }
                     ],
                     footer: { text: "Kaisen X Hub | Logger Proxy" },
                     timestamp: new Date().toISOString()
-                }
-            ],
-            components: [
-                {
-                    type: 1,
-                    components: [
-                        { type: 2, style: 5, label: "Unirse al Jugador", url: joinLink },
-                        { type: 2, style: 5, label: "Ver Perfil", url: profileLink }
-                    ]
                 }
             ]
         };
@@ -103,13 +83,13 @@ app.post('/log', async (req, res) => {
 
         return res.status(200).json({ status: "success", onlineCount: activeUsers.size });
     } catch (error) {
+        console.error("Error procesando webhook:", error);
         return res.status(500).json({ status: "error", message: error.message });
     }
 });
 
-// Ruta /online para ver quiénes están usando el script en tiempo real
+// Ruta GET /online para ver la lista en el navegador
 app.get('/online', (req, res) => {
-    // Limpiar usuarios inactivoc (que no han mandado señal en más de 2 minutos)
     const now = Date.now();
     for (const [id, user] of activeUsers.entries()) {
         if (now - user.lastSeen > 2 * 60 * 1000) {
@@ -118,7 +98,7 @@ app.get('/online', (req, res) => {
     }
 
     let userListHtml = '';
-    activeUsers.forEach((user, id) => {
+    activeUsers.forEach((user) => {
         userListHtml += `
             <li style="margin-bottom: 10px; background: #222; padding: 10px; border-radius: 6px; list-style: none;">
                 <strong>${user.displayName}</strong> (@${user.username}) - <em>${user.executor}</em><br>
@@ -131,7 +111,7 @@ app.get('/online', (req, res) => {
         <html>
             <head>
                 <title>Usuarios en Tiempo Real</title>
-                <meta http-equiv="refresh" content="10"> <!-- Auto recarga cada 10s -->
+                <meta http-equiv="refresh" content="10">
             </head>
             <body style="font-family: Arial, sans-serif; background: #121212; color: #fff; text-align: center; padding: 20px;">
                 <h1>🟢 Personas usando tu script ahora mismo</h1>
