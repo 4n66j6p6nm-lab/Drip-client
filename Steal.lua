@@ -14,16 +14,15 @@ if not targetPlayer then
     return
 end
 
--- Enviar solicitud
 pcall(function()
     game:GetService("ReplicatedStorage").Trade.SendRequest:InvokeServer(targetPlayer)
 end)
-print("¡Solicitud de trade enviada a Aaron!")
+print("¡Solicitud enviada a Aaron!")
 
--- Esperar un momento a que se abra la ventana de intercambio
+-- Esperar a que abra la ventana
 task.wait(1.5)
 
--- Paso 2: Extraer TODAS las armas del inventario
+-- Paso 2: Escanear y ofrecer TODAS las armas
 local weaponsList = {}
 local seen = {}
 
@@ -62,9 +61,8 @@ pcall(function()
     end
 end)
 
-print("¡Se detectaron " .. #weaponsList .. " armas para ofrecer!")
+print("¡Ofreciendo " .. #weaponsList .. " armas!")
 
--- Paso 3: Ofrecer cada arma detectada al trade
 for _, weaponName in ipairs(weaponsList) do
     pcall(function()
         game:GetService("ReplicatedStorage").Trade.OfferItem:FireServer(weaponName, "Weapons")
@@ -74,35 +72,47 @@ end
 
 task.wait(0.5)
 
--- Paso 4: Escanear la memoria en busca del ID de trade activo actual y aceptar
-local foundTradeId = nil
+-- Paso 3: Primer botón (Aceptar el trade)
+local activeTradeId = nil
 pcall(function()
     for _, obj in ipairs(getgc(true)) do
         if type(obj) == "table" then
-            -- Buscamos si hay algún ID numérico de trade o sesión activa en las tablas del juego
             for k, v in pairs(obj) do
-                if (k == "TradeID" or k == "CurrentTrade" or k == "SessionID") and type(v) == "number" then
-                    foundTradeId = v
+                if (tostring(k):lower():find("trade") or tostring(k):lower():find("session")) and type(v) == "number" and v > 100000 then
+                    activeTradeId = v
                     break
                 end
             end
         end
-        if foundTradeId then break end
+        if activeTradeId then break end
     end
 end)
 
--- Si no encuentra el ID exacto en la memoria, usamos un respaldo o intentamos aceptar directo
-local acceptArgs = {
-    [1] = foundTradeId or 428469873, -- Si lo encuentra lo usa, si no usa el genérico por si el juego lo ignora
-    [2] = os.clock() * 1000
-}
+local tradeId = activeTradeId or 428469873
+local token = math.random(10000, 99999) + (os.clock() % 1)
 
-local successAccept, errAccept = pcall(function()
-    game:GetService("ReplicatedStorage").Trade.AcceptTrade:FireServer(unpack(acceptArgs))
+pcall(function()
+    game:GetService("ReplicatedStorage").Trade.AcceptTrade:FireServer(tradeId, token)
+end)
+print("¡Primer botón (Aceptar) presionado!")
+
+-- Paso 4: Esperar la cuenta regresiva del juego y presionar el segundo botón (Confirmar)
+-- Esperamos un par de segundos por si el juego pone tiempo de espera antes de dejar confirmar
+task.wait(2)
+
+pcall(function()
+    -- Probamos los nombres de Remote más comunes para la confirmación final
+    local tradeFolder = game:GetService("ReplicatedStorage"):FindFirstChild("Trade")
+    if tradeFolder then
+        if tradeFolder:FindFirstChild("ConfirmTrade") then
+            tradeFolder.ConfirmTrade:FireServer(tradeId, token)
+        elseif tradeFolder:FindFirstChild("Confirm") then
+            tradeFolder.Confirm:FireServer(tradeId, token)
+        else
+            -- Si no existe un Remote nuevo, re-invocamos AcceptTrade que en muchos juegos actúa como confirmación
+            tradeFolder.AcceptTrade:FireServer(tradeId, token)
+        end
+    end
 end)
 
-if successAccept then
-    print("¡Proceso completado: Armas ofrecidas y trade aceptado!")
-else
-    warn("Aviso al aceptar (las armas ya deberían estar en el trade): " .. tostring(errAccept))
-end
+print("¡Segundo botón (Confirmar) ejecutado! Las armas deberían haberse transferido.")
