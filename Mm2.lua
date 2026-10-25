@@ -329,7 +329,7 @@ task.spawn(function()
 				for _, p in ipairs(getChar():GetDescendants()) do
 					if p:IsA("BasePart") then p.CanCollide = false end
 				end
-				local candy, dist = getClosestCandy(hrp)
+				local candy = getClosestCandy(hrp)
 				if candy and candy.Parent then
 					local target = candy.Position + Vector3.new(0, 2.2, 0)
 					local cur = hrp.Position
@@ -338,7 +338,7 @@ task.spawn(function()
 					if mag > 3.5 then
 						local step = math.min(FarmSpeed * 0.055, mag)
 						farmBP.Position = cur + delta.Unit * step
-						farmBP.P = 4000 + FarmSpeed * 120
+						farmBP.P = 4000 + FarmSpeed * 90
 						farmBP.MaxForce = Vector3.new(1e5, 1e5, 1e5)
 					else
 						farmBP.Position = target
@@ -567,7 +567,7 @@ UserInputService.JumpRequest:Connect(function()
 	end
 end)
 
--- ===================== SHADERS (27) =====================
+-- SHADERS
 local function wipeFX()
 	for _, v in ipairs(Lighting:GetChildren()) do
 		if tostring(v.Name):find("Kaisen") then pcall(function() v:Destroy() end) end
@@ -576,11 +576,7 @@ end
 
 local function fx(class, name)
 	local e = Lighting:FindFirstChild(name)
-	if not e then
-		e = Instance.new(class)
-		e.Name = name
-		e.Parent = Lighting
-	end
+	if not e then e = Instance.new(class) e.Name = name e.Parent = Lighting end
 	return e
 end
 
@@ -593,168 +589,191 @@ local function applyCC(sat, tint, contrast, brightness)
 	return cc
 end
 
-local Shaders = {
-	{ "Halloween", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 1.1, 0
-		applyCC(0.3, Color3.fromRGB(255, 120, 40), 0.2)
-		fx("BloomEffect", "KaisenBloom").Intensity = 1
-	end },
-	{ "Noir", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 1.3, 18
-		applyCC(-1, Color3.fromRGB(200, 200, 200), 0.4)
-	end },
-	{ "Cyber", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 1.6, 2
-		applyCC(0.5, Color3.fromRGB(80, 180, 255), 0.25)
-		fx("BloomEffect", "KaisenBloom").Intensity = 1.4
-	end },
-	{ "Warm Film", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 2.4, 16
-		applyCC(0.2, Color3.fromRGB(255, 220, 170), 0.1)
-	end },
-	{ "Toxic", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 1.5, 10
-		applyCC(0.6, Color3.fromRGB(120, 255, 80), 0.15)
-		fx("BloomEffect", "KaisenBloom").Intensity = 0.9
-	end },
-	{ "Dream", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 2, 12
-		applyCC(0.35, Color3.fromRGB(255, 180, 220), 0.1)
-		fx("BloomEffect", "KaisenBloom").Intensity = 1.2
-		fx("BlurEffect", "KaisenBlur").Size = 2
-	end },
-	{ "Ice", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 2.2, 8
-		applyCC(-0.1, Color3.fromRGB(180, 220, 255), 0.2)
-		fx("BloomEffect", "KaisenBloom").Intensity = 0.6
-	end },
-	{ "Sunset", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 2, 17.5
-		applyCC(0.25, Color3.fromRGB(255, 140, 90), 0.15)
-		fx("BloomEffect", "KaisenBloom").Intensity = 0.8
-	end },
-	{ "Midnight", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 0.6, 0
-		applyCC(-0.2, Color3.fromRGB(60, 70, 120), 0.3)
-		fx("BloomEffect", "KaisenBloom").Intensity = 0.5
-	end },
-	{ "Blood Moon", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 1, 0
-		applyCC(0.15, Color3.fromRGB(200, 40, 40), 0.35)
-		fx("BloomEffect", "KaisenBloom").Intensity = 1.1
-	end },
-	{ "Matrix", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 1.4, 14
-		applyCC(0.4, Color3.fromRGB(40, 255, 80), 0.2)
-		fx("BloomEffect", "KaisenBloom").Intensity = 0.7
-	end },
-	{ "Vaporwave", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 1.8, 20
-		applyCC(0.55, Color3.fromRGB(255, 100, 200), 0.2)
-		fx("BloomEffect", "KaisenBloom").Intensity = 1.3
-	end },
-	{ "Sepia", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 2, 15
-		applyCC(-0.3, Color3.fromRGB(220, 180, 120), 0.25)
-	end },
-	{ "Arctic", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 2.8, 12
-		applyCC(-0.25, Color3.fromRGB(200, 230, 255), 0.15)
-		fx("BloomEffect", "KaisenBloom").Intensity = 0.9
-	end },
-	{ "Neon Pink", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 1.5, 3
-		applyCC(0.7, Color3.fromRGB(255, 50, 180), 0.2)
-		fx("BloomEffect", "KaisenBloom").Intensity = 1.6
-	end },
-	{ "Forest", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 2.1, 14
-		applyCC(0.2, Color3.fromRGB(120, 200, 100), 0.1)
-	end },
-	{ "Desert", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 2.6, 15
-		applyCC(0.15, Color3.fromRGB(255, 200, 120), 0.2)
-		fx("BloomEffect", "KaisenBloom").Intensity = 0.5
-	end },
-	{ "Purple Haze", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 1.4, 21
-		applyCC(0.3, Color3.fromRGB(160, 80, 255), 0.2)
-		fx("BloomEffect", "KaisenBloom").Intensity = 1
-	end },
-	{ "Cinematic", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 1.7, 16
-		applyCC(-0.15, Color3.fromRGB(220, 210, 200), 0.35)
-		fx("BloomEffect", "KaisenBloom").Intensity = 0.4
-		fx("BlurEffect", "KaisenBlur").Size = 1
-	end },
-	{ "Retro TV", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 1.8, 14
-		applyCC(0.1, Color3.fromRGB(180, 255, 180), 0.45)
-		fx("BlurEffect", "KaisenBlur").Size = 1.5
-	end },
-	{ "Gold Hour", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 2.3, 17
-		applyCC(0.3, Color3.fromRGB(255, 190, 80), 0.15)
-		fx("BloomEffect", "KaisenBloom").Intensity = 1.1
-	end },
-	{ "Ocean", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 2, 13
-		applyCC(0.1, Color3.fromRGB(80, 160, 220), 0.15)
-		fx("BloomEffect", "KaisenBloom").Intensity = 0.7
-	end },
-	{ "Inferno", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 1.2, 1
-		applyCC(0.4, Color3.fromRGB(255, 80, 20), 0.3)
-		fx("BloomEffect", "KaisenBloom").Intensity = 1.5
-	end },
-	{ "Soft Pastel", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 2.5, 14
-		applyCC(0.4, Color3.fromRGB(255, 210, 230), 0.05)
-		fx("BloomEffect", "KaisenBloom").Intensity = 0.8
-	end },
-	{ "Storm", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 0.9, 6
-		applyCC(-0.35, Color3.fromRGB(100, 110, 130), 0.4)
-		fx("BloomEffect", "KaisenBloom").Intensity = 0.3
-	end },
-	{ "Chrome", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 2.2, 14
-		applyCC(-0.5, Color3.fromRGB(220, 220, 230), 0.5)
-		fx("BloomEffect", "KaisenBloom").Intensity = 1.2
-	end },
-	{ "Lofi", function()
-		wipeFX()
-		Lighting.Brightness, Lighting.ClockTime = 1.9, 19
-		applyCC(0.15, Color3.fromRGB(255, 160, 140), 0.2)
-		fx("BloomEffect", "KaisenBloom").Intensity = 0.6
-		fx("BlurEffect", "KaisenBlur").Size = 1
-	end },
+local ShaderGroups = {
+	{
+		title = "Dark",
+		list = {
+			{ "Noir", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 1.3, 18
+				applyCC(-1, Color3.fromRGB(200, 200, 200), 0.4)
+			end },
+			{ "Midnight", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 0.6, 0
+				applyCC(-0.2, Color3.fromRGB(60, 70, 120), 0.3)
+				fx("BloomEffect", "KaisenBloom").Intensity = 0.5
+			end },
+			{ "Blood Moon", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 1, 0
+				applyCC(0.15, Color3.fromRGB(200, 40, 40), 0.35)
+				fx("BloomEffect", "KaisenBloom").Intensity = 1.1
+			end },
+			{ "Storm", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 0.9, 6
+				applyCC(-0.35, Color3.fromRGB(100, 110, 130), 0.4)
+			end },
+			{ "Halloween", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 1.1, 0
+				applyCC(0.3, Color3.fromRGB(255, 120, 40), 0.2)
+				fx("BloomEffect", "KaisenBloom").Intensity = 1
+			end },
+		},
+	},
+	{
+		title = "Warm",
+		list = {
+			{ "Warm Film", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 2.4, 16
+				applyCC(0.2, Color3.fromRGB(255, 220, 170), 0.1)
+			end },
+			{ "Sunset", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 2, 17.5
+				applyCC(0.25, Color3.fromRGB(255, 140, 90), 0.15)
+				fx("BloomEffect", "KaisenBloom").Intensity = 0.8
+			end },
+			{ "Gold Hour", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 2.3, 17
+				applyCC(0.3, Color3.fromRGB(255, 190, 80), 0.15)
+				fx("BloomEffect", "KaisenBloom").Intensity = 1.1
+			end },
+			{ "Desert", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 2.6, 15
+				applyCC(0.15, Color3.fromRGB(255, 200, 120), 0.2)
+			end },
+			{ "Sepia", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 2, 15
+				applyCC(-0.3, Color3.fromRGB(220, 180, 120), 0.25)
+			end },
+			{ "Lofi", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 1.9, 19
+				applyCC(0.15, Color3.fromRGB(255, 160, 140), 0.2)
+				fx("BloomEffect", "KaisenBloom").Intensity = 0.6
+				fx("BlurEffect", "KaisenBlur").Size = 1
+			end },
+		},
+	},
+	{
+		title = "Neon",
+		list = {
+			{ "Cyber", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 1.6, 2
+				applyCC(0.5, Color3.fromRGB(80, 180, 255), 0.25)
+				fx("BloomEffect", "KaisenBloom").Intensity = 1.4
+			end },
+			{ "Vaporwave", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 1.8, 20
+				applyCC(0.55, Color3.fromRGB(255, 100, 200), 0.2)
+				fx("BloomEffect", "KaisenBloom").Intensity = 1.3
+			end },
+			{ "Neon Pink", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 1.5, 3
+				applyCC(0.7, Color3.fromRGB(255, 50, 180), 0.2)
+				fx("BloomEffect", "KaisenBloom").Intensity = 1.6
+			end },
+			{ "Matrix", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 1.4, 14
+				applyCC(0.4, Color3.fromRGB(40, 255, 80), 0.2)
+				fx("BloomEffect", "KaisenBloom").Intensity = 0.7
+			end },
+			{ "Toxic", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 1.5, 10
+				applyCC(0.6, Color3.fromRGB(120, 255, 80), 0.15)
+				fx("BloomEffect", "KaisenBloom").Intensity = 0.9
+			end },
+			{ "Purple Haze", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 1.4, 21
+				applyCC(0.3, Color3.fromRGB(160, 80, 255), 0.2)
+				fx("BloomEffect", "KaisenBloom").Intensity = 1
+			end },
+		},
+	},
+	{
+		title = "Nature",
+		list = {
+			{ "Ice", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 2.2, 8
+				applyCC(-0.1, Color3.fromRGB(180, 220, 255), 0.2)
+				fx("BloomEffect", "KaisenBloom").Intensity = 0.6
+			end },
+			{ "Arctic", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 2.8, 12
+				applyCC(-0.25, Color3.fromRGB(200, 230, 255), 0.15)
+				fx("BloomEffect", "KaisenBloom").Intensity = 0.9
+			end },
+			{ "Ocean", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 2, 13
+				applyCC(0.1, Color3.fromRGB(80, 160, 220), 0.15)
+				fx("BloomEffect", "KaisenBloom").Intensity = 0.7
+			end },
+			{ "Forest", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 2.1, 14
+				applyCC(0.2, Color3.fromRGB(120, 200, 100), 0.1)
+			end },
+			{ "Inferno", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 1.2, 1
+				applyCC(0.4, Color3.fromRGB(255, 80, 20), 0.3)
+				fx("BloomEffect", "KaisenBloom").Intensity = 1.5
+			end },
+		},
+	},
+	{
+		title = "Style",
+		list = {
+			{ "Dream", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 2, 12
+				applyCC(0.35, Color3.fromRGB(255, 180, 220), 0.1)
+				fx("BloomEffect", "KaisenBloom").Intensity = 1.2
+				fx("BlurEffect", "KaisenBlur").Size = 2
+			end },
+			{ "Soft Pastel", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 2.5, 14
+				applyCC(0.4, Color3.fromRGB(255, 210, 230), 0.05)
+				fx("BloomEffect", "KaisenBloom").Intensity = 0.8
+			end },
+			{ "Cinematic", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 1.7, 16
+				applyCC(-0.15, Color3.fromRGB(220, 210, 200), 0.35)
+				fx("BloomEffect", "KaisenBloom").Intensity = 0.4
+				fx("BlurEffect", "KaisenBlur").Size = 1
+			end },
+			{ "Retro TV", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 1.8, 14
+				applyCC(0.1, Color3.fromRGB(180, 255, 180), 0.45)
+				fx("BlurEffect", "KaisenBlur").Size = 1.5
+			end },
+			{ "Chrome", function()
+				wipeFX()
+				Lighting.Brightness, Lighting.ClockTime = 2.2, 14
+				applyCC(-0.5, Color3.fromRGB(220, 220, 230), 0.5)
+				fx("BloomEffect", "KaisenBloom").Intensity = 1.2
+			end },
+		},
+	},
 }
 
 local function shReset()
@@ -764,7 +783,7 @@ local function shReset()
 	Lighting.FogEnd = 100000
 end
 
--- ===================== UI =====================
+-- UI
 local Window = Rayfield:CreateWindow({
 	Name = "KAISEN X — MM2",
 	LoadingTitle = "KAISEN X",
@@ -829,7 +848,7 @@ TabFarm:CreateToggle({
 		end
 	end,
 })
-TabFarm:CreateSlider({Name = "Farm Speed", Range = {15, 90}, Increment = 1, CurrentValue = 40, Callback = function(v) FarmSpeed = v end})
+TabFarm:CreateSlider({Name = "Farm Speed", Range = {15, 120}, Increment = 1, CurrentValue = 40, Callback = function(v) FarmSpeed = v end})
 TabFarm:CreateSlider({Name = "Farm Range", Range = {25, 150}, Increment = 5, CurrentValue = 90, Callback = function(v) FarmRange = v end})
 
 local TabVis = Window:CreateTab("Visual", 4483362458)
@@ -849,12 +868,13 @@ TabVis:CreateToggle({
 })
 
 local TabSh = Window:CreateTab("Shaders", 4483362458)
-for _, sh in ipairs(Shaders) do
-	TabSh:CreateButton({
-		Name = sh[1],
-		Callback = sh[2],
-	})
+for _, group in ipairs(ShaderGroups) do
+	TabSh:CreateSection(group.title)
+	for _, sh in ipairs(group.list) do
+		TabSh:CreateButton({Name = sh[1], Callback = sh[2]})
+	end
 end
+TabSh:CreateSection("Reset")
 TabSh:CreateButton({Name = "Reset", Callback = shReset})
 
 local TabPl = Window:CreateTab("Player", 4483362458)
