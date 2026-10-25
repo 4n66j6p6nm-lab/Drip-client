@@ -338,7 +338,7 @@ task.spawn(function()
 					if mag > 3.5 then
 						local step = math.min(FarmSpeed * 0.055, mag)
 						farmBP.Position = cur + delta.Unit * step
-						farmBP.P = 4000 + FarmSpeed * 90
+						farmBP.P = 4000 + FarmSpeed * 120
 						farmBP.MaxForce = Vector3.new(1e5, 1e5, 1e5)
 					else
 						farmBP.Position = target
