@@ -1,8 +1,8 @@
 --[[
   MM2 HUB v5.1 - LinoriaLib (mstudio45)
-  PestaÃ±as: Ronda Â· Evento Â· ESP Â· Rol Â· Jugador Â· Visual Â· Ajustes
-  Idiomas: EspaÃ±ol Â· English Â· PortuguÃªs Â· FranÃ§ais Â· Ð ÑƒÑÑÐºÐ¸Ð¹
-  (el selector de idioma estÃ¡ en la pestaÃ±a Ronda)
+  Pestañas: Ronda · Evento · ESP · Rol · Jugador · Visual · Ajustes
+  Idiomas: Español · English · Português · Français · Русский
+  (el selector de idioma está en la pestaña Ronda)
 ]]
 
 if not game:IsLoaded() then game.Loaded:Wait() end
@@ -22,160 +22,160 @@ local H                 = Color3.fromHex
 -- =============================================================================
 -- IDIOMAS
 -- =============================================================================
-local LANGS = { { "es", "EspaÃ±ol" }, { "en", "English" }, { "pt", "PortuguÃªs" }, { "fr", "FranÃ§ais" }, { "ru", "Ð ÑƒÑÑÐºÐ¸Ð¹" } }
+local LANGS = { { "es", "Español" }, { "en", "English" }, { "pt", "Português" }, { "fr", "Français" }, { "ru", "Русский" } }
 local LIDX  = { es = 1, en = 2, pt = 3, fr = 4, ru = 5 }
 
 -- orden: es, en, pt, fr, ru
 local TR = {
-    tab_round   = { "Ronda", "Round", "Rodada", "Manche", "Ð Ð°ÑƒÐ½Ð´" },
-    tab_event   = { "Evento", "Event", "Evento", "Ã‰vÃ©nement", "Ð¡Ð¾Ð±Ñ‹Ñ‚Ð¸Ðµ" },
+    tab_round   = { "Ronda", "Round", "Rodada", "Manche", "Раунд" },
+    tab_event   = { "Evento", "Event", "Evento", "Événement", "Событие" },
     tab_esp     = { "ESP", "ESP", "ESP", "ESP", "ESP" },
-    tab_role    = { "Rol", "Role", "FunÃ§Ã£o", "RÃ´le", "Ð Ð¾Ð»ÑŒ" },
-    tab_player  = { "Jugador", "Player", "Jogador", "Joueur", "Ð˜Ð³Ñ€Ð¾Ðº" },
-    tab_visual  = { "Visual", "Visual", "Visual", "Visuel", "Ð“Ñ€Ð°Ñ„Ð¸ÐºÐ°" },
-    tab_settings= { "Ajustes", "Settings", "ConfiguraÃ§Ãµes", "ParamÃ¨tres", "ÐÐ°ÑÑ‚Ñ€Ð¾Ð¹ÐºÐ¸" },
+    tab_role    = { "Rol", "Role", "Função", "Rôle", "Роль" },
+    tab_player  = { "Jugador", "Player", "Jogador", "Joueur", "Игрок" },
+    tab_visual  = { "Visual", "Visual", "Visual", "Visuel", "Графика" },
+    tab_settings= { "Ajustes", "Settings", "Configurações", "Paramètres", "Настройки" },
 
-    gb_state    = { "Estado de la partida", "Match status", "Estado da partida", "Ã‰tat de la partie", "Ð¡Ð¾ÑÑ‚Ð¾ÑÐ½Ð¸Ðµ Ð¸Ð³Ñ€Ñ‹" },
-    gb_hud      = { "Avisos y HUD", "Alerts & HUD", "Avisos e HUD", "Alertes et HUD", "Ð£Ð²ÐµÐ´Ð¾Ð¼Ð»ÐµÐ½Ð¸Ñ Ð¸ HUD" },
-    gb_lang     = { "Idioma", "Language", "Idioma", "Langue", "Ð¯Ð·Ñ‹Ðº" },
-    l_round     = { "Ronda", "Round", "Rodada", "Manche", "Ð Ð°ÑƒÐ½Ð´" },
-    st_wait     = { "esperando...", "waiting...", "aguardando...", "en attente...", "Ð¾Ð¶Ð¸Ð´Ð°Ð½Ð¸Ðµ..." },
-    st_live     = { "en curso", "in progress", "em andamento", "en cours", "Ð¸Ð´Ñ‘Ñ‚" },
-    st_end      = { "terminada", "ended", "encerrada", "terminÃ©e", "Ð¾ÐºÐ¾Ð½Ñ‡ÐµÐ½" },
-    l_time      = { "Tiempo", "Time", "Tempo", "Temps", "Ð’Ñ€ÐµÐ¼Ñ" },
-    t_remaining = { "Restante", "Remaining", "Restante", "Restant", "ÐžÑÑ‚Ð°Ð»Ð¾ÑÑŒ" },
-    t_elapsed   = { "Transcurrido", "Elapsed", "Decorrido", "Ã‰coulÃ©", "ÐŸÑ€Ð¾ÑˆÐ»Ð¾" },
-    l_alive     = { "Vivos", "Alive", "Vivos", "Vivants", "Ð–Ð¸Ð²Ñ‹" },
-    l_myrole    = { "Mi rol", "My role", "Minha funÃ§Ã£o", "Mon rÃ´le", "ÐœÐ¾Ñ Ñ€Ð¾Ð»ÑŒ" },
-    l_murd      = { "Asesino", "Murderer", "Assassino", "Meurtrier", "Ð£Ð±Ð¸Ð¹Ñ†Ð°" },
-    l_sher      = { "Sheriff", "Sheriff", "Xerife", "ShÃ©rif", "Ð¨ÐµÑ€Ð¸Ñ„" },
-    l_inno      = { "Inocente", "Innocent", "Inocente", "Innocent", "ÐÐµÐ²Ð¸Ð½Ð¾Ð²Ð½Ñ‹Ð¹" },
-    dead        = { "muerto", "dead", "morto", "mort", "Ð¼Ñ‘Ñ€Ñ‚Ð²" },
-    waiting_hud = { "Esperando ronda", "Waiting for round", "Aguardando rodada", "En attente de manche", "ÐžÐ¶Ð¸Ð´Ð°Ð½Ð¸Ðµ Ñ€Ð°ÑƒÐ½Ð´Ð°" },
-    tg_hud      = { "Contador en pantalla", "On-screen timer", "Contador na tela", "Compteur Ã  l'Ã©cran", "Ð¢Ð°Ð¹Ð¼ÐµÑ€ Ð½Ð° ÑÐºÑ€Ð°Ð½Ðµ" },
-    tg_nround   = { "Avisar inicio y fin de ronda", "Notify round start & end", "Avisar inÃ­cio e fim da rodada", "PrÃ©venir dÃ©but et fin de manche", "Ð£Ð²ÐµÐ´Ð¾Ð¼Ð»ÑÑ‚ÑŒ Ð¾ Ð½Ð°Ñ‡Ð°Ð»Ðµ Ð¸ ÐºÐ¾Ð½Ñ†Ðµ Ñ€Ð°ÑƒÐ½Ð´Ð°" },
-    tg_ntimer   = { "Avisar a los 30s y 10s", "Alert at 30s and 10s", "Avisar aos 30s e 10s", "Alerter Ã  30s et 10s", "Ð£Ð²ÐµÐ´Ð¾Ð¼Ð»ÑÑ‚ÑŒ Ð·Ð° 30Ñ Ð¸ 10Ñ" },
-    tg_ndeath   = { "Avisar si muere asesino o sheriff", "Alert if murderer or sheriff dies", "Avisar se assassino ou xerife morrer", "Alerter si meurtrier ou shÃ©rif meurt", "Ð£Ð²ÐµÐ´Ð¾Ð¼Ð»ÑÑ‚ÑŒ Ð¾ ÑÐ¼ÐµÑ€Ñ‚Ð¸ ÑƒÐ±Ð¸Ð¹Ñ†Ñ‹ Ð¸Ð»Ð¸ ÑˆÐµÑ€Ð¸Ñ„Ð°" },
-    timer_info  = { "El contador usa el reloj del juego si lo encuentra; si no, cuenta desde que empieza la ronda.", "The timer uses the game's clock if found; otherwise it counts from round start.", "O contador usa o relÃ³gio do jogo se achar; senÃ£o conta desde o inÃ­cio da rodada.", "Le compteur utilise l'horloge du jeu s'il la trouve ; sinon il compte depuis le dÃ©but de la manche.", "Ð¢Ð°Ð¹Ð¼ÐµÑ€ Ð¸ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐµÑ‚ Ñ‡Ð°ÑÑ‹ Ð¸Ð³Ñ€Ñ‹, ÐµÑÐ»Ð¸ Ð½Ð°Ð¹Ð´Ñ‘Ñ‚; Ð¸Ð½Ð°Ñ‡Ðµ ÑÑ‡Ð¸Ñ‚Ð°ÐµÑ‚ Ñ Ð½Ð°Ñ‡Ð°Ð»Ð° Ñ€Ð°ÑƒÐ½Ð´Ð°." },
-    n_round_start = { "Ronda iniciada", "Round started", "Rodada iniciada", "Manche commencÃ©e", "Ð Ð°ÑƒÐ½Ð´ Ð½Ð°Ñ‡Ð°Ð»ÑÑ" },
-    n_round_end = { "Ronda terminada", "Round ended", "Rodada encerrada", "Manche terminÃ©e", "Ð Ð°ÑƒÐ½Ð´ Ð·Ð°ÐºÐ¾Ð½Ñ‡ÐµÐ½" },
-    n_30        = { "Quedan 30 segundos", "30 seconds left", "Faltam 30 segundos", "Il reste 30 secondes", "ÐžÑÑ‚Ð°Ð»Ð¾ÑÑŒ 30 ÑÐµÐºÑƒÐ½Ð´" },
-    n_10        = { "Quedan 10 segundos", "10 seconds left", "Faltam 10 segundos", "Il reste 10 secondes", "ÐžÑÑ‚Ð°Ð»Ð¾ÑÑŒ 10 ÑÐµÐºÑƒÐ½Ð´" },
-    n_died      = { "ha muerto", "has died", "morreu", "est mort", "Ð¿Ð¾Ð³Ð¸Ð±" },
-    n_langchange= { "Cambiando idioma...", "Changing language...", "Mudando idioma...", "Changement de langue...", "Ð¡Ð¼ÐµÐ½Ð° ÑÐ·Ñ‹ÐºÐ°..." },
+    gb_state    = { "Estado de la partida", "Match status", "Estado da partida", "État de la partie", "Состояние игры" },
+    gb_hud      = { "Avisos y HUD", "Alerts & HUD", "Avisos e HUD", "Alertes et HUD", "Уведомления и HUD" },
+    gb_lang     = { "Idioma", "Language", "Idioma", "Langue", "Язык" },
+    l_round     = { "Ronda", "Round", "Rodada", "Manche", "Раунд" },
+    st_wait     = { "esperando...", "waiting...", "aguardando...", "en attente...", "ожидание..." },
+    st_live     = { "en curso", "in progress", "em andamento", "en cours", "идёт" },
+    st_end      = { "terminada", "ended", "encerrada", "terminée", "окончен" },
+    l_time      = { "Tiempo", "Time", "Tempo", "Temps", "Время" },
+    t_remaining = { "Restante", "Remaining", "Restante", "Restant", "Осталось" },
+    t_elapsed   = { "Transcurrido", "Elapsed", "Decorrido", "Écoulé", "Прошло" },
+    l_alive     = { "Vivos", "Alive", "Vivos", "Vivants", "Живы" },
+    l_myrole    = { "Mi rol", "My role", "Minha função", "Mon rôle", "Моя роль" },
+    l_murd      = { "Asesino", "Murderer", "Assassino", "Meurtrier", "Убийца" },
+    l_sher      = { "Sheriff", "Sheriff", "Xerife", "Shérif", "Шериф" },
+    l_inno      = { "Inocente", "Innocent", "Inocente", "Innocent", "Невиновный" },
+    dead        = { "muerto", "dead", "morto", "mort", "мёртв" },
+    waiting_hud = { "Esperando ronda", "Waiting for round", "Aguardando rodada", "En attente de manche", "Ожидание раунда" },
+    tg_hud      = { "Contador en pantalla", "On-screen timer", "Contador na tela", "Compteur à l'écran", "Таймер на экране" },
+    tg_nround   = { "Avisar inicio y fin de ronda", "Notify round start & end", "Avisar início e fim da rodada", "Prévenir début et fin de manche", "Уведомлять о начале и конце раунда" },
+    tg_ntimer   = { "Avisar a los 30s y 10s", "Alert at 30s and 10s", "Avisar aos 30s e 10s", "Alerter à 30s et 10s", "Уведомлять за 30с и 10с" },
+    tg_ndeath   = { "Avisar si muere asesino o sheriff", "Alert if murderer or sheriff dies", "Avisar se assassino ou xerife morrer", "Alerter si meurtrier ou shérif meurt", "Уведомлять о смерти убийцы или шерифа" },
+    timer_info  = { "El contador usa el reloj del juego si lo encuentra; si no, cuenta desde que empieza la ronda.", "The timer uses the game's clock if found; otherwise it counts from round start.", "O contador usa o relógio do jogo se achar; senão conta desde o início da rodada.", "Le compteur utilise l'horloge du jeu s'il la trouve ; sinon il compte depuis le début de la manche.", "Таймер использует часы игры, если найдёт; иначе считает с начала раунда." },
+    n_round_start = { "Ronda iniciada", "Round started", "Rodada iniciada", "Manche commencée", "Раунд начался" },
+    n_round_end = { "Ronda terminada", "Round ended", "Rodada encerrada", "Manche terminée", "Раунд закончен" },
+    n_30        = { "Quedan 30 segundos", "30 seconds left", "Faltam 30 segundos", "Il reste 30 secondes", "Осталось 30 секунд" },
+    n_10        = { "Quedan 10 segundos", "10 seconds left", "Faltam 10 segundos", "Il reste 10 secondes", "Осталось 10 секунд" },
+    n_died      = { "ha muerto", "has died", "morreu", "est mort", "погиб" },
+    n_langchange= { "Cambiando idioma...", "Changing language...", "Mudando idioma...", "Changement de langue...", "Смена языка..." },
 
-    gb_farm     = { "Auto farm Candy", "Candy auto farm", "Auto farm de Candy", "Auto farm Candy", "ÐÐ²Ñ‚Ð¾Ñ„Ð°Ñ€Ð¼ ÐºÐ¾Ð½Ñ„ÐµÑ‚" },
-    gb_opt      = { "Opciones", "Options", "OpÃ§Ãµes", "Options", "ÐžÐ¿Ñ†Ð¸Ð¸" },
-    gb_info     = { "Info del evento", "Event info", "Info do evento", "Infos de l'Ã©vÃ©nement", "Ð˜Ð½Ñ„Ð¾ Ð¾ ÑÐ¾Ð±Ñ‹Ñ‚Ð¸Ð¸" },
-    tg_farm     = { "Auto-recoger Candy", "Auto-collect Candy", "Auto-coletar Candy", "Auto-ramasser Candy", "ÐÐ²Ñ‚Ð¾ÑÐ±Ð¾Ñ€ ÐºÐ¾Ð½Ñ„ÐµÑ‚" },
-    sl_speed    = { "Velocidad", "Speed", "Velocidade", "Vitesse", "Ð¡ÐºÐ¾Ñ€Ð¾ÑÑ‚ÑŒ" },
-    tg_avoid    = { "Evitar al asesino", "Avoid the murderer", "Evitar o assassino", "Ã‰viter le meurtrier", "Ð˜Ð·Ð±ÐµÐ³Ð°Ñ‚ÑŒ ÑƒÐ±Ð¸Ð¹Ñ†Ñƒ" },
-    sl_avoid    = { "Distancia segura", "Safe distance", "DistÃ¢ncia segura", "Distance de sÃ©curitÃ©", "Ð‘ÐµÐ·Ð¾Ð¿Ð°ÑÐ½Ð°Ñ Ð´Ð¸ÑÑ‚Ð°Ð½Ñ†Ð¸Ñ" },
-    l_count     = { "Recorridos (aprox.)", "Visited (approx.)", "Percorridos (aprox.)", "Parcourus (approx.)", "ÐŸÐ¾ÑÐµÑ‰ÐµÐ½Ð¾ (Ð¿Ñ€Ð¸Ð±Ð».)" },
-    l_left      = { "Candy en mapa", "Candy on map", "Candy no mapa", "Candy sur la carte", "ÐšÐ¾Ð½Ñ„ÐµÑ‚ Ð½Ð° ÐºÐ°Ñ€Ñ‚Ðµ" },
-    l_fstate    = { "Farm", "Farm", "Farm", "Farm", "Ð¤Ð°Ñ€Ð¼" },
-    fs_off      = { "apagado", "off", "desligado", "dÃ©sactivÃ©", "Ð²Ñ‹ÐºÐ»" },
-    fs_wait     = { "esperando ronda", "waiting for round", "aguardando rodada", "attente de manche", "Ð¶Ð´Ñ‘Ñ‚ Ñ€Ð°ÑƒÐ½Ð´" },
-    fs_run      = { "farmeando", "farming", "farmando", "en cours", "Ñ„Ð°Ñ€Ð¼Ð¸Ñ‚" },
-    tg_wide     = { "BÃºsqueda ampliada", "Extended search", "Busca ampliada", "Recherche Ã©tendue", "Ð Ð°ÑÑˆÐ¸Ñ€ÐµÐ½Ð½Ñ‹Ð¹ Ð¿Ð¾Ð¸ÑÐº" },
-    tip_wide    = { "Busca tambiÃ©n objetos con 'candy' en el nombre dentro del mapa", "Also searches map objects with 'candy' in the name", "Busca tambÃ©m objetos com 'candy' no nome dentro do mapa", "Cherche aussi les objets contenant 'candy' dans la carte", "Ð˜Ñ‰ÐµÑ‚ Ñ‚Ð°ÐºÐ¶Ðµ Ð¾Ð±ÑŠÐµÐºÑ‚Ñ‹ Ñ 'candy' Ð² Ð½Ð°Ð·Ð²Ð°Ð½Ð¸Ð¸ Ð½Ð° ÐºÐ°Ñ€Ñ‚Ðµ" },
-    tg_autoreset= { "Reiniciar al acabar candies", "Reset when candies run out", "Reiniciar ao acabar candies", "RÃ©initialiser sans candies", "Ð¡Ð±Ñ€Ð¾Ñ, ÐºÐ¾Ð³Ð´Ð° ÐºÐ¾Ð½Ñ„ÐµÑ‚Ñ‹ ÐºÐ¾Ð½Ñ‡Ð¸Ð»Ð¸ÑÑŒ" },
-    tip_autoreset={ "Mata tu personaje cuando no queden candies, para pasar a la siguiente ronda", "Kills your character when no candies are left, to skip to the next round", "Mata seu personagem quando nÃ£o houver candies, para ir Ã  prÃ³xima rodada", "Tue ton personnage quand il n'y a plus de candies, pour passer Ã  la manche suivante", "Ð£Ð±Ð¸Ð²Ð°ÐµÑ‚ Ð¿ÐµÑ€ÑÐ¾Ð½Ð°Ð¶Ð°, ÐºÐ¾Ð³Ð´Ð° ÐºÐ¾Ð½Ñ„ÐµÑ‚ Ð½ÐµÑ‚, Ñ‡Ñ‚Ð¾Ð±Ñ‹ Ð¿ÐµÑ€ÐµÐ¹Ñ‚Ð¸ Ðº ÑÐ»ÐµÐ´ÑƒÑŽÑ‰ÐµÐ¼Ñƒ Ñ€Ð°ÑƒÐ½Ð´Ñƒ" },
-    tg_candyesp = { "Marcar candies (ESP)", "Mark candies (ESP)", "Marcar candies (ESP)", "Marquer les candies (ESP)", "ÐœÐµÑ‚ÐºÐ¸ ÐºÐ¾Ð½Ñ„ÐµÑ‚ (ESP)" },
-    tg_nocfarm  = { "Atravesar paredes al farmear", "Walk through walls while farming", "Atravessar paredes ao farmar", "Traverser les murs en farmant", "ÐŸÑ€Ð¾Ñ…Ð¾Ð´Ð¸Ñ‚ÑŒ ÑÐºÐ²Ð¾Ð·ÑŒ ÑÑ‚ÐµÐ½Ñ‹ Ð¿Ñ€Ð¸ Ñ„Ð°Ñ€Ð¼Ðµ" },
-    btn_resetlist={ "Reiniciar lista", "Reset list", "Reiniciar lista", "RÃ©initialiser la liste", "Ð¡Ð±Ñ€Ð¾ÑÐ¸Ñ‚ÑŒ ÑÐ¿Ð¸ÑÐ¾Ðº" },
-    n_listreset = { "Lista reiniciada", "List reset", "Lista reiniciada", "Liste rÃ©initialisÃ©e", "Ð¡Ð¿Ð¸ÑÐ¾Ðº ÑÐ±Ñ€Ð¾ÑˆÐµÐ½" },
-    info1       = { "Evento hasta el 16 nov 2026.", "Event until Nov 16, 2026.", "Evento atÃ© 16 nov 2026.", "Ã‰vÃ©nement jusqu'au 16 nov. 2026.", "Ð¡Ð¾Ð±Ñ‹Ñ‚Ð¸Ðµ Ð´Ð¾ 16 Ð½Ð¾ÑÐ±Ñ€Ñ 2026." },
-    info2       = { "No caen monedas, solo Candy.", "No coins drop, only Candy.", "NÃ£o caem moedas, sÃ³ Candy.", "Pas de piÃ¨ces, seulement des Candy.", "ÐœÐ¾Ð½ÐµÑ‚Ñ‹ Ð½Ðµ Ð¿Ð°Ð´Ð°ÑŽÑ‚, Ñ‚Ð¾Ð»ÑŒÐºÐ¾ ÐºÐ¾Ð½Ñ„ÐµÑ‚Ñ‹." },
-    info3       = { "Misiones diarias: 60 / 120 / 200 candies.", "Daily quests: 60 / 120 / 200 candies.", "MissÃµes diÃ¡rias: 60 / 120 / 200 candies.", "QuÃªtes quotidiennes : 60 / 120 / 200 candies.", "Ð•Ð¶ÐµÐ´Ð½ÐµÐ²Ð½Ñ‹Ðµ Ð·Ð°Ð´Ð°Ð½Ð¸Ñ: 60 / 120 / 200 ÐºÐ¾Ð½Ñ„ÐµÑ‚." },
-    info4       = { "El Candy expira al terminar el evento: gÃ¡stalo antes.", "Candy expires when the event ends: spend it first.", "O Candy expira quando o evento acaba: gaste antes.", "Les Candy expirent Ã  la fin de l'Ã©vÃ©nement : dÃ©pense-les avant.", "ÐšÐ¾Ð½Ñ„ÐµÑ‚Ñ‹ ÑÐ³Ð¾Ñ€Ð°ÑŽÑ‚ Ð¿Ð¾ÑÐ»Ðµ ÑÐ¾Ð±Ñ‹Ñ‚Ð¸Ñ: Ð¿Ð¾Ñ‚Ñ€Ð°Ñ‚ÑŒ Ð¸Ñ… Ð·Ð°Ñ€Ð°Ð½ÐµÐµ." },
+    gb_farm     = { "Auto farm Candy", "Candy auto farm", "Auto farm de Candy", "Auto farm Candy", "Автофарм конфет" },
+    gb_opt      = { "Opciones", "Options", "Opções", "Options", "Опции" },
+    gb_info     = { "Info del evento", "Event info", "Info do evento", "Infos de l'événement", "Инфо о событии" },
+    tg_farm     = { "Auto-recoger Candy", "Auto-collect Candy", "Auto-coletar Candy", "Auto-ramasser Candy", "Автосбор конфет" },
+    sl_speed    = { "Velocidad", "Speed", "Velocidade", "Vitesse", "Скорость" },
+    tg_avoid    = { "Evitar al asesino", "Avoid the murderer", "Evitar o assassino", "Éviter le meurtrier", "Избегать убийцу" },
+    sl_avoid    = { "Distancia segura", "Safe distance", "Distância segura", "Distance de sécurité", "Безопасная дистанция" },
+    l_count     = { "Recorridos (aprox.)", "Visited (approx.)", "Percorridos (aprox.)", "Parcourus (approx.)", "Посещено (прибл.)" },
+    l_left      = { "Candy en mapa", "Candy on map", "Candy no mapa", "Candy sur la carte", "Конфет на карте" },
+    l_fstate    = { "Farm", "Farm", "Farm", "Farm", "Фарм" },
+    fs_off      = { "apagado", "off", "desligado", "désactivé", "выкл" },
+    fs_wait     = { "esperando ronda", "waiting for round", "aguardando rodada", "attente de manche", "ждёт раунд" },
+    fs_run      = { "farmeando", "farming", "farmando", "en cours", "фармит" },
+    tg_wide     = { "Búsqueda ampliada", "Extended search", "Busca ampliada", "Recherche étendue", "Расширенный поиск" },
+    tip_wide    = { "Busca también objetos con 'candy' en el nombre dentro del mapa", "Also searches map objects with 'candy' in the name", "Busca também objetos com 'candy' no nome dentro do mapa", "Cherche aussi les objets contenant 'candy' dans la carte", "Ищет также объекты с 'candy' в названии на карте" },
+    tg_autoreset= { "Reiniciar al acabar candies", "Reset when candies run out", "Reiniciar ao acabar candies", "Réinitialiser sans candies", "Сброс, когда конфеты кончились" },
+    tip_autoreset={ "Mata tu personaje cuando no queden candies, para pasar a la siguiente ronda", "Kills your character when no candies are left, to skip to the next round", "Mata seu personagem quando não houver candies, para ir à próxima rodada", "Tue ton personnage quand il n'y a plus de candies, pour passer à la manche suivante", "Убивает персонажа, когда конфет нет, чтобы перейти к следующему раунду" },
+    tg_candyesp = { "Marcar candies (ESP)", "Mark candies (ESP)", "Marcar candies (ESP)", "Marquer les candies (ESP)", "Метки конфет (ESP)" },
+    tg_nocfarm  = { "Atravesar paredes al farmear", "Walk through walls while farming", "Atravessar paredes ao farmar", "Traverser les murs en farmant", "Проходить сквозь стены при фарме" },
+    btn_resetlist={ "Reiniciar lista", "Reset list", "Reiniciar lista", "Réinitialiser la liste", "Сбросить список" },
+    n_listreset = { "Lista reiniciada", "List reset", "Lista reiniciada", "Liste réinitialisée", "Список сброшен" },
+    info1       = { "Evento hasta el 16 nov 2026.", "Event until Nov 16, 2026.", "Evento até 16 nov 2026.", "Événement jusqu'au 16 nov. 2026.", "Событие до 16 ноября 2026." },
+    info2       = { "No caen monedas, solo Candy.", "No coins drop, only Candy.", "Não caem moedas, só Candy.", "Pas de pièces, seulement des Candy.", "Монеты не падают, только конфеты." },
+    info3       = { "Misiones diarias: 60 / 120 / 200 candies.", "Daily quests: 60 / 120 / 200 candies.", "Missões diárias: 60 / 120 / 200 candies.", "Quêtes quotidiennes : 60 / 120 / 200 candies.", "Ежедневные задания: 60 / 120 / 200 конфет." },
+    info4       = { "El Candy expira al terminar el evento: gástalo antes.", "Candy expires when the event ends: spend it first.", "O Candy expira quando o evento acaba: gaste antes.", "Les Candy expirent à la fin de l'événement : dépense-les avant.", "Конфеты сгорают после события: потрать их заранее." },
 
-    gb_espp     = { "ESP jugadores", "Player ESP", "ESP de jogadores", "ESP joueurs", "ESP Ð¸Ð³Ñ€Ð¾ÐºÐ¾Ð²" },
-    gb_gun      = { "Pistola", "Gun", "Arma", "Arme", "ÐŸÐ¸ÑÑ‚Ð¾Ð»ÐµÑ‚" },
-    tg_esp      = { "Activar ESP", "Enable ESP", "Ativar ESP", "Activer ESP", "Ð’ÐºÐ»ÑŽÑ‡Ð¸Ñ‚ÑŒ ESP" },
-    tg_espnames = { "Nombre y rol", "Name & role", "Nome e funÃ§Ã£o", "Nom et rÃ´le", "Ð˜Ð¼Ñ Ð¸ Ñ€Ð¾Ð»ÑŒ" },
-    tg_espgun   = { "Resaltar pistola caÃ­da", "Highlight dropped gun", "Destacar arma caÃ­da", "Surligner l'arme au sol", "ÐŸÐ¾Ð´ÑÐ²ÐµÑ‡Ð¸Ð²Ð°Ñ‚ÑŒ ÑƒÐ¿Ð°Ð²ÑˆÐ¸Ð¹ Ð¿Ð¸ÑÑ‚Ð¾Ð»ÐµÑ‚" },
-    btn_grabgun = { "Agarrar pistola caÃ­da", "Grab dropped gun", "Pegar arma caÃ­da", "Ramasser l'arme", "ÐŸÐ¾Ð´Ð¾Ð±Ñ€Ð°Ñ‚ÑŒ Ð¿Ð¸ÑÑ‚Ð¾Ð»ÐµÑ‚" },
-    n_gunok     = { "Pistola recogida", "Gun grabbed", "Arma coletada", "Arme ramassÃ©e", "ÐŸÐ¸ÑÑ‚Ð¾Ð»ÐµÑ‚ Ð¿Ð¾Ð´Ð¾Ð±Ñ€Ð°Ð½" },
-    n_nogun     = { "No hay pistola en el suelo", "No gun on the ground", "Sem arma no chÃ£o", "Pas d'arme au sol", "ÐŸÐ¸ÑÑ‚Ð¾Ð»ÐµÑ‚Ð° Ð½Ð° Ð·ÐµÐ¼Ð»Ðµ Ð½ÐµÑ‚" },
-    tg_autogun  = { "Auto-agarrar pistola", "Auto-grab gun", "Auto-pegar arma", "Auto-ramasser l'arme", "ÐÐ²Ñ‚Ð¾Ð¿Ð¾Ð´Ð±Ð¾Ñ€ Ð¿Ð¸ÑÑ‚Ð¾Ð»ÐµÑ‚Ð°" },
-    tg_rolenotify={ "Avisar de mi rol", "Notify my role", "Avisar minha funÃ§Ã£o", "PrÃ©venir de mon rÃ´le", "Ð£Ð²ÐµÐ´Ð¾Ð¼Ð»ÑÑ‚ÑŒ Ð¾ Ð¼Ð¾ÐµÐ¹ Ñ€Ð¾Ð»Ð¸" },
-    n_yourrole  = { "Tu rol:", "Your role:", "Sua funÃ§Ã£o:", "Ton rÃ´le :", "Ð¢Ð²Ð¾Ñ Ñ€Ð¾Ð»ÑŒ:" },
+    gb_espp     = { "ESP jugadores", "Player ESP", "ESP de jogadores", "ESP joueurs", "ESP игроков" },
+    gb_gun      = { "Pistola", "Gun", "Arma", "Arme", "Пистолет" },
+    tg_esp      = { "Activar ESP", "Enable ESP", "Ativar ESP", "Activer ESP", "Включить ESP" },
+    tg_espnames = { "Nombre y rol", "Name & role", "Nome e função", "Nom et rôle", "Имя и роль" },
+    tg_espgun   = { "Resaltar pistola caída", "Highlight dropped gun", "Destacar arma caída", "Surligner l'arme au sol", "Подсвечивать упавший пистолет" },
+    btn_grabgun = { "Agarrar pistola caída", "Grab dropped gun", "Pegar arma caída", "Ramasser l'arme", "Подобрать пистолет" },
+    n_gunok     = { "Pistola recogida", "Gun grabbed", "Arma coletada", "Arme ramassée", "Пистолет подобран" },
+    n_nogun     = { "No hay pistola en el suelo", "No gun on the ground", "Sem arma no chão", "Pas d'arme au sol", "Пистолета на земле нет" },
+    tg_autogun  = { "Auto-agarrar pistola", "Auto-grab gun", "Auto-pegar arma", "Auto-ramasser l'arme", "Автоподбор пистолета" },
+    tg_rolenotify={ "Avisar de mi rol", "Notify my role", "Avisar minha função", "Prévenir de mon rôle", "Уведомлять о моей роли" },
+    n_yourrole  = { "Tu rol:", "Your role:", "Sua função:", "Ton rôle :", "Твоя роль:" },
 
-    gb_sheriff  = { "Sheriff", "Sheriff", "Xerife", "ShÃ©rif", "Ð¨ÐµÑ€Ð¸Ñ„" },
-    gb_safe     = { "Inocente / seguridad", "Innocent / safety", "Inocente / seguranÃ§a", "Innocent / sÃ©curitÃ©", "ÐÐµÐ²Ð¸Ð½Ð¾Ð²Ð½Ñ‹Ð¹ / Ð±ÐµÐ·Ð¾Ð¿Ð°ÑÐ½Ð¾ÑÑ‚ÑŒ" },
-    btn_shoot   = { "Disparar al asesino", "Shoot the murderer", "Atirar no assassino", "Tirer sur le meurtrier", "Ð’Ñ‹ÑÑ‚Ñ€ÐµÐ»Ð¸Ñ‚ÑŒ Ð² ÑƒÐ±Ð¸Ð¹Ñ†Ñƒ" },
-    tg_autoshoot= { "Auto-disparar al asesino", "Auto-shoot murderer", "Auto-atirar no assassino", "Auto-tir sur le meurtrier", "ÐÐ²Ñ‚Ð¾Ð²Ñ‹ÑÑ‚Ñ€ÐµÐ» Ð² ÑƒÐ±Ð¸Ð¹Ñ†Ñƒ" },
-    sl_range    = { "Alcance auto", "Auto range", "Alcance auto", "PortÃ©e auto", "Ð”Ð°Ð»ÑŒÐ½Ð¾ÑÑ‚ÑŒ Ð°Ð²Ñ‚Ð¾" },
-    sl_cooldown = { "Espera entre disparos", "Delay between shots", "Intervalo entre tiros", "DÃ©lai entre les tirs", "ÐŸÐ°ÑƒÐ·Ð° Ð¼ÐµÐ¶Ð´Ñƒ Ð²Ñ‹ÑÑ‚Ñ€ÐµÐ»Ð°Ð¼Ð¸" },
-    tg_predict  = { "Predecir movimiento", "Predict movement", "Prever movimento", "PrÃ©dire le mouvement", "ÐŸÑ€ÐµÐ´ÑÐºÐ°Ð·Ñ‹Ð²Ð°Ñ‚ÑŒ Ð´Ð²Ð¸Ð¶ÐµÐ½Ð¸Ðµ" },
-    tg_los      = { "Solo con lÃ­nea de visiÃ³n", "Only with line of sight", "SÃ³ com linha de visÃ£o", "Seulement en ligne de vue", "Ð¢Ð¾Ð»ÑŒÐºÐ¾ Ð¿Ñ€Ð¸ Ð¿Ñ€ÑÐ¼Ð¾Ð¹ Ð²Ð¸Ð´Ð¸Ð¼Ð¾ÑÑ‚Ð¸" },
-    btn_equipgun= { "Equipar pistola", "Equip gun", "Equipar arma", "Ã‰quiper l'arme", "Ð’Ð·ÑÑ‚ÑŒ Ð¿Ð¸ÑÑ‚Ð¾Ð»ÐµÑ‚" },
-    err_notsher = { "No eres sheriff", "You are not the sheriff", "VocÃª nÃ£o Ã© o xerife", "Tu n'es pas le shÃ©rif", "Ð¢Ñ‹ Ð½Ðµ ÑˆÐµÑ€Ð¸Ñ„" },
-    err_nomurd  = { "No hay asesino vivo", "No living murderer", "Nenhum assassino vivo", "Aucun meurtrier en vie", "Ð£Ð±Ð¸Ð¹Ñ†Ð° Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½" },
-    err_nogun   = { "No tienes la pistola", "You don't have the gun", "VocÃª nÃ£o tem a arma", "Tu n'as pas l'arme", "Ð£ Ñ‚ÐµÐ±Ñ Ð½ÐµÑ‚ Ð¿Ð¸ÑÑ‚Ð¾Ð»ÐµÑ‚Ð°" },
-    err_noremote= { "La pistola no tiene el remote Shoot", "The gun has no Shoot remote", "A arma nÃ£o tem o remote Shoot", "L'arme n'a pas le remote Shoot", "Ð£ Ð¿Ð¸ÑÑ‚Ð¾Ð»ÐµÑ‚Ð° Ð½ÐµÑ‚ remote Shoot" },
-    err_shoot   = { "No se pudo disparar", "Could not shoot", "NÃ£o foi possÃ­vel atirar", "Tir impossible", "ÐÐµ ÑƒÐ´Ð°Ð»Ð¾ÑÑŒ Ð²Ñ‹ÑÑ‚Ñ€ÐµÐ»Ð¸Ñ‚ÑŒ" },
-    tg_aura     = { "Aura de cuchillo", "Knife aura", "Aura da faca", "Aura du couteau", "ÐÑƒÑ€Ð° Ð½Ð¾Ð¶Ð°" },
-    sl_aurarange= { "Alcance del aura", "Aura range", "Alcance da aura", "PortÃ©e de l'aura", "Ð Ð°Ð´Ð¸ÑƒÑ Ð°ÑƒÑ€Ñ‹" },
-    tg_reach    = { "Reach del cuchillo", "Knife reach", "Alcance da faca", "Allonge du couteau", "Ð£Ð²ÐµÐ»Ð¸Ñ‡ÐµÐ½Ð½Ñ‹Ð¹ Ð½Ð¾Ð¶" },
-    sl_reachsize= { "TamaÃ±o del reach", "Reach size", "Tamanho do alcance", "Taille de l'allonge", "Ð Ð°Ð·Ð¼ÐµÑ€" },
-    btn_killall = { "Matar a todos", "Kill all", "Matar todos", "Tuer tout le monde", "Ð£Ð±Ð¸Ñ‚ÑŒ Ð²ÑÐµÑ…" },
-    n_notmurd   = { "No eres el asesino", "You are not the murderer", "VocÃª nÃ£o Ã© o assassino", "Tu n'es pas le meurtrier", "Ð¢Ñ‹ Ð½Ðµ ÑƒÐ±Ð¸Ð¹Ñ†Ð°" },
-    n_killdone  = { "Ronda de ataques terminada", "Attack run finished", "Rodada de ataques concluÃ­da", "SÃ©rie d'attaques terminÃ©e", "ÐÑ‚Ð°ÐºÐ° Ð·Ð°Ð²ÐµÑ€ÑˆÐµÐ½Ð°" },
-    btn_equipknife={ "Equipar cuchillo", "Equip knife", "Equipar faca", "Ã‰quiper le couteau", "Ð’Ð·ÑÑ‚ÑŒ Ð½Ð¾Ð¶" },
-    tg_safe     = { "Modo seguro (cielo)", "Safe mode (sky)", "Modo seguro (cÃ©u)", "Mode sÃ»r (ciel)", "Ð‘ÐµÐ·Ð¾Ð¿Ð°ÑÐ½Ñ‹Ð¹ Ñ€ÐµÐ¶Ð¸Ð¼ (Ð½ÐµÐ±Ð¾)" },
-    tip_safe    = { "Te lleva a una plataforma en el cielo; al desactivarlo vuelves", "Takes you to a sky platform; turning it off brings you back", "Leva vocÃª a uma plataforma no cÃ©u; ao desativar vocÃª volta", "Te tÃ©lÃ©porte sur une plateforme dans le ciel ; tu reviens en le dÃ©sactivant", "ÐŸÐµÑ€ÐµÐ½Ð¾ÑÐ¸Ñ‚ Ð½Ð° Ð¿Ð»Ð°Ñ‚Ñ„Ð¾Ñ€Ð¼Ñƒ Ð² Ð½ÐµÐ±Ðµ; Ð¿Ñ€Ð¸ Ð²Ñ‹ÐºÐ»ÑŽÑ‡ÐµÐ½Ð¸Ð¸ Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‰Ð°ÐµÑ‚" },
-    tg_autosafe = { "Auto-cielo si el asesino estÃ¡ cerca", "Auto-sky if murderer is near", "Auto-cÃ©u se o assassino estiver perto", "Auto-ciel si le meurtrier est proche", "ÐÐ²Ñ‚Ð¾-Ð½ÐµÐ±Ð¾, ÐµÑÐ»Ð¸ ÑƒÐ±Ð¸Ð¹Ñ†Ð° Ñ€ÑÐ´Ð¾Ð¼" },
-    sl_danger   = { "Distancia de peligro", "Danger distance", "DistÃ¢ncia de perigo", "Distance de danger", "ÐžÐ¿Ð°ÑÐ½Ð°Ñ Ð´Ð¸ÑÑ‚Ð°Ð½Ñ†Ð¸Ñ" },
+    gb_sheriff  = { "Sheriff", "Sheriff", "Xerife", "Shérif", "Шериф" },
+    gb_safe     = { "Inocente / seguridad", "Innocent / safety", "Inocente / segurança", "Innocent / sécurité", "Невиновный / безопасность" },
+    btn_shoot   = { "Disparar al asesino", "Shoot the murderer", "Atirar no assassino", "Tirer sur le meurtrier", "Выстрелить в убийцу" },
+    tg_autoshoot= { "Auto-disparar al asesino", "Auto-shoot murderer", "Auto-atirar no assassino", "Auto-tir sur le meurtrier", "Автовыстрел в убийцу" },
+    sl_range    = { "Alcance auto", "Auto range", "Alcance auto", "Portée auto", "Дальность авто" },
+    sl_cooldown = { "Espera entre disparos", "Delay between shots", "Intervalo entre tiros", "Délai entre les tirs", "Пауза между выстрелами" },
+    tg_predict  = { "Predecir movimiento", "Predict movement", "Prever movimento", "Prédire le mouvement", "Предсказывать движение" },
+    tg_los      = { "Solo con línea de visión", "Only with line of sight", "Só com linha de visão", "Seulement en ligne de vue", "Только при прямой видимости" },
+    btn_equipgun= { "Equipar pistola", "Equip gun", "Equipar arma", "Équiper l'arme", "Взять пистолет" },
+    err_notsher = { "No eres sheriff", "You are not the sheriff", "Você não é o xerife", "Tu n'es pas le shérif", "Ты не шериф" },
+    err_nomurd  = { "No hay asesino vivo", "No living murderer", "Nenhum assassino vivo", "Aucun meurtrier en vie", "Убийца не найден" },
+    err_nogun   = { "No tienes la pistola", "You don't have the gun", "Você não tem a arma", "Tu n'as pas l'arme", "У тебя нет пистолета" },
+    err_noremote= { "La pistola no tiene el remote Shoot", "The gun has no Shoot remote", "A arma não tem o remote Shoot", "L'arme n'a pas le remote Shoot", "У пистолета нет remote Shoot" },
+    err_shoot   = { "No se pudo disparar", "Could not shoot", "Não foi possível atirar", "Tir impossible", "Не удалось выстрелить" },
+    tg_aura     = { "Aura de cuchillo", "Knife aura", "Aura da faca", "Aura du couteau", "Аура ножа" },
+    sl_aurarange= { "Alcance del aura", "Aura range", "Alcance da aura", "Portée de l'aura", "Радиус ауры" },
+    tg_reach    = { "Reach del cuchillo", "Knife reach", "Alcance da faca", "Allonge du couteau", "Увеличенный нож" },
+    sl_reachsize= { "Tamaño del reach", "Reach size", "Tamanho do alcance", "Taille de l'allonge", "Размер" },
+    btn_killall = { "Matar a todos", "Kill all", "Matar todos", "Tuer tout le monde", "Убить всех" },
+    n_notmurd   = { "No eres el asesino", "You are not the murderer", "Você não é o assassino", "Tu n'es pas le meurtrier", "Ты не убийца" },
+    n_killdone  = { "Ronda de ataques terminada", "Attack run finished", "Rodada de ataques concluída", "Série d'attaques terminée", "Атака завершена" },
+    btn_equipknife={ "Equipar cuchillo", "Equip knife", "Equipar faca", "Équiper le couteau", "Взять нож" },
+    tg_safe     = { "Modo seguro (cielo)", "Safe mode (sky)", "Modo seguro (céu)", "Mode sûr (ciel)", "Безопасный режим (небо)" },
+    tip_safe    = { "Te lleva a una plataforma en el cielo; al desactivarlo vuelves", "Takes you to a sky platform; turning it off brings you back", "Leva você a uma plataforma no céu; ao desativar você volta", "Te téléporte sur une plateforme dans le ciel ; tu reviens en le désactivant", "Переносит на платформу в небе; при выключении возвращает" },
+    tg_autosafe = { "Auto-cielo si el asesino está cerca", "Auto-sky if murderer is near", "Auto-céu se o assassino estiver perto", "Auto-ciel si le meurtrier est proche", "Авто-небо, если убийца рядом" },
+    sl_danger   = { "Distancia de peligro", "Danger distance", "Distância de perigo", "Distance de danger", "Опасная дистанция" },
 
-    gb_move     = { "Movimiento", "Movement", "Movimento", "Mouvement", "Ð”Ð²Ð¸Ð¶ÐµÐ½Ð¸Ðµ" },
-    gb_extras   = { "Extras", "Extras", "Extras", "Extras", "Ð”Ð¾Ð¿Ð¾Ð»Ð½Ð¸Ñ‚ÐµÐ»ÑŒÐ½Ð¾" },
-    tg_jump     = { "Salto", "Jump", "Pulo", "Saut", "ÐŸÑ€Ñ‹Ð¶Ð¾Ðº" },
-    tg_infjump  = { "Salto infinito", "Infinite jump", "Pulo infinito", "Saut infini", "Ð‘ÐµÑÐºÐ¾Ð½ÐµÑ‡Ð½Ñ‹Ð¹ Ð¿Ñ€Ñ‹Ð¶Ð¾Ðº" },
-    tg_fly      = { "Volar", "Fly", "Voar", "Voler", "ÐŸÐ¾Ð»Ñ‘Ñ‚" },
-    sl_flyspeed = { "Velocidad de vuelo", "Fly speed", "Velocidade de voo", "Vitesse de vol", "Ð¡ÐºÐ¾Ñ€Ð¾ÑÑ‚ÑŒ Ð¿Ð¾Ð»Ñ‘Ñ‚Ð°" },
-    btn_goplayer= { "Ir al jugador", "Go to player", "Ir ao jogador", "Aller au joueur", "Ðš Ð¸Ð³Ñ€Ð¾ÐºÑƒ" },
-    btn_refresh = { "Actualizar lista", "Refresh list", "Atualizar lista", "Actualiser la liste", "ÐžÐ±Ð½Ð¾Ð²Ð¸Ñ‚ÑŒ ÑÐ¿Ð¸ÑÐ¾Ðº" },
-    tg_spectate = { "Espectar jugador", "Spectate player", "Espectar jogador", "Observer le joueur", "ÐÐ°Ð±Ð»ÑŽÐ´Ð°Ñ‚ÑŒ Ð·Ð° Ð¸Ð³Ñ€Ð¾ÐºÐ¾Ð¼" },
-    sl_fov      = { "Campo de visiÃ³n", "Field of view", "Campo de visÃ£o", "Champ de vision", "ÐŸÐ¾Ð»Ðµ Ð·Ñ€ÐµÐ½Ð¸Ñ" },
-    n_fps       = { "FPS boost aplicado", "FPS boost applied", "FPS boost aplicado", "Boost FPS appliquÃ©", "Ð‘ÑƒÑÑ‚ FPS Ð¿Ñ€Ð¸Ð¼ÐµÐ½Ñ‘Ð½" },
-    btn_rejoin  = { "Reentrar al servidor", "Rejoin server", "Reentrar no servidor", "Rejoindre le serveur", "ÐŸÐµÑ€ÐµÐ·Ð°Ð¹Ñ‚Ð¸ Ð½Ð° ÑÐµÑ€Ð²ÐµÑ€" },
-    btn_hop     = { "Cambiar de servidor", "Server hop", "Trocar de servidor", "Changer de serveur", "Ð¡Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ ÑÐµÑ€Ð²ÐµÑ€" },
-    n_noserver  = { "No encontrÃ© otro servidor", "No other server found", "NÃ£o achei outro servidor", "Aucun autre serveur trouvÃ©", "Ð”Ñ€ÑƒÐ³Ð¾Ð¹ ÑÐµÑ€Ð²ÐµÑ€ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½" },
-    n_fail      = { "No se pudo", "Failed", "NÃ£o foi possÃ­vel", "Ã‰chec", "ÐÐµ ÑƒÐ´Ð°Ð»Ð¾ÑÑŒ" },
-    nobody      = { "(nadie)", "(nobody)", "(ninguÃ©m)", "(personne)", "(Ð½Ð¸ÐºÐ¾Ð³Ð¾)" },
+    gb_move     = { "Movimiento", "Movement", "Movimento", "Mouvement", "Движение" },
+    gb_extras   = { "Extras", "Extras", "Extras", "Extras", "Дополнительно" },
+    tg_jump     = { "Salto", "Jump", "Pulo", "Saut", "Прыжок" },
+    tg_infjump  = { "Salto infinito", "Infinite jump", "Pulo infinito", "Saut infini", "Бесконечный прыжок" },
+    tg_fly      = { "Volar", "Fly", "Voar", "Voler", "Полёт" },
+    sl_flyspeed = { "Velocidad de vuelo", "Fly speed", "Velocidade de voo", "Vitesse de vol", "Скорость полёта" },
+    btn_goplayer= { "Ir al jugador", "Go to player", "Ir ao jogador", "Aller au joueur", "К игроку" },
+    btn_refresh = { "Actualizar lista", "Refresh list", "Atualizar lista", "Actualiser la liste", "Обновить список" },
+    tg_spectate = { "Espectar jugador", "Spectate player", "Espectar jogador", "Observer le joueur", "Наблюдать за игроком" },
+    sl_fov      = { "Campo de visión", "Field of view", "Campo de visão", "Champ de vision", "Поле зрения" },
+    n_fps       = { "FPS boost aplicado", "FPS boost applied", "FPS boost aplicado", "Boost FPS appliqué", "Буст FPS применён" },
+    btn_rejoin  = { "Reentrar al servidor", "Rejoin server", "Reentrar no servidor", "Rejoindre le serveur", "Перезайти на сервер" },
+    btn_hop     = { "Cambiar de servidor", "Server hop", "Trocar de servidor", "Changer de serveur", "Сменить сервер" },
+    n_noserver  = { "No encontré otro servidor", "No other server found", "Não achei outro servidor", "Aucun autre serveur trouvé", "Другой сервер не найден" },
+    n_fail      = { "No se pudo", "Failed", "Não foi possível", "Échec", "Не удалось" },
+    nobody      = { "(nadie)", "(nobody)", "(ninguém)", "(personne)", "(никого)" },
 
-    gb_shaders  = { "Shaders", "Shaders", "Shaders", "Shaders", "Ð¨ÐµÐ¹Ð´ÐµÑ€Ñ‹" },
-    gb_live     = { "Ajustes en vivo", "Live adjustments", "Ajustes ao vivo", "RÃ©glages en direct", "ÐÐ°ÑÑ‚Ñ€Ð¾Ð¹ÐºÐ¸ Ð¾Ð½Ð»Ð°Ð¹Ð½" },
-    dd_shader   = { "Shader", "Shader", "Shader", "Shader", "Ð¨ÐµÐ¹Ð´ÐµÑ€" },
-    tg_shader   = { "Activar shader", "Enable shader", "Ativar shader", "Activer le shader", "Ð’ÐºÐ»ÑŽÑ‡Ð¸Ñ‚ÑŒ ÑˆÐµÐ¹Ð´ÐµÑ€" },
-    btn_random  = { "Shader aleatorio", "Random shader", "Shader aleatÃ³rio", "Shader alÃ©atoire", "Ð¡Ð»ÑƒÑ‡Ð°Ð¹Ð½Ñ‹Ð¹ ÑˆÐµÐ¹Ð´ÐµÑ€" },
-    fx_time     = { "Hora", "Time of day", "Hora", "Heure", "Ð’Ñ€ÐµÐ¼Ñ ÑÑƒÑ‚Ð¾Ðº" },
-    fx_bright   = { "Brillo", "Brightness", "Brilho", "LuminositÃ©", "Ð¯Ñ€ÐºÐ¾ÑÑ‚ÑŒ" },
-    fx_fog      = { "Niebla", "Fog", "NÃ©voa", "Brouillard", "Ð¢ÑƒÐ¼Ð°Ð½" },
-    fx_sat      = { "SaturaciÃ³n", "Saturation", "SaturaÃ§Ã£o", "Saturation", "ÐÐ°ÑÑ‹Ñ‰ÐµÐ½Ð½Ð¾ÑÑ‚ÑŒ" },
-    fx_con      = { "Contraste", "Contrast", "Contraste", "Contraste", "ÐšÐ¾Ð½Ñ‚Ñ€Ð°ÑÑ‚" },
+    gb_shaders  = { "Shaders", "Shaders", "Shaders", "Shaders", "Шейдеры" },
+    gb_live     = { "Ajustes en vivo", "Live adjustments", "Ajustes ao vivo", "Réglages en direct", "Настройки онлайн" },
+    dd_shader   = { "Shader", "Shader", "Shader", "Shader", "Шейдер" },
+    tg_shader   = { "Activar shader", "Enable shader", "Ativar shader", "Activer le shader", "Включить шейдер" },
+    btn_random  = { "Shader aleatorio", "Random shader", "Shader aleatório", "Shader aléatoire", "Случайный шейдер" },
+    fx_time     = { "Hora", "Time of day", "Hora", "Heure", "Время суток" },
+    fx_bright   = { "Brillo", "Brightness", "Brilho", "Luminosité", "Яркость" },
+    fx_fog      = { "Niebla", "Fog", "Névoa", "Brouillard", "Туман" },
+    fx_sat      = { "Saturación", "Saturation", "Saturação", "Saturation", "Насыщенность" },
+    fx_con      = { "Contraste", "Contrast", "Contraste", "Contraste", "Контраст" },
 
-    sh_real     = { "Realista", "Realistic", "Realista", "RÃ©aliste", "Ð ÐµÐ°Ð»Ð¸ÑÑ‚Ð¸Ñ‡Ð½Ñ‹Ð¹" },
-    sh_noon     = { "MediodÃ­a claro", "Clear noon", "Meio-dia claro", "Plein midi", "Ð¯ÑÐ½Ñ‹Ð¹ Ð¿Ð¾Ð»Ð´ÐµÐ½ÑŒ" },
-    sh_gold     = { "Atardecer dorado", "Golden sunset", "PÃ´r do sol dourado", "Coucher de soleil dorÃ©", "Ð—Ð¾Ð»Ð¾Ñ‚Ð¾Ð¹ Ð·Ð°ÐºÐ°Ñ‚" },
-    sh_blue     = { "Hora azul", "Blue hour", "Hora azul", "Heure bleue", "Ð¡Ð¸Ð½Ð¸Ð¹ Ñ‡Ð°Ñ" },
-    sh_moon     = { "Noche lunar", "Moonlit night", "Noite lunar", "Nuit lunaire", "Ð›ÑƒÐ½Ð½Ð°Ñ Ð½Ð¾Ñ‡ÑŒ" },
-    sh_hallo    = { "Halloween naranja", "Orange Halloween", "Halloween laranja", "Halloween orange", "ÐžÑ€Ð°Ð½Ð¶ÐµÐ²Ñ‹Ð¹ Ð¥ÑÐ»Ð»Ð¾ÑƒÐ¸Ð½" },
-    sh_cine     = { "CinematogrÃ¡fico", "Cinematic", "CinematogrÃ¡fico", "CinÃ©matographique", "ÐšÐ¸Ð½ÐµÐ¼Ð°Ñ‚Ð¾Ð³Ñ€Ð°Ñ„Ð¸Ñ‡Ð½Ñ‹Ð¹" },
+    sh_real     = { "Realista", "Realistic", "Realista", "Réaliste", "Реалистичный" },
+    sh_noon     = { "Mediodía claro", "Clear noon", "Meio-dia claro", "Plein midi", "Ясный полдень" },
+    sh_gold     = { "Atardecer dorado", "Golden sunset", "Pôr do sol dourado", "Coucher de soleil doré", "Золотой закат" },
+    sh_blue     = { "Hora azul", "Blue hour", "Hora azul", "Heure bleue", "Синий час" },
+    sh_moon     = { "Noche lunar", "Moonlit night", "Noite lunar", "Nuit lunaire", "Лунная ночь" },
+    sh_hallo    = { "Halloween naranja", "Orange Halloween", "Halloween laranja", "Halloween orange", "Оранжевый Хэллоуин" },
+    sh_cine     = { "Cinematográfico", "Cinematic", "Cinematográfico", "Cinématographique", "Кинематографичный" },
     sh_teal     = { "Teal & Orange", "Teal & Orange", "Teal & Orange", "Teal & Orange", "Teal & Orange" },
-    sh_cyber    = { "Cyberpunk neÃ³n", "Neon cyberpunk", "Cyberpunk neon", "Cyberpunk nÃ©on", "ÐÐµÐ¾Ð½Ð¾Ð²Ñ‹Ð¹ ÐºÐ¸Ð±ÐµÑ€Ð¿Ð°Ð½Ðº" },
+    sh_cyber    = { "Cyberpunk neón", "Neon cyberpunk", "Cyberpunk neon", "Cyberpunk néon", "Неоновый киберпанк" },
     sh_synth    = { "Synthwave", "Synthwave", "Synthwave", "Synthwave", "Synthwave" },
-    sh_fantasy  = { "FantasÃ­a mÃ¡gica", "Magic fantasy", "Fantasia mÃ¡gica", "Fantaisie magique", "Ð’Ð¾Ð»ÑˆÐµÐ±Ð½Ð¾Ðµ Ñ„ÑÐ½Ñ‚ÐµÐ·Ð¸" },
-    sh_horror   = { "Terror", "Horror", "Terror", "Horreur", "Ð£Ð¶Ð°Ñ" },
-    sh_noir     = { "Noir", "Noir", "Noir", "Noir", "ÐÑƒÐ°Ñ€" },
-    sh_bright   = { "Ultra brillante", "Ultra bright", "Ultra brilhante", "Ultra lumineux", "Ð£Ð»ÑŒÑ‚Ñ€Ð°ÑÑ€ÐºÐ¸Ð¹" },
+    sh_fantasy  = { "Fantasía mágica", "Magic fantasy", "Fantasia mágica", "Fantaisie magique", "Волшебное фэнтези" },
+    sh_horror   = { "Terror", "Horror", "Terror", "Horreur", "Ужас" },
+    sh_noir     = { "Noir", "Noir", "Noir", "Noir", "Нуар" },
+    sh_bright   = { "Ultra brillante", "Ultra bright", "Ultra brilhante", "Ultra lumineux", "Ультраяркий" },
 
-    gb_menu     = { "MenÃº", "Menu", "Menu", "Menu", "ÐœÐµÐ½ÑŽ" },
-    btn_unload  = { "Descargar script", "Unload script", "Descarregar script", "DÃ©charger le script", "Ð’Ñ‹Ð³Ñ€ÑƒÐ·Ð¸Ñ‚ÑŒ ÑÐºÑ€Ð¸Ð¿Ñ‚" },
-    l_menukey   = { "Tecla del menÃº (PC)", "Menu key (PC)", "Tecla do menu (PC)", "Touche du menu (PC)", "ÐšÐ»Ð°Ð²Ð¸ÑˆÐ° Ð¼ÐµÐ½ÑŽ (ÐŸÐš)" },
-    n_loaded    = { "MM2 Hub v5.1 cargado", "MM2 Hub v5.1 loaded", "MM2 Hub v5.1 carregado", "MM2 Hub v5.1 chargÃ©", "MM2 Hub v5.1 Ð·Ð°Ð³Ñ€ÑƒÐ¶ÐµÐ½" },
+    gb_menu     = { "Menú", "Menu", "Menu", "Menu", "Меню" },
+    btn_unload  = { "Descargar script", "Unload script", "Descarregar script", "Décharger le script", "Выгрузить скрипт" },
+    l_menukey   = { "Tecla del menú (PC)", "Menu key (PC)", "Tecla do menu (PC)", "Touche du menu (PC)", "Клавиша меню (ПК)" },
+    n_loaded    = { "MM2 Hub v5.1 cargado", "MM2 Hub v5.1 loaded", "MM2 Hub v5.1 carregado", "MM2 Hub v5.1 chargé", "MM2 Hub v5.1 загружен" },
 }
 
 local LANG_FILE = "MM2Hub/lang.txt"
@@ -195,7 +195,7 @@ local function saveLang(code)
 end
 
 -- =============================================================================
--- CONSTRUCCIÃ“N DEL HUB (se vuelve a ejecutar al cambiar de idioma)
+-- CONSTRUCCIÓN DEL HUB (se vuelve a ejecutar al cambiar de idioma)
 -- =============================================================================
 local function Build(LANG, snap)
     local function T(k)
@@ -204,7 +204,7 @@ local function Build(LANG, snap)
         return e[LIDX[LANG]] or e[2]
     end
 
-    -- LibrerÃ­a ----------------------------------------------------------------
+    -- Librería ----------------------------------------------------------------
     local repo = "https://raw.githubusercontent.com/mstudio45/LinoriaLib/main/"
     local Library      = loadstring(game:HttpGet(repo .. "Library.lua"))()
     local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
@@ -363,7 +363,7 @@ local function Build(LANG, snap)
         local lblSher  = RdBox:AddLabel(T("l_sher") .. ": ?")
 
         -- Idioma
-        local langNames, curName = {}, "EspaÃ±ol"
+        local langNames, curName = {}, "Español"
         for _, l in ipairs(LANGS) do
             table.insert(langNames, l[2])
             if l[1] == LANG then curName = l[2] end
@@ -464,7 +464,7 @@ local function Build(LANG, snap)
                     if direction == "down" then remaining = gs end
                 end
 
-                -- Â¿ronda activa? (mapa + asesino con cuchillo vivo, sin marca de fin)
+                -- ¿ronda activa? (mapa + asesino con cuchillo vivo, sin marca de fin)
                 local newActive = false
                 local m = strictMurd()
                 if map and not Round.ended then
@@ -532,7 +532,7 @@ local function Build(LANG, snap)
 
                 hud.Enabled = Toggles.HUDOn.Value
                 hudTop.Text = newActive and timeText or T("waiting_hud")
-                hudBot.Text = T("l_myrole") .. ": " .. roleName(myRole) .. "  Â·  " .. T("l_alive") .. ": " .. nAlive
+                hudBot.Text = T("l_myrole") .. ": " .. roleName(myRole) .. "  ·  " .. T("l_alive") .. ": " .. nAlive
 
                 task.wait(0.4)
             end
@@ -671,7 +671,7 @@ local function Build(LANG, snap)
                         task.wait(0.8)
                     end
                 else
-                    -- ronda terminada o farm apagado: asegurar que no queda ningÃºn movimiento
+                    -- ronda terminada o farm apagado: asegurar que no queda ningún movimiento
                     if Farm.tween then pcall(function() Farm.tween:Cancel() end); Farm.tween = nil end
                     task.wait(0.5)
                 end
@@ -889,7 +889,7 @@ local function Build(LANG, snap)
 
         -- ---------------------------------------------------------------------
         -- SHERIFF: usa el remote  Character.Gun.Shoot:FireServer(origen, destino)
-        -- (FireServer no espera respuesta, asÃ­ que no puede congelar el script)
+        -- (FireServer no espera respuesta, así que no puede congelar el script)
         -- ---------------------------------------------------------------------
         local shooting = false
         local lastShot = 0
@@ -981,7 +981,7 @@ local function Build(LANG, snap)
 
                         if clear then
                             shooting = true
-                            pcall(shootAt, mh)   -- cualquier error queda contenido aquÃ­
+                            pcall(shootAt, mh)   -- cualquier error queda contenido aquí
                             shooting = false
                         end
                     end
@@ -1147,7 +1147,7 @@ local function Build(LANG, snap)
                 if not flyBV or flyBV.Parent ~= hrp then
                     if flyBV then flyBV:Destroy() end
                     flyBV = Instance.new("BodyVelocity")
-                    flyBV.MaxForce = Vector3.new(1000000000, 1000000000, 1000000000)
+                    flyBV.MaxForce = Vector3.new(1e9, 1e9, 1e9)
                     flyBV.Parent = hrp
                 end
                 local cam = workspace.CurrentCamera
@@ -1351,7 +1351,7 @@ local function Build(LANG, snap)
         ShdBox:AddToggle("Fullbright", { Text = "Fullbright", Default = false, Callback = function(v)
             if v then
                 Lighting.Brightness = 2; Lighting.ClockTime = 14
-                Lighting.FogEnd = 100000; Lighting.GlobalShadows = false
+                Lighting.FogEnd = 1e5; Lighting.GlobalShadows = false
                 Lighting.Ambient = Color3.fromRGB(190, 190, 190)
             else
                 for k, val in pairs(original) do pcall(function() Lighting[k] = val end) end
@@ -1409,7 +1409,7 @@ local function Build(LANG, snap)
         MenuBox:AddLabel(T("l_menukey")):AddKeyPicker("MenuKeybind", { Default = "RightShift", NoUI = true, Text = T("l_menukey") })
         Library.ToggleKeybind = Options.MenuKeybind
 
-        -- cambio de idioma: reconstruye el menÃº conservando tus ajustes
+        -- cambio de idioma: reconstruye el menú conservando tus ajustes
         local nameToCode = {}
         for _, l in ipairs(LANGS) do nameToCode[l[2]] = l[1] end
         Options.LangPick:OnChanged(function()
