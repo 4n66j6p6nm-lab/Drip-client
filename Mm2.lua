@@ -1,8 +1,7 @@
 --[[
-  MM2 HUB v5.1 - LinoriaLib (mstudio45)
+  KAISEN X - LinoriaLib (mstudio45)
   Pestañas: Ronda · Evento · ESP · Rol · Jugador · Visual · Ajustes
   Idiomas: Español · English · Português · Français · Русский
-  (el selector de idioma está en la pestaña Ronda)
 ]]
 
 if not game:IsLoaded() then game.Loaded:Wait() end
@@ -11,13 +10,18 @@ local Players           = game:GetService("Players")
 local Lighting          = game:GetService("Lighting")
 local TweenService      = game:GetService("TweenService")
 local RunService        = game:GetService("RunService")
-local UIS               = game:GetService("UserInputService")
+local UIS                = game:GetService("UserInputService")
 local VirtualUser       = game:GetService("VirtualUser")
 local HttpService       = game:GetService("HttpService")
 local TeleportSvc       = game:GetService("TeleportService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TextChatService   = game:GetService("TextChatService")
 local LP                = Players.LocalPlayer
 local H                 = Color3.fromHex
+
+-- Imagen de fondo fija (no editable) -----------------------------------------
+local BG_URL    = "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcSGUyGjW26Sn5b9Jvuc7VgWKhEMcPuYGOIfagnCqeyjHwa2nkSK"
+local BG_TRANSP = 0.9 -- muy transparente: apenas se nota, no tapa el texto
 
 -- =============================================================================
 -- IDIOMAS
@@ -25,7 +29,6 @@ local H                 = Color3.fromHex
 local LANGS = { { "es", "Español" }, { "en", "English" }, { "pt", "Português" }, { "fr", "Français" }, { "ru", "Русский" } }
 local LIDX  = { es = 1, en = 2, pt = 3, fr = 4, ru = 5 }
 
--- orden: es, en, pt, fr, ru
 local TR = {
     tab_round   = { "Ronda", "Round", "Rodada", "Manche", "Раунд" },
     tab_event   = { "Evento", "Event", "Evento", "Événement", "Событие" },
@@ -97,7 +100,13 @@ local TR = {
     tg_espgun   = { "Resaltar pistola caída", "Highlight dropped gun", "Destacar arma caída", "Surligner l'arme au sol", "Подсвечивать упавший пистолет" },
     btn_grabgun = { "Agarrar pistola caída", "Grab dropped gun", "Pegar arma caída", "Ramasser l'arme", "Подобрать пистолет" },
     n_gunok     = { "Pistola recogida", "Gun grabbed", "Arma coletada", "Arme ramassée", "Пистолет подобран" },
-    n_nogun     = { "No hay pistola en el suelo", "No gun on the ground", "Sem arma no chão", "Pas d'arme au sol", "Пистолета на земле нет" },
+    n_nogun     = { "No encuentro la pistola en el mapa", "Can't find the gun on the map", "Não achei a arma no mapa", "Arme introuvable sur la carte", "Пистолет на карте не найден" },
+    n_gunfail   = { "No se pudo recoger la pistola", "Could not pick up the gun", "Não foi possível pegar a arma", "Impossible de ramasser l'arme", "Не удалось подобрать пистолет" },
+    n_murdcant  = { "El asesino no puede recoger la pistola", "The murderer can't pick up the gun", "O assassino não pode pegar a arma", "Le meurtrier ne peut pas ramasser l'arme", "Убийца не может подобрать пистолет" },
+    n_hasgun    = { "Ya tienes la pistola", "You already have the gun", "Você já tem a arma", "Tu as déjà l'arme", "У тебя уже есть пистолет" },
+    btn_gundbg  = { "Depurar pistola caída", "Debug dropped gun", "Depurar arma caída", "Déboguer l'arme au sol", "Отладка пистолета" },
+    n_gundbg    = { "Info de la pistola copiada", "Gun info copied", "Info da arma copiada", "Infos de l'arme copiées", "Инфо о пистолете скопирована" },
+    n_gundbg2   = { "Info de la pistola impresa en consola (F9)", "Gun info printed to console (F9)", "Info da arma impressa no console (F9)", "Infos de l'arme dans la console (F9)", "Инфо о пистолете в консоли (F9)" },
     tg_autogun  = { "Auto-agarrar pistola", "Auto-grab gun", "Auto-pegar arma", "Auto-ramasser l'arme", "Автоподбор пистолета" },
     tg_rolenotify={ "Avisar de mi rol", "Notify my role", "Avisar minha função", "Prévenir de mon rôle", "Уведомлять о моей роли" },
     n_yourrole  = { "Tu rol:", "Your role:", "Sua função:", "Ton rôle :", "Твоя роль:" },
@@ -128,6 +137,25 @@ local TR = {
     tip_safe    = { "Te lleva a una plataforma en el cielo; al desactivarlo vuelves", "Takes you to a sky platform; turning it off brings you back", "Leva você a uma plataforma no céu; ao desativar você volta", "Te téléporte sur une plateforme dans le ciel ; tu reviens en le désactivant", "Переносит на платформу в небе; при выключении возвращает" },
     tg_autosafe = { "Auto-cielo si el asesino está cerca", "Auto-sky if murderer is near", "Auto-céu se o assassino estiver perto", "Auto-ciel si le meurtrier est proche", "Авто-небо, если убийца рядом" },
     sl_danger   = { "Distancia de peligro", "Danger distance", "Distância de perigo", "Distance de danger", "Опасная дистанция" },
+
+    gb_fling    = { "Fling", "Fling" },
+    tip_fling   = { "Técnica experimental: puede no funcionar si el juego corrige la posición", "Experimental technique: may not work if the game corrects position" },
+    dd_flingtarget = { "Jugador objetivo", "Target player" },
+    btn_flingrefresh = { "Actualizar lista", "Refresh list" },
+    sl_flingpower = { "Potencia del fling", "Fling power" },
+    btn_fling_murd = { "Fling al asesino", "Fling the murderer" },
+    btn_fling_sher = { "Fling al sheriff", "Fling the sheriff" },
+    btn_fling_target = { "Flingear objetivo", "Fling target" },
+    n_flingfail = { "No se pudo flingear (sin objetivo válido)", "Could not fling (no valid target)" },
+    n_flingdone = { "Fling enviado", "Fling sent" },
+
+    gb_reveal   = { "Revelar asesino en el chat", "Reveal murderer in chat" },
+    tg_reveal   = { "Revelar automáticamente cada ronda", "Auto-reveal every round" },
+    btn_reveal  = { "Revelar ahora", "Reveal now" },
+    tip_reveal  = { "Envía un mensaje al chat del juego con el nombre del asesino", "Sends a message to the game chat naming the murderer" },
+    n_revealfail= { "No hay asesino para revelar", "No murderer to reveal" },
+    n_revealsent= { "Mensaje enviado al chat", "Message sent to chat" },
+    n_revealnochat={ "No se pudo enviar el mensaje al chat", "Could not send the chat message" },
 
     gb_move     = { "Movimiento", "Movement", "Movimento", "Mouvement", "Движение" },
     gb_extras   = { "Extras", "Extras", "Extras", "Extras", "Дополнительно" },
@@ -175,10 +203,10 @@ local TR = {
     gb_menu     = { "Menú", "Menu", "Menu", "Menu", "Меню" },
     btn_unload  = { "Descargar script", "Unload script", "Descarregar script", "Décharger le script", "Выгрузить скрипт" },
     l_menukey   = { "Tecla del menú (PC)", "Menu key (PC)", "Tecla do menu (PC)", "Touche du menu (PC)", "Клавиша меню (ПК)" },
-    n_loaded    = { "MM2 Hub v5.1 cargado", "MM2 Hub v5.1 loaded", "MM2 Hub v5.1 carregado", "MM2 Hub v5.1 chargé", "MM2 Hub v5.1 загружен" },
+    n_loaded    = { "Kaisen X cargado", "Kaisen X loaded" },
 }
 
-local LANG_FILE = "MM2Hub/lang.txt"
+local LANG_FILE = "KaisenX/lang.txt"
 local function loadLang()
     local ok, v = pcall(function() return readfile(LANG_FILE) end)
     if ok and type(v) == "string" then
@@ -189,13 +217,13 @@ local function loadLang()
 end
 local function saveLang(code)
     pcall(function()
-        if makefolder then pcall(makefolder, "MM2Hub") end
+        if makefolder then pcall(makefolder, "KaisenX") end
         writefile(LANG_FILE, code)
     end)
 end
 
 -- =============================================================================
--- CONSTRUCCIÓN DEL HUB (se vuelve a ejecutar al cambiar de idioma)
+-- CONSTRUCCIÓN DEL HUB
 -- =============================================================================
 local function Build(LANG, snap)
     local function T(k)
@@ -204,7 +232,6 @@ local function Build(LANG, snap)
         return e[LIDX[LANG]] or e[2]
     end
 
-    -- Librería ----------------------------------------------------------------
     local repo = "https://raw.githubusercontent.com/mstudio45/LinoriaLib/main/"
     local Library      = loadstring(game:HttpGet(repo .. "Library.lua"))()
     local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
@@ -212,9 +239,8 @@ local function Build(LANG, snap)
     local Toggles = getgenv().Toggles or Library.Toggles
     local Options = getgenv().Options or Library.Options
 
-    getgenv().__MM2HubUnload = function() pcall(function() Library:Unload() end) end
+    getgenv().__KaisenXUnload = function() pcall(function() Library:Unload() end) end
 
-    -- Utilidades --------------------------------------------------------------
     local alive = true
     local conns = {}
     local function track(c) table.insert(conns, c); return c end
@@ -225,11 +251,11 @@ local function Build(LANG, snap)
     end
 
     local guiParent = (pcall(function() return gethui() end) and gethui()) or game:GetService("CoreGui")
-    for _, n in ipairs({ "MM2HubESP", "MM2HubHUD" }) do
+    for _, n in ipairs({ "KaisenXESP", "KaisenXHUD" }) do
         local old = guiParent:FindFirstChild(n); if old then old:Destroy() end
     end
     local espFolder = Instance.new("Folder")
-    espFolder.Name = "MM2HubESP"
+    espFolder.Name = "KaisenXESP"
     espFolder.Parent = guiParent
 
     local function fmtTime(s)
@@ -238,8 +264,11 @@ local function Build(LANG, snap)
     end
 
     local function toPart(o)
+        if not o then return nil end
         if o:IsA("BasePart") then return o end
-        if o:IsA("Model") then return o:FindFirstChildWhichIsA("BasePart", true) end
+        local handle = o:FindFirstChild("Handle")
+        if handle and handle:IsA("BasePart") then return handle end
+        return o:FindFirstChildWhichIsA("BasePart", true)
     end
 
     local function getMap()
@@ -248,7 +277,32 @@ local function Build(LANG, snap)
         end
     end
 
-    -- Roles: "murd" / "sheriff" / "inno" --------------------------------------
+    -- Chat del juego --------------------------------------------------------------
+    local function sendChat(text)
+        -- TextChatService (chat nuevo)
+        local okNew = pcall(function()
+            local channel = TextChatService.TextChannels and TextChatService.TextChannels:FindFirstChild("RBXGeneral")
+            if channel then
+                local r = channel:SendAsync(text)
+                if r and r.TextChannel then return true end
+            end
+            error("no channel")
+        end)
+        if okNew then return true end
+        -- Chat legado
+        local okLegacy = pcall(function()
+            local ev = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
+            local remote = ev and ev:FindFirstChild("SayMessageRequest")
+            if remote then
+                remote:FireServer(text, "All")
+                return true
+            end
+            error("no legacy")
+        end)
+        return okLegacy
+    end
+
+    -- Roles ---------------------------------------------------------------------
     local roleCache = {}
     local pdRemote
 
@@ -268,7 +322,6 @@ local function Build(LANG, snap)
                 end
             end
             if pdRemote then
-                -- en hilo aparte: si el servidor no responde, no bloquea nada
                 task.spawn(function()
                     local ok, data = pcall(function() return pdRemote:InvokeServer() end)
                     if ok and type(data) == "table" then
@@ -322,12 +375,42 @@ local function Build(LANG, snap)
         if m and m ~= LP and m.Character then return m.Character:FindFirstChild("HumanoidRootPart") end
     end
 
-    -- Estado de ronda compartido ------------------------------------------------
     local Round = { active = false, ended = false, hadMurd = false, id = 0, startedAt = 0 }
 
-    -- Ventana -------------------------------------------------------------------
+    -- Pistola caída: búsqueda por todo el workspace -------------------------------
+    local gunDrop
+    local function isGunName(n) return n:lower():find("gundrop", 1, true) ~= nil end
+    local function isGunClass(d) return d:IsA("BasePart") or d:IsA("Model") or d:IsA("Tool") end
+
+    local function findGunDrop()
+        if gunDrop and gunDrop.Parent then return gunDrop end
+        gunDrop = workspace:FindFirstChild("GunDrop")
+        if not gunDrop then
+            local map = getMap()
+            if map then gunDrop = map:FindFirstChild("GunDrop", true) end
+        end
+        return gunDrop
+    end
+
+    track(workspace.DescendantAdded:Connect(function(d)
+        if isGunName(d.Name) and isGunClass(d) then gunDrop = d end
+    end))
+    task.spawn(function()
+        while alive do
+            if not (gunDrop and gunDrop.Parent) and getMap() then
+                pcall(function()
+                    for _, d in ipairs(workspace:GetDescendants()) do
+                        if isGunName(d.Name) and isGunClass(d) then gunDrop = d break end
+                    end
+                end)
+            end
+            task.wait(2.5)
+        end
+    end)
+
+    -- Ventana ---------------------------------------------------------------------
     local Window = Library:CreateWindow({
-        Title = "MM2 Hub v5.1",
+        Title = "Kaisen X",
         Center = true,
         AutoShow = true,
         TabPadding = 4,
@@ -346,6 +429,51 @@ local function Build(LANG, snap)
         Settings = Window:AddTab(T("tab_settings")),
     }
 
+    -- Imagen de fondo fija: muy transparente, detrás del contenido -----------------
+    local bgImage
+    task.spawn(function()
+        local main
+        for i = 1, 30 do
+            local h = rawget(Window, "Holder") or Window.Holder
+            if typeof(h) == "Instance" then main = h break end
+            local sg = Library.ScreenGui
+            if sg then
+                for _, f in ipairs(sg:GetChildren()) do
+                    if f:IsA("Frame") and math.abs(f.AbsoluteSize.X - 470) < 10 and math.abs(f.AbsoluteSize.Y - 320) < 10 then
+                        main = f break
+                    end
+                end
+            end
+            if main then break end
+            task.wait(0.1)
+        end
+        if not main then return end
+        local ok, data = pcall(function() return game:HttpGet(BG_URL) end)
+        if not ok or type(data) ~= "string" or #data < 100 then return end
+        if not (writefile and getcustomasset) then return end
+        pcall(function() if makefolder then makefolder("KaisenX") end end)
+        local path = "KaisenX/bg.png"
+        local okw = pcall(writefile, path, data)
+        if not okw then return end
+        local ok2, asset = pcall(getcustomasset, path)
+        if not ok2 or not asset then return end
+        local img = Instance.new("ImageLabel")
+        img.Name = "KaisenXBg"
+        img.Size = UDim2.fromScale(1, 1)
+        img.BackgroundTransparency = 1
+        img.Image = asset
+        img.ImageTransparency = BG_TRANSP -- 0.9: apenas visible
+        img.ScaleType = Enum.ScaleType.Crop
+        img.ZIndex = 0            -- detrás de todos los controles
+        img.Active = false
+        img.Parent = main
+        img:SetAttribute("__bg", true)
+        -- lo manda al fondo de la pila de dibujo
+        img.Parent = main
+        pcall(function() img:TweenSize(img.Size, "Out", "Linear", 0) end)
+        bgImage = img
+    end)
+
     local hud, hudTop, hudBot
 
     -- =========================================================================
@@ -362,7 +490,6 @@ local function Build(LANG, snap)
         local lblMurd  = RdBox:AddLabel(T("l_murd") .. ": ?")
         local lblSher  = RdBox:AddLabel(T("l_sher") .. ": ?")
 
-        -- Idioma
         local langNames, curName = {}, "Español"
         for _, l in ipairs(LANGS) do
             table.insert(langNames, l[2])
@@ -376,9 +503,8 @@ local function Build(LANG, snap)
         RdOpt:AddToggle("NotifyDeaths", { Text = T("tg_ndeath"), Default = true })
         RdOpt:AddLabel(T("timer_info"), true)
 
-        -- HUD en pantalla
         hud = Instance.new("ScreenGui")
-        hud.Name = "MM2HubHUD"
+        hud.Name = "KaisenXHUD"
         hud.ResetOnSpawn = false
         hud.IgnoreGuiInset = true
         hud.Parent = guiParent
@@ -408,7 +534,6 @@ local function Build(LANG, snap)
         hudTop = hudLabel(2, 17, true)
         hudBot = hudLabel(23, 12, false)
 
-        -- Reloj del juego (si existe)
         local function findGameTimer()
             local pg = LP:FindFirstChild("PlayerGui")
             if not pg then return end
@@ -423,7 +548,6 @@ local function Build(LANG, snap)
             if m then return tonumber(m) * 60 + tonumber(s) end
         end
 
-        -- Eventos del juego que indican el fin de ronda (si existen)
         pcall(function()
             for _, d in ipairs(ReplicatedStorage:GetDescendants()) do
                 if d:IsA("RemoteEvent") then
@@ -439,6 +563,21 @@ local function Build(LANG, snap)
         local gameTimer, lastSec, direction
         local warned30, warned10 = false, false
         local prevAlive = {}
+
+        -- revelar asesino: una vez por ronda
+        local revealedRound = -1
+        local function doReveal(manual)
+            local m = findByRole("murd")
+            if not m then
+                if manual then Library:Notify(T("n_revealfail"), 3) end
+                return
+            end
+            local msg = "The murder is " .. m.Name .. " kaisen x"
+            local ok = sendChat(msg)
+            if manual then
+                Library:Notify(ok and T("n_revealsent") or T("n_revealnochat"), 3)
+            end
+        end
 
         task.spawn(function()
             local tick = 0
@@ -464,7 +603,6 @@ local function Build(LANG, snap)
                     if direction == "down" then remaining = gs end
                 end
 
-                -- ¿ronda activa? (mapa + asesino con cuchillo vivo, sin marca de fin)
                 local newActive = false
                 local m = strictMurd()
                 if map and not Round.ended then
@@ -492,7 +630,11 @@ local function Build(LANG, snap)
                 prevActive = newActive
                 Round.active = newActive
 
-                -- texto de tiempo
+                if newActive and Toggles.AutoReveal and Toggles.AutoReveal.Value and revealedRound ~= Round.id then
+                    revealedRound = Round.id
+                    task.spawn(doReveal, false)
+                end
+
                 local timeText = "--:--"
                 if newActive then
                     if gs and direction == "down" then timeText = T("t_remaining") .. " " .. fmtTime(gs)
@@ -537,10 +679,13 @@ local function Build(LANG, snap)
                 task.wait(0.4)
             end
         end)
+
+        -- se expone para la pestaña Rol
+        getgenv().__KaisenX_doReveal = doReveal
     end
 
     -- =========================================================================
-    -- EVENTO: Auto farm de Candy (solo durante la ronda)
+    -- EVENTO: Auto farm de Candy (solo durante la ronda, velocidad por defecto 27)
     -- =========================================================================
     do
         local EvBox  = Tabs.Event:AddLeftGroupbox(T("gb_farm"))
@@ -548,7 +693,7 @@ local function Build(LANG, snap)
         local EvInfo = Tabs.Event:AddRightGroupbox(T("gb_info"))
 
         EvBox:AddToggle("AutoFarm", { Text = T("tg_farm"), Default = false })
-        EvBox:AddSlider("FarmSpeed", { Text = T("sl_speed"), Default = 28, Min = 10, Max = 70, Rounding = 0, Suffix = " st/s" })
+        EvBox:AddSlider("FarmSpeed", { Text = T("sl_speed"), Default = 27, Min = 10, Max = 70, Rounding = 0, Suffix = " st/s" })
         EvBox:AddToggle("AvoidMurd", { Text = T("tg_avoid"), Default = true })
         EvBox:AddSlider("AvoidDist", { Text = T("sl_avoid"), Default = 30, Min = 10, Max = 80, Rounding = 0, Suffix = " st" })
         local lblFarm  = EvBox:AddLabel(T("l_fstate") .. ": " .. T("fs_off"))
@@ -601,7 +746,6 @@ local function Build(LANG, snap)
 
         task.spawn(function()
             while alive do
-                -- nueva ronda => lista limpia
                 if Farm.seenRound ~= Round.id then
                     Farm.seenRound = Round.id
                     resetFarm()
@@ -640,7 +784,6 @@ local function Build(LANG, snap)
                             tw.Completed:Connect(function() done = true end)
                             Farm.tween = tw
                             tw:Play()
-                            -- se corta al instante si termina la ronda o apagas el farm
                             while not done and alive and Round.active and Toggles.AutoFarm.Value do
                                 task.wait(0.05)
                             end
@@ -671,7 +814,6 @@ local function Build(LANG, snap)
                         task.wait(0.8)
                     end
                 else
-                    -- ronda terminada o farm apagado: asegurar que no queda ningún movimiento
                     if Farm.tween then pcall(function() Farm.tween:Cancel() end); Farm.tween = nil end
                     task.wait(0.5)
                 end
@@ -679,7 +821,6 @@ local function Build(LANG, snap)
             end
         end)
 
-        -- ESP de candies
         local candyTags = {}
         task.spawn(function()
             while alive do
@@ -713,7 +854,6 @@ local function Build(LANG, snap)
             end
         end)
 
-        -- Noclip (farm activo o manual)
         track(RunService.Stepped:Connect(function()
             local farmNoclip = Toggles.AutoFarm.Value and Round.active and Toggles.NoClipFarm.Value
             local manual = Toggles.Noclip and Toggles.Noclip.Value
@@ -729,7 +869,7 @@ local function Build(LANG, snap)
     end
 
     -- =========================================================================
-    -- ESP
+    -- ESP + PISTOLA CAÍDA
     -- =========================================================================
     local grabGun
     do
@@ -783,27 +923,31 @@ local function Build(LANG, snap)
 
         task.spawn(function()
             while alive do
-                if Toggles.ESPOn.Value then
+                if Toggles.ESPOn.Value or Toggles.ESPGun.Value then
                     local keep = {}
-                    for _, plr in ipairs(Players:GetPlayers()) do
-                        local ch = plr ~= LP and plr.Character
-                        local head = ch and ch:FindFirstChild("Head")
-                        if head and isAlive(plr) then
-                            local role = getRole(plr)
-                            local col = role == "murd" and Options.ColMurd.Value
-                                or role == "sheriff" and Options.ColSher.Value or Options.ColInno.Value
-                            ensureHighlight(plr.Name, ch, col)
-                            keep["HL_" .. plr.Name] = true
-                            if Toggles.ESPNames.Value then
-                                ensureTag(plr.Name, head, plr.Name .. " [" .. roleName(role) .. "]", col)
-                                keep["BB_" .. plr.Name] = true
+                    if Toggles.ESPOn.Value then
+                        for _, plr in ipairs(Players:GetPlayers()) do
+                            local ch = plr ~= LP and plr.Character
+                            local head = ch and ch:FindFirstChild("Head")
+                            if head and isAlive(plr) then
+                                local role = getRole(plr)
+                                local col = role == "murd" and Options.ColMurd.Value
+                                    or role == "sheriff" and Options.ColSher.Value or Options.ColInno.Value
+                                ensureHighlight(plr.Name, ch, col)
+                                keep["HL_" .. plr.Name] = true
+                                if Toggles.ESPNames.Value then
+                                    ensureTag(plr.Name, head, plr.Name .. " [" .. roleName(role) .. "]", col)
+                                    keep["BB_" .. plr.Name] = true
+                                end
                             end
                         end
                     end
-                    local gun = workspace:FindFirstChild("GunDrop")
-                    if gun and Toggles.ESPGun.Value then
-                        ensureHighlight("GunDrop", gun, Options.ColGun.Value)
-                        keep["HL_GunDrop"] = true
+                    if Toggles.ESPGun.Value then
+                        local g = findGunDrop()
+                        if g then
+                            ensureHighlight("GunDrop", g, Options.ColGun.Value)
+                            keep["HL_GunDrop"] = true
+                        end
                     end
                     for _, o in ipairs(espFolder:GetChildren()) do
                         if (o.Name:sub(1, 3) == "HL_" or o.Name:sub(1, 3) == "BB_") and not keep[o.Name] then o:Destroy() end
@@ -818,38 +962,89 @@ local function Build(LANG, snap)
         end)
 
         grabGun = function()
-            local g = workspace:FindFirstChild("GunDrop")
-            local part = g and toPart(g)
+            local g = findGunDrop()
+            local part = toPart(g)
+            if not part then return false, "none" end
+            if getRole(LP) == "murd" then return false, "murd" end
+            if hasTool(LP, "Gun") then return false, "has" end
             local _, hrp = getChar()
-            if not part or not hrp then return false end
-            local old = hrp.CFrame
-            if firetouchinterest then
-                pcall(function() firetouchinterest(hrp, part, 0); firetouchinterest(hrp, part, 1) end)
+            if not hrp then return false, "fail" end
+
+            local function touch()
+                if firetouchinterest then
+                    pcall(function() firetouchinterest(hrp, part, 0); firetouchinterest(hrp, part, 1) end)
+                end
             end
-            task.wait(0.15)
+            local function waitGun(sec)
+                local t0 = os.clock()
+                while os.clock() - t0 < sec do
+                    if hasTool(LP, "Gun") then return true end
+                    task.wait(0.05)
+                end
+                return hasTool(LP, "Gun") ~= nil
+            end
+
+            touch()
+            if waitGun(0.4) then return true, "ok" end
+
             if part.Parent then
-                hrp.CFrame = part.CFrame + Vector3.new(0, 2, 0)
-                task.wait(0.35)
+                local old = hrp.CFrame
+                hrp.CFrame = part.CFrame + Vector3.new(0, 2.5, 0)
+                task.wait(0.2)
+                touch()
+                local got = waitGun(1)
+                hrp.CFrame = old
+                if got then return true, "ok" end
             end
-            hrp.CFrame = old
-            return true
+            return false, "fail"
+        end
+
+        local function notifyGrab(ok, why)
+            if ok then Library:Notify(T("n_gunok"), 3)
+            elseif why == "none" then Library:Notify(T("n_nogun"), 3)
+            elseif why == "murd" then Library:Notify(T("n_murdcant"), 3)
+            elseif why == "has" then Library:Notify(T("n_hasgun"), 3)
+            else Library:Notify(T("n_gunfail"), 3) end
         end
 
         GunBox:AddButton({ Text = T("btn_grabgun"), Func = function()
             task.spawn(function()
-                if grabGun() then Library:Notify(T("n_gunok"), 3)
-                else Library:Notify(T("n_nogun"), 3) end
+                local ok, a, b = pcall(grabGun)
+                if ok then notifyGrab(a, b) else Library:Notify(T("n_gunfail"), 3) end
             end)
         end })
         GunBox:AddToggle("AutoGun", { Text = T("tg_autogun"), Default = false })
         GunBox:AddToggle("RoleNotify", { Text = T("tg_rolenotify"), Default = true })
 
+        GunBox:AddButton({ Text = T("btn_gundbg"), Func = function()
+            local g = findGunDrop()
+            local lines = {}
+            if g then
+                local p = toPart(g)
+                table.insert(lines, "GunDrop: " .. g:GetFullName() .. " [" .. g.ClassName .. "]")
+                if p then table.insert(lines, "Pos: " .. tostring(p.Position) .. " | CanTouch=" .. tostring(p.CanTouch)) end
+            else
+                table.insert(lines, "GunDrop: nil")
+            end
+            table.insert(lines, "Mi rol: " .. getRole(LP) .. " | Gun en mochila/mano: " .. tostring(hasTool(LP, "Gun") ~= nil))
+            table.insert(lines, "Hijos de workspace con 'gun':")
+            for _, c in ipairs(workspace:GetChildren()) do
+                if c.Name:lower():find("gun", 1, true) then table.insert(lines, "  " .. c:GetFullName() .. " [" .. c.ClassName .. "]") end
+            end
+            local text = table.concat(lines, "\n")
+            print(text)
+            if setclipboard then pcall(setclipboard, text); Library:Notify(T("n_gundbg"), 3)
+            else Library:Notify(T("n_gundbg2"), 3) end
+        end })
+
         task.spawn(function()
             while alive do
-                if Toggles.AutoGun.Value and workspace:FindFirstChild("GunDrop") then
-                    pcall(grabGun); task.wait(1)
+                local wait = 0.5
+                if Toggles.AutoGun.Value and getRole(LP) ~= "murd" and not hasTool(LP, "Gun") and findGunDrop() then
+                    local ok, got = pcall(grabGun)
+                    wait = (ok and got) and 1 or 3
                 end
-                task.wait(0.5)
+                task.wait(wait)
             end
         end)
 
@@ -869,13 +1064,21 @@ local function Build(LANG, snap)
     end
 
     -- =========================================================================
-    -- ROL
+    -- ROL (sheriff, asesino, inocente, fling, revelar)
     -- =========================================================================
     local safePlat, savedCF
     do
-        local ShBox = Tabs.Role:AddLeftGroupbox(T("gb_sheriff"))
-        local MdBox = Tabs.Role:AddRightGroupbox(T("l_murd"))
-        local InBox = Tabs.Role:AddLeftGroupbox(T("gb_safe"))
+        local ShBox    = Tabs.Role:AddLeftGroupbox(T("gb_sheriff"))
+        local MdBox    = Tabs.Role:AddRightGroupbox(T("l_murd"))
+        local InBox    = Tabs.Role:AddLeftGroupbox(T("gb_safe"))
+        local FlingBox = Tabs.Role:AddRightGroupbox(T("gb_fling"))
+        local RevBox   = Tabs.Role:AddLeftGroupbox(T("gb_reveal"))
+
+        RevBox:AddLabel(T("tip_reveal"), true)
+        RevBox:AddToggle("AutoReveal", { Text = T("tg_reveal"), Default = false })
+        RevBox:AddButton({ Text = T("btn_reveal"), Func = function()
+            task.spawn(function() getgenv().__KaisenX_doReveal(true) end)
+        end })
 
         local function equip(name)
             local tool = hasTool(LP, name)
@@ -887,10 +1090,7 @@ local function Build(LANG, snap)
             return LP.Character and LP.Character:FindFirstChild(name)
         end
 
-        -- ---------------------------------------------------------------------
-        -- SHERIFF: usa el remote  Character.Gun.Shoot:FireServer(origen, destino)
-        -- (FireServer no espera respuesta, así que no puede congelar el script)
-        -- ---------------------------------------------------------------------
+        -- Sheriff: Gun.Shoot:FireServer(origen, destino)
         local shooting = false
         local lastShot = 0
 
@@ -981,7 +1181,7 @@ local function Build(LANG, snap)
 
                         if clear then
                             shooting = true
-                            pcall(shootAt, mh)   -- cualquier error queda contenido aquí
+                            pcall(shootAt, mh)
                             shooting = false
                         end
                     end
@@ -1084,7 +1284,7 @@ local function Build(LANG, snap)
             if not hrp then return end
             if not safePlat then
                 safePlat = Instance.new("Part")
-                safePlat.Name = "MM2HubSafe"
+                safePlat.Name = "KaisenXSafe"
                 safePlat.Size = Vector3.new(40, 2, 40)
                 safePlat.Anchored = true
                 safePlat.Transparency = 0.6
@@ -1118,6 +1318,69 @@ local function Build(LANG, snap)
                 task.wait(0.4)
             end
         end)
+
+        -- Fling (experimental): asesino, sheriff y cualquier jugador del servidor
+        local function playerNames()
+            local t = {}
+            for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then table.insert(t, p.Name) end end
+            if #t == 0 then t = { T("nobody") } end
+            return t
+        end
+        FlingBox:AddLabel(T("tip_fling"), true)
+        FlingBox:AddDropdown("FlingTarget", { Values = playerNames(), Default = 1, Multi = false, Text = T("dd_flingtarget") })
+        FlingBox:AddButton({ Text = T("btn_flingrefresh"), Func = function() Options.FlingTarget:SetValues(playerNames()) end })
+        FlingBox:AddSlider("FlingPower", { Text = T("sl_flingpower"), Default = 900, Min = 100, Max = 3000, Rounding = 0 })
+
+        local function flingPlayer(targetPlr)
+            local _, hrp = getChar()
+            local tch = targetPlr and targetPlr.Character
+            local thrp = tch and tch:FindFirstChild("HumanoidRootPart")
+            if not hrp or not thrp then return false end
+
+            local old = hrp.CFrame
+            local power = Options.FlingPower.Value
+
+            local bv = Instance.new("BodyVelocity")
+            bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+            bv.P = 1e4
+            local bav = Instance.new("BodyAngularVelocity")
+            bav.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
+            bav.AngularVelocity = Vector3.new(0, power, 0)
+            bv.Parent = hrp
+            bav.Parent = hrp
+
+            hrp.CFrame = thrp.CFrame
+            bv.Velocity = Vector3.new(power, power * 0.3, power)
+            task.wait(0.15)
+
+            pcall(function() bv:Destroy() end)
+            pcall(function() bav:Destroy() end)
+            if hrp.Parent then hrp.CFrame = old end
+            return true
+        end
+
+        local function flingByRole(role)
+            local plr = findByRole(role)
+            if not plr or not isAlive(plr) or not plr.Character then
+                Library:Notify(T("n_flingfail"), 3)
+                return
+            end
+            task.spawn(function()
+                local ok = pcall(flingPlayer, plr)
+                Library:Notify(ok and T("n_flingdone") or T("n_flingfail"), 3)
+            end)
+        end
+
+        ShBox:AddButton({ Text = T("btn_fling_murd"), Func = function() flingByRole("murd") end })
+        MdBox:AddButton({ Text = T("btn_fling_sher"), Func = function() flingByRole("sheriff") end })
+        FlingBox:AddButton({ Text = T("btn_fling_target"), Func = function()
+            local plr = Players:FindFirstChild(Options.FlingTarget.Value or "")
+            if not plr or not isAlive(plr) then Library:Notify(T("n_flingfail"), 3) return end
+            task.spawn(function()
+                local ok = pcall(flingPlayer, plr)
+                Library:Notify(ok and T("n_flingdone") or T("n_flingfail"), 3)
+            end)
+        end })
     end
 
     -- =========================================================================
@@ -1376,7 +1639,7 @@ local function Build(LANG, snap)
     end
 
     -- =========================================================================
-    -- AJUSTES + cambio de idioma
+    -- AJUSTES + idioma
     -- =========================================================================
     local function takeSnapshot()
         local s = { toggles = {}, options = {}, shader = currentShaderId }
@@ -1387,7 +1650,7 @@ local function Build(LANG, snap)
         return s
     end
 
-    local SKIP = { LangPick = true, ShaderPick = true, TPPlayer = true, MenuKeybind = true, SafeMode = true, Spectate = true }
+    local SKIP = { LangPick = true, ShaderPick = true, TPPlayer = true, FlingTarget = true, MenuKeybind = true, SafeMode = true, Spectate = true }
     local function restoreSnapshot(s)
         if not s then return end
         if s.shader then pcall(function() Options.ShaderPick:SetValue(T("sh_" .. s.shader)) end) end
@@ -1409,7 +1672,6 @@ local function Build(LANG, snap)
         MenuBox:AddLabel(T("l_menukey")):AddKeyPicker("MenuKeybind", { Default = "RightShift", NoUI = true, Text = T("l_menukey") })
         Library.ToggleKeybind = Options.MenuKeybind
 
-        -- cambio de idioma: reconstruye el menú conservando tus ajustes
         local nameToCode = {}
         for _, l in ipairs(LANGS) do nameToCode[l[2]] = l[1] end
         Options.LangPick:OnChanged(function()
@@ -1431,6 +1693,7 @@ local function Build(LANG, snap)
     Library:OnUnload(function()
         alive = false
         for _, c in ipairs(conns) do pcall(function() c:Disconnect() end) end
+        if bgImage then pcall(function() bgImage:Destroy() end) end
         pcall(function() espFolder:Destroy() end)
         pcall(function() hud:Destroy() end)
         if flyBV then pcall(function() flyBV:Destroy() end) end
@@ -1444,15 +1707,15 @@ local function Build(LANG, snap)
     SaveManager:SetLibrary(Library)
     SaveManager:IgnoreThemeSettings()
     SaveManager:SetIgnoreIndexes({ "MenuKeybind", "LangPick" })
-    ThemeManager:SetFolder("MM2Hub")
-    SaveManager:SetFolder("MM2Hub/mm2")
+    ThemeManager:SetFolder("KaisenX")
+    SaveManager:SetFolder("KaisenX/main")
     SaveManager:BuildConfigSection(Tabs.Settings)
     ThemeManager:ApplyToTab(Tabs.Settings)
+    SaveManager:LoadAutoloadConfig()
 
     restoreSnapshot(snap)
     Library:Notify(T("n_loaded"), 4)
 end
 
--- Evitar duplicados si ejecutas el script dos veces
-if getgenv().__MM2HubUnload then pcall(getgenv().__MM2HubUnload) task.wait(0.4) end
+if getgenv().__KaisenXUnload then pcall(getgenv().__KaisenXUnload) task.wait(0.4) end
 Build(loadLang(), nil)
