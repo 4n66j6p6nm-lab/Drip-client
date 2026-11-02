@@ -16,12 +16,17 @@ local HttpService       = game:GetService("HttpService")
 local TeleportSvc       = game:GetService("TeleportService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TextChatService   = game:GetService("TextChatService")
+local SoundService      = game:GetService("SoundService")
 local LP                = Players.LocalPlayer
 local H                 = Color3.fromHex
 
 -- Imagen de fondo fija (no editable) -----------------------------------------
 local BG_URL    = "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcSGUyGjW26Sn5b9Jvuc7VgWKhEMcPuYGOIfagnCqeyjHwa2nkSK"
-local BG_TRANSP = 0.9 -- muy transparente: apenas se nota, no tapa el texto
+local BG_TRANSP = 0.9
+
+-- Discord fijo (solo para copiar) -----------------------------------------------
+local DISCORD_URL = "https://discord.gg/tjevxNrAt"
+local DISCORD_MSG = "¡Únete al Discord de Kaisen X! " .. DISCORD_URL .. " — novedades del script, soporte y sorteos."
 
 -- =============================================================================
 -- IDIOMAS
@@ -86,6 +91,7 @@ local TR = {
     tip_autoreset={ "Mata tu personaje cuando no queden candies, para pasar a la siguiente ronda", "Kills your character when no candies are left, to skip to the next round", "Mata seu personagem quando não houver candies, para ir à próxima rodada", "Tue ton personnage quand il n'y a plus de candies, pour passer à la manche suivante", "Убивает персонажа, когда конфет нет, чтобы перейти к следующему раунду" },
     tg_candyesp = { "Marcar candies (ESP)", "Mark candies (ESP)", "Marcar candies (ESP)", "Marquer les candies (ESP)", "Метки конфет (ESP)" },
     tg_nocfarm  = { "Atravesar paredes al farmear", "Walk through walls while farming", "Atravessar paredes ao farmar", "Traverser les murs en farmant", "Проходить сквозь стены при фарме" },
+    tg_candysound = { "Sonido al recoger Candy", "Sound on Candy pickup" },
     btn_resetlist={ "Reiniciar lista", "Reset list", "Reiniciar lista", "Réinitialiser la liste", "Сбросить список" },
     n_listreset = { "Lista reiniciada", "List reset", "Lista reiniciada", "Liste réinitialisée", "Список сброшен" },
     info1       = { "Evento hasta el 16 nov 2026.", "Event until Nov 16, 2026.", "Evento até 16 nov 2026.", "Événement jusqu'au 16 nov. 2026.", "Событие до 16 ноября 2026." },
@@ -139,15 +145,16 @@ local TR = {
     sl_danger   = { "Distancia de peligro", "Danger distance", "Distância de perigo", "Distance de danger", "Опасная дистанция" },
 
     gb_fling    = { "Fling", "Fling" },
-    tip_fling   = { "Técnica experimental: puede no funcionar si el juego corrige la posición", "Experimental technique: may not work if the game corrects position" },
+    tip_fling   = { "LIMITACIÓN REAL: un script de cliente no puede mover a otro jugador para todos — cada personaje lo controla físicamente su propio cliente. Este botón escribe velocidad en el objetivo, pero lo normal es que no se note nada o se corrija al instante.", "REAL LIMITATION: a client script can't move another player for everyone — each character is physically controlled by its own client. This button writes velocity onto the target, but typically nothing will show, or it gets corrected instantly." },
     dd_flingtarget = { "Jugador objetivo", "Target player" },
     btn_flingrefresh = { "Actualizar lista", "Refresh list" },
     sl_flingpower = { "Potencia del fling", "Fling power" },
+    sl_flingduration = { "Duración del fling", "Fling duration" },
     btn_fling_murd = { "Fling al asesino", "Fling the murderer" },
     btn_fling_sher = { "Fling al sheriff", "Fling the sheriff" },
     btn_fling_target = { "Flingear objetivo", "Fling target" },
     n_flingfail = { "No se pudo flingear (sin objetivo válido)", "Could not fling (no valid target)" },
-    n_flingdone = { "Fling enviado", "Fling sent" },
+    n_flingdone = { "Intento de fling enviado (puede no notarse)", "Fling attempt sent (may not show)" },
 
     gb_reveal   = { "Revelar asesino en el chat", "Reveal murderer in chat" },
     tg_reveal   = { "Revelar automáticamente cada ronda", "Auto-reveal every round" },
@@ -159,10 +166,20 @@ local TR = {
 
     gb_move     = { "Movimiento", "Movement", "Movimento", "Mouvement", "Движение" },
     gb_extras   = { "Extras", "Extras", "Extras", "Extras", "Дополнительно" },
+    gb_antifling= { "Anti-fling", "Anti-fling" },
+    tip_antifling={ "Si tu velocidad se dispara de golpe (te están flingeando), la frena al instante en cualquier dirección, para que no te saque volando del mapa ni te mate por caída.", "If your speed spikes suddenly (you're being flung), it's instantly cut in every direction, so it never launches you off the map or kills you from the fall." },
+    tg_antifling= { "Activar anti-fling", "Enable anti-fling" },
+    sl_antifling= { "Umbral de velocidad", "Speed threshold" },
+    gb_extra2   = { "Funciones extra", "Extra features" },
     tg_jump     = { "Salto", "Jump", "Pulo", "Saut", "Прыжок" },
     tg_infjump  = { "Salto infinito", "Infinite jump", "Pulo infinito", "Saut infini", "Бесконечный прыжок" },
     tg_fly      = { "Volar", "Fly", "Voar", "Voler", "Полёт" },
     sl_flyspeed = { "Velocidad de vuelo", "Fly speed", "Velocidade de voo", "Vitesse de vol", "Скорость полёта" },
+    tg_nofall   = { "Sin daño de caída", "No fall damage" },
+    tip_nofall  = { "Restaura tu vida si cae de golpe por una caída (puede no evitar el daño real del servidor)", "Restores your health if it drops suddenly from a fall (may not stop real server-side damage)" },
+    tg_freecam  = { "Freecam", "Freecam" },
+    tip_freecam = { "Mueve la cámara con W A S D, Espacio y Ctrl izq., sin mover tu personaje. No gira con el mouse.", "Move the camera with W A S D, Space and Left Ctrl, without moving your character. Doesn't rotate with the mouse." },
+    sl_freecamspeed = { "Velocidad de cámara", "Camera speed" },
     btn_goplayer= { "Ir al jugador", "Go to player", "Ir ao jogador", "Aller au joueur", "К игроку" },
     btn_refresh = { "Actualizar lista", "Refresh list", "Atualizar lista", "Actualiser la liste", "Обновить список" },
     tg_spectate = { "Espectar jugador", "Spectate player", "Espectar jogador", "Observer le joueur", "Наблюдать за игроком" },
@@ -199,10 +216,23 @@ local TR = {
     sh_horror   = { "Terror", "Horror", "Terror", "Horreur", "Ужас" },
     sh_noir     = { "Noir", "Noir", "Noir", "Noir", "Нуар" },
     sh_bright   = { "Ultra brillante", "Ultra bright", "Ultra brilhante", "Ultra lumineux", "Ультраяркий" },
+    sh_pastel   = { "Pastel soñado", "Pastel dream" },
+    sh_ocean    = { "Océano profundo", "Deep ocean" },
+    sh_volcano  = { "Volcánico", "Volcanic" },
+    sh_aurora   = { "Aurora ártica", "Arctic aurora" },
+    sh_vhs      = { "Retro VHS", "Retro VHS" },
+    sh_warm     = { "Hora dorada cálida", "Warm golden hour" },
 
     gb_menu     = { "Menú", "Menu", "Menu", "Menu", "Меню" },
     btn_unload  = { "Descargar script", "Unload script", "Descarregar script", "Décharger le script", "Выгрузить скрипт" },
     l_menukey   = { "Tecla del menú (PC)", "Menu key (PC)", "Tecla do menu (PC)", "Touche du menu (PC)", "Клавиша меню (ПК)" },
+
+    gb_discord  = { "Discord", "Discord" },
+    tip_discord = { "Copia el mensaje de invitación para compartirlo tú mismo donde quieras.", "Copies the invite message so you can share it yourself wherever you want." },
+    btn_discord_copy = { "Copiar invitación", "Copy invite" },
+    n_discordcopied = { "Invitación copiada", "Invite copied" },
+    n_discordnosup = { "Tu executor no soporta copiar al portapapeles", "Your executor doesn't support clipboard copy" },
+
     n_loaded    = { "Kaisen X cargado", "Kaisen X loaded" },
 }
 
@@ -279,7 +309,6 @@ local function Build(LANG, snap)
 
     -- Chat del juego --------------------------------------------------------------
     local function sendChat(text)
-        -- TextChatService (chat nuevo)
         local okNew = pcall(function()
             local channel = TextChatService.TextChannels and TextChatService.TextChannels:FindFirstChild("RBXGeneral")
             if channel then
@@ -289,7 +318,6 @@ local function Build(LANG, snap)
             error("no channel")
         end)
         if okNew then return true end
-        -- Chat legado
         local okLegacy = pcall(function()
             local ev = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
             local remote = ev and ev:FindFirstChild("SayMessageRequest")
@@ -462,15 +490,11 @@ local function Build(LANG, snap)
         img.Size = UDim2.fromScale(1, 1)
         img.BackgroundTransparency = 1
         img.Image = asset
-        img.ImageTransparency = BG_TRANSP -- 0.9: apenas visible
+        img.ImageTransparency = BG_TRANSP
         img.ScaleType = Enum.ScaleType.Crop
-        img.ZIndex = 0            -- detrás de todos los controles
+        img.ZIndex = 0
         img.Active = false
         img.Parent = main
-        img:SetAttribute("__bg", true)
-        -- lo manda al fondo de la pila de dibujo
-        img.Parent = main
-        pcall(function() img:TweenSize(img.Size, "Out", "Linear", 0) end)
         bgImage = img
     end)
 
@@ -564,7 +588,6 @@ local function Build(LANG, snap)
         local warned30, warned10 = false, false
         local prevAlive = {}
 
-        -- revelar asesino: una vez por ronda
         local revealedRound = -1
         local function doReveal(manual)
             local m = findByRole("murd")
@@ -680,13 +703,13 @@ local function Build(LANG, snap)
             end
         end)
 
-        -- se expone para la pestaña Rol
         getgenv().__KaisenX_doReveal = doReveal
     end
 
     -- =========================================================================
     -- EVENTO: Auto farm de Candy (solo durante la ronda, velocidad por defecto 27)
     -- =========================================================================
+    local onCandyPicked
     do
         local EvBox  = Tabs.Event:AddLeftGroupbox(T("gb_farm"))
         local EvOpt  = Tabs.Event:AddRightGroupbox(T("gb_opt"))
@@ -704,11 +727,25 @@ local function Build(LANG, snap)
         EvOpt:AddToggle("AutoReset", { Text = T("tg_autoreset"), Default = false, Tooltip = T("tip_autoreset") })
         EvOpt:AddToggle("CandyESP", { Text = T("tg_candyesp"), Default = false })
         EvOpt:AddToggle("NoClipFarm", { Text = T("tg_nocfarm"), Default = true })
+        EvOpt:AddToggle("CandySound", { Text = T("tg_candysound"), Default = false })
 
         EvInfo:AddLabel(T("info1"), true)
         EvInfo:AddLabel(T("info2"), true)
         EvInfo:AddLabel(T("info3"), true)
         EvInfo:AddLabel(T("info4"), true)
+
+        onCandyPicked = function()
+            if Toggles.CandySound and Toggles.CandySound.Value then
+                pcall(function()
+                    local s = Instance.new("Sound")
+                    s.SoundId = "rbxasset://sounds/electronicpingshort.wav"
+                    s.Volume = 0.6
+                    s.Parent = SoundService
+                    s:Play()
+                    game:GetService("Debris"):AddItem(s, 2)
+                end)
+            end
+        end
 
         local Farm = { visited = setmetatable({}, { __mode = "k" }), skip = setmetatable({}, { __mode = "k" }),
                        count = 0, resetDone = false, seenRound = -1, tween = nil }
@@ -801,6 +838,7 @@ local function Build(LANG, snap)
                                 Farm.visited[best] = true
                                 Farm.count += 1
                                 lblCount:SetText(T("l_count") .. ": " .. Farm.count)
+                                onCandyPicked()
                             end
                         elseif pending == 0 and Toggles.AutoReset.Value and not Farm.resetDone then
                             Farm.resetDone = true
@@ -1319,7 +1357,14 @@ local function Build(LANG, snap)
             end
         end)
 
-        -- Fling (experimental): asesino, sheriff y cualquier jugador del servidor
+        -- ---------------------------------------------------------------------
+        -- FLING corregido: antes movía/aceleraba TU propio personaje (por eso
+        -- te empujaba a ti). Ahora escribe la velocidad en el personaje del
+        -- OBJETIVO, no en el tuyo, y nunca toca tu HRP. Ver aviso en tip_fling:
+        -- por cómo funciona el "network ownership" de Roblox, lo normal es
+        -- que esto no se note para nadie, porque el cliente del objetivo
+        -- corrige su posición al instante. No empuja al usuario del script.
+        -- ---------------------------------------------------------------------
         local function playerNames()
             local t = {}
             for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then table.insert(t, p.Name) end end
@@ -1330,32 +1375,32 @@ local function Build(LANG, snap)
         FlingBox:AddDropdown("FlingTarget", { Values = playerNames(), Default = 1, Multi = false, Text = T("dd_flingtarget") })
         FlingBox:AddButton({ Text = T("btn_flingrefresh"), Func = function() Options.FlingTarget:SetValues(playerNames()) end })
         FlingBox:AddSlider("FlingPower", { Text = T("sl_flingpower"), Default = 900, Min = 100, Max = 3000, Rounding = 0 })
+        FlingBox:AddSlider("FlingDuration", { Text = T("sl_flingduration"), Default = 0.8, Min = 0.3, Max = 2, Rounding = 1, Suffix = " s" })
 
         local function flingPlayer(targetPlr)
-            local _, hrp = getChar()
             local tch = targetPlr and targetPlr.Character
             local thrp = tch and tch:FindFirstChild("HumanoidRootPart")
-            if not hrp or not thrp then return false end
+            if not thrp then return false end
 
-            local old = hrp.CFrame
             local power = Options.FlingPower.Value
-
-            local bv = Instance.new("BodyVelocity")
-            bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
-            bv.P = 1e4
-            local bav = Instance.new("BodyAngularVelocity")
-            bav.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
-            bav.AngularVelocity = Vector3.new(0, power, 0)
-            bv.Parent = hrp
-            bav.Parent = hrp
-
-            hrp.CFrame = thrp.CFrame
-            bv.Velocity = Vector3.new(power, power * 0.3, power)
-            task.wait(0.15)
-
-            pcall(function() bv:Destroy() end)
-            pcall(function() bav:Destroy() end)
-            if hrp.Parent then hrp.CFrame = old end
+            local duration = Options.FlingDuration.Value
+            local t0 = os.clock()
+            local i = 0
+            local conn
+            conn = RunService.Heartbeat:Connect(function()
+                if not alive or not thrp.Parent or os.clock() - t0 > duration then
+                    if conn then conn:Disconnect() end
+                    return
+                end
+                i += 1
+                local angle = i * 2.4
+                -- Solo se toca al OBJETIVO: nunca se mueve ni se acelera tu propio HRP.
+                pcall(function()
+                    thrp.AssemblyLinearVelocity = Vector3.new(math.sin(angle) * power, power * 0.6, math.cos(angle) * power)
+                end)
+            end)
+            task.wait(duration + 0.15)
+            if conn then conn:Disconnect() end
             return true
         end
 
@@ -1388,8 +1433,10 @@ local function Build(LANG, snap)
     -- =========================================================================
     local flyBV
     do
-        local MoveBox = Tabs.Player:AddLeftGroupbox(T("gb_move"))
-        local MiscBox = Tabs.Player:AddRightGroupbox(T("gb_extras"))
+        local MoveBox   = Tabs.Player:AddLeftGroupbox(T("gb_move"))
+        local MiscBox   = Tabs.Player:AddRightGroupbox(T("gb_extras"))
+        local AFBox     = Tabs.Player:AddLeftGroupbox(T("gb_antifling"))
+        local Extra2Box = Tabs.Player:AddRightGroupbox(T("gb_extra2"))
 
         MoveBox:AddToggle("WSOn", { Text = T("sl_speed"), Default = false })
         MoveBox:AddSlider("WS", { Text = "WalkSpeed", Default = 24, Min = 16, Max = 100, Rounding = 0 })
@@ -1424,6 +1471,72 @@ local function Build(LANG, snap)
             if Toggles.InfJump.Value then
                 local _, _, hum = getChar()
                 if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+            end
+        end))
+
+        -- ---------------------------------------------------------------------
+        -- Anti-fling: ahora frena la velocidad en LAS TRES direcciones (X, Y, Z)
+        -- y no solo la horizontal. Así, si alguien intenta flingearte (tu
+        -- velocidad se dispara de golpe hacia arriba, al vacío, etc.), se corta
+        -- al instante y nunca te saca del mapa ni te mata por la caída.
+        -- No interfiere con tu salto o movimiento normal porque el umbral solo
+        -- reacciona a picos muy por encima de lo que logra un salto normal.
+        -- ---------------------------------------------------------------------
+        AFBox:AddLabel(T("tip_antifling"), true)
+        AFBox:AddToggle("AntiFling", { Text = T("tg_antifling"), Default = false })
+        AFBox:AddSlider("AntiFlingThreshold", { Text = T("sl_antifling"), Default = 150, Min = 50, Max = 400, Rounding = 0 })
+
+        track(RunService.Heartbeat:Connect(function()
+            if not (Toggles.AntiFling and Toggles.AntiFling.Value) then return end
+            local _, hrp = getChar()
+            if not hrp then return end
+            local vel = hrp.AssemblyLinearVelocity
+            if vel.Magnitude > Options.AntiFlingThreshold.Value then
+                hrp.AssemblyLinearVelocity = Vector3.zero
+                hrp.AssemblyAngularVelocity = Vector3.zero
+            end
+        end))
+
+        -- Funciones extra ----------------------------------------------------------
+        Extra2Box:AddToggle("NoFallDamage", { Text = T("tg_nofall"), Default = false, Tooltip = T("tip_nofall") })
+        local lastSeenHealth = {}
+        track(RunService.Heartbeat:Connect(function()
+            if not (Toggles.NoFallDamage and Toggles.NoFallDamage.Value) then return end
+            local _, _, hum = getChar()
+            if not hum then return end
+            local last = lastSeenHealth[hum]
+            if last and hum.Health < last - 8 and hum.Health > 0 then
+                hum.Health = last
+            end
+            lastSeenHealth[hum] = hum.Health
+        end))
+
+        Extra2Box:AddToggle("Freecam", { Text = T("tg_freecam"), Default = false, Tooltip = T("tip_freecam") })
+        Extra2Box:AddSlider("FreecamSpeed", { Text = T("sl_freecamspeed"), Default = 60, Min = 10, Max = 200, Rounding = 0 })
+
+        local freecamActive = false
+        track(RunService.RenderStepped:Connect(function(dt)
+            local cam = workspace.CurrentCamera
+            if Toggles.Freecam and Toggles.Freecam.Value then
+                if not freecamActive then
+                    freecamActive = true
+                    cam.CameraType = Enum.CameraType.Scriptable
+                end
+                local speed = Options.FreecamSpeed.Value * dt
+                local cf = cam.CFrame
+                local move = Vector3.zero
+                if UIS:IsKeyDown(Enum.KeyCode.W) then move += cf.LookVector end
+                if UIS:IsKeyDown(Enum.KeyCode.S) then move -= cf.LookVector end
+                if UIS:IsKeyDown(Enum.KeyCode.A) then move -= cf.RightVector end
+                if UIS:IsKeyDown(Enum.KeyCode.D) then move += cf.RightVector end
+                if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0, 1, 0) end
+                if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then move -= Vector3.new(0, 1, 0) end
+                cam.CFrame = cf + move * speed
+            elseif freecamActive then
+                freecamActive = false
+                cam.CameraType = Enum.CameraType.Custom
+                local _, _, hum = getChar()
+                if hum then cam.CameraSubject = hum end
             end
         end))
 
@@ -1566,8 +1679,15 @@ local function Build(LANG, snap)
             horror  = S({ t = 3, b = 1, ex = -0.1, am = "23282d", oa = "2d3737", top = "96b4aa", bot = "0a0f0f", fog = "3c4b46", fs = 0, fe = 220, ad = 0.62, ac = "5f6e69", adc = "282d32", hz = 4, gl = 0, bi = 0.3, bs = 24, bt = 1.2, con = 0.3, sat = -0.35, tint = "d2ebe1", ry = 0, df = 0.3 }),
             noir    = S({ t = 21, b = 1.2, am = "282828", oa = "3c3c3c", top = "e6e6e6", bot = "000000", fog = "28282d", fs = 20, fe = 800, ad = 0.4, ac = "46464b", adc = "1e1e23", hz = 2, bi = 0.6, bs = 36, bt = 1.1, con = 0.5, sat = -1, ry = 0.1, df = 0.3 }),
             bright  = S({ t = 12, b = 5, ex = 0.5, am = "8c8c8c", oa = "b4b4b4", fog = "dce6f5", fs = 500, fe = 5000, ad = 0.15, ac = "c8d7f0", adc = "8296be", hz = 0.5, gl = 0.2, bi = 0.5, con = 0.1, sat = 0.3, ry = 0.2, df = 0 }),
+            pastel  = S({ t = 15, b = 2.6, ex = 0.2, am = "a0a0c0", oa = "c8c8e6", top = "ffd2f0", bot = "d2e6ff", fog = "ffe1f5", fe = 2000, ad = 0.3, ac = "ffe1f5", adc = "c8aadc", hz = 2, gl = 0.5, bi = 0.7, con = -0.05, sat = 0.1, tint = "fff0fa", ry = 0.25 }),
+            ocean   = S({ t = 13, b = 1.6, am = "0a2d46", oa = "14506e", top = "3c8cb4", bot = "021428", fog = "0f4664", fs = 0, fe = 500, ad = 0.6, ac = "1e6482", adc = "0a2846", hz = 3.5, gl = 0, bi = 0.6, con = 0.2, sat = 0.15, tint = "c8e6ff", ry = 0.1, df = 0.2 }),
+            volcano = S({ t = 21, b = 1.4, ex = 0, am = "501e0f", oa = "782d14", top = "ff501e", bot = "1e0a05", fog = "641e0f", fs = 0, fe = 500, ad = 0.55, ac = "aa3c1e", adc = "500f0a", hz = 3.5, gl = 0.6, bi = 1, bs = 44, con = 0.3, sat = 0.1, tint = "ffb48c", ry = 0.1 }),
+            aurora  = S({ t = 2, b = 0.9, ex = 0.2, am = "0f2d28", oa = "14503c", top = "64ffc8", bot = "0a0f28", fog = "0f3c32", fs = 50, fe = 1500, ad = 0.4, ac = "3cdca0", adc = "0f2846", hz = 2, gl = 0.4, bi = 0.9, bs = 44, con = 0.15, sat = 0.3, tint = "c8ffe6", ry = 0 }),
+            vhs     = S({ t = 18, b = 2, am = "645064", oa = "967896", top = "ffaad2", bot = "3c1e46", fog = "c882aa", fe = 1600, ad = 0.3, ac = "dc96c8", adc = "78466e", hz = 1.8, gl = 0.4, bi = 0.5, con = 0.35, sat = -0.3, tint = "ffd2e6", ry = 0.1 }),
+            warm    = S({ t = 17.5, b = 3, am = "785a3c", oa = "aa8250", top = "ffc878", bot = "462814", fog = "ffc896", fe = 2000, ad = 0.32, ac = "ffd2a0", adc = "c8824b", hz = 2, gl = 0.9, bi = 0.6, con = 0.15, sat = 0.2, tint = "ffe6c8", ry = 0.3 }),
         }
-        local ORDER = { "real", "noon", "gold", "blue", "moon", "hallo", "cine", "teal", "cyber", "synth", "fantasy", "horror", "noir", "bright" }
+        local ORDER = { "real", "noon", "gold", "blue", "moon", "hallo", "cine", "teal", "cyber", "synth", "fantasy", "horror", "noir", "bright",
+            "pastel", "ocean", "volcano", "aurora", "vhs", "warm" }
         local shaderNames, nameToId = {}, {}
         for _, id in ipairs(ORDER) do
             local nm = T("sh_" .. id)
@@ -1639,7 +1759,7 @@ local function Build(LANG, snap)
     end
 
     -- =========================================================================
-    -- AJUSTES + idioma
+    -- AJUSTES + idioma + Discord (solo copiar)
     -- =========================================================================
     local function takeSnapshot()
         local s = { toggles = {}, options = {}, shader = currentShaderId }
@@ -1650,7 +1770,7 @@ local function Build(LANG, snap)
         return s
     end
 
-    local SKIP = { LangPick = true, ShaderPick = true, TPPlayer = true, FlingTarget = true, MenuKeybind = true, SafeMode = true, Spectate = true }
+    local SKIP = { LangPick = true, ShaderPick = true, TPPlayer = true, FlingTarget = true, MenuKeybind = true, SafeMode = true, Spectate = true, Freecam = true }
     local function restoreSnapshot(s)
         if not s then return end
         if s.shader then pcall(function() Options.ShaderPick:SetValue(T("sh_" .. s.shader)) end) end
@@ -1668,9 +1788,22 @@ local function Build(LANG, snap)
 
     do
         local MenuBox = Tabs.Settings:AddLeftGroupbox(T("gb_menu"))
+        local DcBox   = Tabs.Settings:AddRightGroupbox(T("gb_discord"))
+
         MenuBox:AddButton({ Text = T("btn_unload"), Func = function() Library:Unload() end })
         MenuBox:AddLabel(T("l_menukey")):AddKeyPicker("MenuKeybind", { Default = "RightShift", NoUI = true, Text = T("l_menukey") })
         Library.ToggleKeybind = Options.MenuKeybind
+
+        DcBox:AddLabel(DISCORD_URL, true)
+        DcBox:AddLabel(T("tip_discord"), true)
+        DcBox:AddButton({ Text = T("btn_discord_copy"), Func = function()
+            if setclipboard then
+                pcall(setclipboard, DISCORD_MSG)
+                Library:Notify(T("n_discordcopied"), 3)
+            else
+                Library:Notify(T("n_discordnosup"), 3)
+            end
+        end })
 
         local nameToCode = {}
         for _, l in ipairs(LANGS) do nameToCode[l[2]] = l[1] end
@@ -1698,6 +1831,13 @@ local function Build(LANG, snap)
         pcall(function() hud:Destroy() end)
         if flyBV then pcall(function() flyBV:Destroy() end) end
         if safePlat then pcall(function() safePlat:Destroy() end) end
+        pcall(function()
+            local cam = workspace.CurrentCamera
+            cam.CameraType = Enum.CameraType.Custom
+            local ch = LP.Character
+            local hum = ch and ch:FindFirstChildOfClass("Humanoid")
+            if hum then cam.CameraSubject = hum end
+        end)
         for _, e in ipairs({ atm, bloom, cc, rays, dof }) do pcall(function() e:Destroy() end) end
         for k, v in pairs(original) do pcall(function() Lighting[k] = v end) end
         pcall(function() Lighting.GlobalShadows = origShadows end)
