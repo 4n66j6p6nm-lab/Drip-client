@@ -1,7 +1,9 @@
 --[[
   KAISEN X - MM2 - WindUI
-  Pistola y cuchillo con remotes reales, noclip por grupo de colisión,
-  wallbang, HUD de ronda, idiomas (ES/EN/PT/FR/RU)
+  Pistola y cuchillo con remotes reales, silent aim con verificacion,
+  noclip por grupo de colision, wallbang, HUD de ronda, keybinds,
+  crosshair, skin changer, fling, performance mode.
+  Idiomas: ES/EN/PT/FR/RU
 ]]
 
 if not game:IsLoaded() then game.Loaded:Wait() end
@@ -10,7 +12,7 @@ local Players             = game:GetService("Players")
 local Lighting            = game:GetService("Lighting")
 local TweenService        = game:GetService("TweenService")
 local RunService          = game:GetService("RunService")
-local UIS                  = game:GetService("UserInputService")
+local UIS                 = game:GetService("UserInputService")
 local VirtualUser         = game:GetService("VirtualUser")
 local HttpService         = game:GetService("HttpService")
 local TeleportSvc         = game:GetService("TeleportService")
@@ -21,7 +23,7 @@ local PhysicsService      = game:GetService("PhysicsService")
 local CoreGui             = game:GetService("CoreGui")
 local LP                  = Players.LocalPlayer
 
-local BG_ASSET   = "rbxassetid://127386766933743"
+local BG_ASSET    = "rbxassetid://127386766933743"
 local DISCORD_URL = "https://discord.gg/tjevxNrAt"
 
 local GUN_NAME   = "Gun"
@@ -36,11 +38,17 @@ local LIDX  = { es = 1, en = 2, pt = 3, fr = 4, ru = 5 }
 
 local TR = {
     tab_round="Ronda,Round,Rodada,Manche,Раунд",
-    tab_event="Evento,Event,Evento,Événement,Событие",
+    tab_combat="Combat,Combat,Combate,Combat,Бой",
+    tab_cross="Crosshair,Crosshair,Mira,Crosshair,Прицел",
+    tab_skin="Skins,Skins,Skins,Skins,Скины",
+    tab_buttons="Botones,Buttons,Botões,Boutons,Кнопки",
     tab_esp="ESP,ESP,ESP,ESP,ESP",
-    tab_role="Rol,Role,Função,Rôle,Роль",
+    tab_fling="Fling y TP,Fling & TP,Fling e TP,Fling et TP,Флинг и ТП",
+    tab_event="Autofarm,Autofarm,Autofarm,Autofarm,Автофарм",
     tab_player="Jugador,Player,Jogador,Joueur,Игрок",
     tab_visual="Visual,Visual,Visual,Visuel,Графика",
+    tab_keys="Keybinds,Keybinds,Teclas,Raccourcis,Клавиши",
+    tab_search="Buscar,Search,Buscar,Recherche,Поиск",
     tab_settings="Ajustes,Settings,Configurações,Paramètres,Настройки",
 
     st_round="Ronda: esperando...,Round: waiting...,Rodada: aguardando...,Manche : en attente...,Раунд: ожидание...",
@@ -72,8 +80,8 @@ local TR = {
     n_10="Quedan 10 segundos,10 seconds left,Faltam 10 segundos,Il reste 10 secondes,Осталось 10 секунд",
     n_died="ha muerto,has died,morreu,est mort,погиб",
 
-    gb_farm="Auto farm Candy,Candy auto farm,Auto farm Candy,Auto farm Candy,Автофарм конфет",
-    tg_farm="Auto-recoger Candy,Auto-collect Candy,Auto-coletar Candy,Auto-ramasser Candy,Автосбор конфет",
+    gb_farm="Auto farm de monedas,Coin autofarm,Coin autofarm,Coin autofarm,Автофарм монет",
+    tg_farm="Auto-recoger monedas,Auto-collect coins,Auto-coletar moedas,Auto-ramasser pièces,Автосбор монет",
     sl_speed="Velocidad,Speed,Velocidade,Vitesse,Скорость",
     tg_avoid="Evitar al asesino,Avoid murderer,Evitar assassino,Éviter le meurtrier,Избегать убийцу",
     sl_avoid="Distancia segura,Safe distance,Distância segura,Distance de sécurité,Безопасная дистанция",
@@ -81,12 +89,16 @@ local TR = {
     fs_wait="esperando ronda,waiting for round,aguardando rodada,attente de manche,ждёт раунд",
     fs_run="farmeando,farming,farmando,en cours,фармит",
     l_count="Recorridos,Visited,Percorridos,Parcourus,Посещено",
-    l_left="Candy en mapa,Candy on map,Candy no mapa,Candy sur la carte,Конфет на карте",
+    l_left="Monedas en mapa,Coins on map,Moedas no mapa,Pièces sur la carte,Монет на карте",
     tg_wide="Búsqueda ampliada,Extended search,Busca ampliada,Recherche étendue,Расширенный поиск",
-    tg_autoreset="Reiniciar al acabar candies,Reset when empty,Reiniciar ao acabar,Réinitialiser,Сброс по окончании",
-    tg_candyesp="Marcar candies (ESP),Mark candies (ESP),Marcar candies (ESP),Marquer les candies,Метки конфет",
+    tg_autoreset="Reiniciar al acabar,Reset when empty,Reiniciar ao acabar,Réinitialiser,Сброс по окончании",
+    tg_candyesp="Marcar monedas (ESP),Mark coins (ESP),Marcar moedas,Marquer les pièces,Метки монет",
     tg_nocfarm="Atravesar paredes al farmear,Walk through walls farming,Atravessar paredes,Traverser les murs,Проходить сквозь стены",
-    tg_candysound="Sonido al recoger Candy,Sound on pickup,Som ao coletar,Son à la collecte,Звук при сборе",
+    tg_candysound="Sonido al recoger,Sound on pickup,Som ao coletar,Son à la collecte,Звук при сборе",
+    tg_perf="Modo rendimiento (quita texturas),Performance mode (strip textures),Modo desempenho,Mode performance,Режим производительности",
+    tg_autohop="Cambiar de servidor si está vacío,Hop when server empty,Trocar se vazio,Changer si vide,Сменить пустой сервер",
+    sl_hopmin="Mínimo de jugadores,Min players,Mínimo de jogadores,Joueurs minimum,Минимум игроков",
+    n_perf="Texturas eliminadas,Textures stripped,Texturas removidas,Textures retirées,Текстуры убраны",
 
     gb_espp="ESP jugadores,Player ESP,ESP de jogadores,ESP joueurs,ESP игроков",
     tg_esp="Activar ESP,Enable ESP,Ativar ESP,Activer ESP,Включить ESP",
@@ -122,6 +134,10 @@ local TR = {
     err_nogun="No tienes la pistola,You don't have gun,Você não tem a arma,Tu n'as pas l'arme,Нет пистолета",
     err_noremote="La pistola no tiene Shoot,Gun has no Shoot,Arma sem Shoot,Arme sans Shoot,У пистолета нет Shoot",
     err_shoot="No se pudo disparar,Could not shoot,Não foi possível atirar,Tir impossible,Не удалось выстрелить",
+    tg_silent="Silent aim (mouse.Hit),Silent aim (mouse.Hit),Silent aim (mouse.Hit),Silent aim (mouse.Hit),Сайлент аим",
+    tip_silent="Reescribe el punto de mira del cliente. Con esto la bala va al objetivo aunque no esté en el centro de la pantalla.,Rewrites the client aim point. The bullet goes to the target even off-center.,Reescreve a mira do cliente. A bala vai ao alvo.,Réécrit le point de visée client. La balle va à la cible.,Переписывает точку прицела. Пуля летит в цель.",
+    n_shotok="Impacto confirmado,Hit confirmed,Acerto confirmado,Touché confirmé,Попадание",
+    n_shotmiss="No impactó,Missed,Não acertou,Raté,Промах",
 
     sec_murdthrow="Asesino — lanzar cuchillo,Murderer — throw knife,Assassino — lançar faca,Meurtrier — lancer couteau,Убийца — метание ножа",
     btn_throw="Lanzar cuchillo al más cercano,Throw knife at nearest,Lançar faca no mais próximo,Lancer le couteau au plus proche,Метнуть нож в ближайшего",
@@ -146,11 +162,62 @@ local TR = {
     tg_autosafe="Auto-cielo si el asesino está cerca,Auto-sky if murderer near,Auto-céu se perto,Auto-ciel si proche,Авто-небо при опасности",
     sl_safedist="Distancia de peligro,Danger distance,Distância de perigo,Distance de danger,Опасная дистанция",
 
+    gb_cross="Mira,Crosshair,Mira,Crosshair,Прицел",
+    tg_cross="Activar mira,Enable crosshair,Ativar mira,Activer le crosshair,Включить прицел",
+    dd_style="Estilo,Style,Estilo,Style,Стиль",
+    cs_cross="Cruz,Cross,Cruz,Croix,Крест", cs_dot="Punto,Dot,Ponto,Point,Точка", cs_circle="Círculo,Circle,Círculo,Cercle,Круг",
+    sl_crosssize="Tamaño,Size,Tamanho,Taille,Размер",
+    sl_crossthick="Grosor,Thickness,Espessura,Épaisseur,Толщина",
+    col_cross="Color,Color,Cor,Couleur,Цвет",
+
+    gb_skin="Skin de cuchillo y pistola,Knife & gun skin,Skin de faca e arma,Skin couteau et arme,Скин ножа и пистолета",
+    dd_skin="Skin,Skin,Skin,Skin,Скин",
+    btn_applyskin="Aplicar skin,Apply skin,Aplicar skin,Appliquer le skin,Применить скин",
+    btn_copyskin="Copiar skin de jugador,Copy player skin,Copiar skin de jogador,Copier le skin du joueur,Копировать скин",
+    dd_skinplayer="Jugador,Player,Jogador,Joueur,Игрок",
+    n_skinok="Skin aplicada,Skin applied,Skin aplicada,Skin appliqué,Скин применён",
+    n_skinnone="Necesitas cuchillo o pistola equipada,You need a knife or gun equipped,Você precisa de faca ou arma,Il faut un couteau ou une arme,Нужен нож или пистолет",
+    n_skincopy="No pude copiar esa skin,Couldn't copy that skin,Não pude copiar,Skin non copiée,Не удалось скопировать",
+
+    gb_buttons="Acciones rápidas,Quick actions,Ações rápidas,Actions rapides,Быстрые действия",
+    btn_b_reveal="Revelar asesino,Reveal murderer,Revelar assassino,Révéler le meurtrier,Раскрыть убийцу",
+    btn_b_gun="Agarrar pistola,Grab gun,Pegar arma,Ramasser l'arme,Взять пистолет",
+    btn_b_killall="Matar a todos,Kill all,Matar todos,Tuer tout le monde,Убить всех",
+    btn_b_safe="Ir al cielo,Go to sky,Ir ao céu,Aller au ciel,На небо",
+    btn_b_fling="Fling al asesino,Fling murderer,Fling no assassino,Fling le meurtrier,Флинг убийцы",
+    btn_b_hop="Cambiar de servidor,Server hop,Trocar de servidor,Changer de serveur,Сменить сервер",
+    btn_b_rejoin="Reentrar,Rejoin,Reentrar,Rejoindre,Перезайти",
+    btn_b_unload="Descargar script,Unload script,Descarregar script,Décharger,Выгрузить",
+
+    gb_fling="Fling,Fling,Fling,Fling,Флинг",
+    btn_fling="Fling al jugador seleccionado,Fling selected player,Fling no jogador selecionado,Fling le joueur sélectionné,Флинг выбранного",
+    btn_flingall="Fling a todos,Fling everyone,Fling em todos,Fling tout le monde,Флинг всех",
+    n_fling="Fling enviado,Fling sent,Fling enviado,Fling envoyé,Флинг отправлен",
+    n_flingfail="No se pudo flingear,Couldn't fling,Não pude dar fling,Échec du fling,Не удалось",
+    gb_tp="Teleport,Teleport,Teleporte,Téléport,Телепорт",
+    btn_tp="Ir al jugador,Go to player,Ir ao jogador,Aller au joueur,К игроку",
+    btn_tpfling="Ir y flingear,Go and fling,Ir e dar fling,Aller et fling,К нему и флинг",
+    btn_tpcoords="Ir a coordenadas,Go to coordinates,Ir a coordenadas,Aller aux coordonnées,К координатам",
+    ph_coords="x y z", n_tpcoords="Coordenadas inválidas,Invalid coordinates,Coordenadas inválidas,Coordonnées invalides,Неверные координаты",
+
+    gb_keys="Asignar tecla,Bind key,Atribuir tecla,Assigner une touche,Назначить клавишу",
+    dd_action="Acción,Action,Ação,Action,Действие",
+    btn_bind="Pulsar tecla a asignar,Press key to bind,Pressionar tecla,Puiser une touche,Нажать клавишу",
+    n_bindwait="Pulsa una tecla...,Press a key...,Pressione uma tecla...,Appuyez sur une touche...,Нажмите клавишу...",
+    n_bindok="Tecla asignada,Key bound,Tecla atribuída,Touche assignée,Клавиша назначена",
+    btn_clear="Borrar todas las teclas,Clear all binds,Limpar teclas,Effacer les touches,Очистить клавиши",
+    n_cleared="Teclas borradas,Binds cleared,Teclas limpas,Touches effacées,Клавиши очищены",
+    l_binds="Teclas activas,Active binds,Teclas ativas,Touches actives,Активные клавиши",
+
+    ph_search="Escribe y pulsa Buscar", btn_search="Buscar",
+    n_searchfound="Abriendo pestaña,Opening tab,Abrindo aba,Onglet ouvert,Открываю вкладку",
+    n_searchnone="Sin resultados,No results,Sem resultados,Aucun résultat,Нет результатов",
+
     gb_move="Movimiento,Movement,Movimento,Mouvement,Движение",
     tg_ws="Velocidad,Speed,Velocidade,Vitesse,Скорость",
     tg_jp="Salto,Jump,Pulo,Saut,Прыжок",
     tg_infjump="Salto infinito,Infinite jump,Pulo infinito,Saut infini,Бесконечный прыжок",
-    tg_noclip="Noclip (por grupo de colisión),Noclip (collision group),Noclip (grupo de colisão),Noclip (groupe de collision),Ноуклип (группа коллизии)",
+    tg_noclip="Noclip (por grupo de colisión),Noclip (collision group),Noclip (grupo de colisão),Noclip (groupe de collision),Ноуклип",
     tg_fly="Volar,Fly,Voar,Voler,Полёт",
     sl_flyspeed="Velocidad de vuelo,Fly speed,Velocidade de voo,Vitesse de vol,Скорость полёта",
     dd_player="Jugador,Player,Jogador,Joueur,Игрок",
@@ -186,9 +253,9 @@ local TR = {
     n_disccopy="Invitación copiada,Invite copied,Convite copiado,Invitation copiée,Приглашение скопировано",
     n_discnosup="Tu executor no soporta copiar,Executor doesn't support copy,Executor sem suporte,Executor non pris en charge,Executor не поддерживает копирование",
     n_loaded="Kaisen X cargado,Kaisen X loaded,Kaisen X carregado,Kaisen X chargé,Kaisen X загружен",
-    btn_retrybg="Reintentar imagen de fondo,Retry background image,Tentar imagem de fundo novamente,Réessayer l'image de fond,Повторить попытку фона",
-    n_bgok="Imagen de fondo aplicada,Background image applied,Imagem de fundo aplicada,Image de fond appliquée,Фоновое изображение применено",
-    n_bgfail="No encontré dónde poner la imagen todavía,Still couldn't find where to place the image,Ainda não encontrei onde colocar a imagem,Toujours pas trouvé où placer l'image,Пока не нашёл, куда поместить изображение",
+    btn_retrybg="Reintentar imagen de fondo,Retry background image,Tentar imagem de fundo,Réessayer l'image de fond,Повторить попытку фона",
+    n_bgok="Imagen de fondo aplicada,Background image applied,Imagem de fundo aplicada,Image de fond appliquée,Фон применён",
+    n_bgfail="No encontré dónde poner la imagen todavía,Still couldn't find where to place the image,Ainda não encontrei onde colocar,Toujours pas trouvé où placer,Пока не нашёл, куда поместить",
 }
 local function TRS(key) local s = TR[key]; if not s then return key end; return s end
 
@@ -401,20 +468,67 @@ local function Build(LANG)
         return best
     end
 
-    local function shootAt(targetHRP, useLOS, predict)
+    -- =========================================================================
+    -- DISPARO: origen de cámara, verificación por vida y reintentos
+    -- =========================================================================
+    local aimTarget
+    local silentOn = false
+
+    local function shootAt(targetHRP, useLOS, predict, tries)
+        tries = tries or 3
+        local char = targetHRP.Parent
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if not hum or hum.Health <= 0 then return false, "dead" end
+
         local gun = ensureGun()
         if not gun then return false, T("err_nogun") end
         local remote = gun:FindFirstChild("Shoot")
         if not remote then return false, T("err_noremote") end
-        local ch, hrp = getChar()
-        if not hrp then return false, "no char" end
-        local att = hrp:FindFirstChild("GunRaycastAttachment")
-        local originCF = att and att.WorldCFrame or hrp.CFrame
-        local pos = targetHRP.Position
-        if predict then pos = pos + targetHRP.AssemblyLinearVelocity * 0.12 end
-        if useLOS and not losClear(originCF.Position, pos) then return false, "no LOS" end
-        local ok, err = pcall(function() remote:FireServer(originCF, CFrame.new(pos)) end)
-        return ok, err
+
+        local cam = workspace.CurrentCamera
+        local before = hum.Health
+        local head = char:FindFirstChild("Head")
+
+        for attempt = 1, tries do
+            local point = (attempt > 1 and head and head.Position) or targetHRP.Position
+            if predict then point = point + targetHRP.AssemblyLinearVelocity * 0.1 end
+
+            -- origen: cámara del cliente, que es desde donde dispara MM2
+            local origin = cam.CFrame
+
+            if useLOS and not losClear(origin.Position, point, char) then
+                if attempt >= tries then return false, "no LOS" end
+            else
+                pcall(function() remote:FireServer(origin, CFrame.new(point)) end)
+            end
+
+            for _ = 1, 12 do
+                task.wait(0.03)
+                if hum.Health < before then return true, "hit" end
+            end
+        end
+        return false, "miss"
+    end
+
+    if getrawmetatable and setreadonly and newcclosure then
+        local okHook = pcall(function()
+            local mt = getrawmetatable(game)
+            setreadonly(mt, false)
+            local old = mt.__index
+            mt.__index = newcclosure(function(self, k)
+                if silentOn and aimTarget and aimTarget.Parent then
+                    if k == "Hit" then return CFrame.new(aimTarget.Position) end
+                    if k == "Target" then return aimTarget end
+                    if k == "UnitRay" then
+                        local cam = workspace.CurrentCamera
+                        return Ray.new(cam.CFrame.Position, (aimTarget.Position - cam.CFrame.Position).Unit)
+                    end
+                end
+                return old(self, k)
+            end)
+            setreadonly(mt, true)
+        end)
+        if not okHook then warn("Kaisen X: sin soporte para silent aim") end
     end
 
     local function throwKnifeAt(targetHRP, useLOS, knifeSpeed)
@@ -486,12 +600,30 @@ local function Build(LANG)
         if not on then noclipParts = {} end
     end
 
-    -- =============================================================================
-    -- VENTANA + imagen de fondo
-    -- =============================================================================
+    local function hopServer()
+        task.spawn(function()
+            local ok, res = pcall(function()
+                return HttpService:JSONDecode(game:HttpGet(
+                    "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
+            end)
+            if ok and res and res.data then
+                for _, s in ipairs(res.data) do
+                    if s.id ~= game.JobId and s.playing < s.maxPlayers then
+                        TeleportSvc:TeleportToPlaceInstance(game.PlaceId, s.id, LP)
+                        return
+                    end
+                end
+            end
+            WindUI:Notify({ Title = "Kaisen X", Content = T("n_noserver"), Duration = 3 })
+        end)
+    end
+
+    -- =========================================================================
+    -- VENTANA + fondo tipo cristal
+    -- =========================================================================
     local guiParent = (pcall(function() return gethui() end) and gethui()) or CoreGui
 
-    for _, n in ipairs({ "KaisenXESP", "KaisenXHUD" }) do
+    for _, n in ipairs({ "KaisenXESP", "KaisenXHUD", "KaisenXCross" }) do
         local old = guiParent:FindFirstChild(n); if old then old:Destroy() end
     end
     local espFolder = Instance.new("Folder"); espFolder.Name = "KaisenXESP"; espFolder.Parent = guiParent
@@ -511,19 +643,14 @@ local function Build(LANG)
         return
     end
 
-    -- =============================================================================
-    -- FONDO: se ancla al marco real de la ventana, nunca al contenedor de
-    -- pantalla completa. Verifica que el asset cargue y avisa si no.
-    -- =============================================================================
+    local BG_ID = (BG_ASSET:gsub("%D", ""))
     local bgImage
 
     local function resolveHost()
-        -- 1) API del propio WindUI
         for _, key in ipairs({ "Frame", "MainFrame", "Window", "Root", "Holder" }) do
             local f = Window[key]
             if typeof(f) == "Instance" and f:IsA("GuiObject") then return f end
         end
-        -- 2) respaldo: descendencia, descartando frames de pantalla completa
         local cam = workspace.CurrentCamera
         local vp = cam and cam.ViewportSize or Vector2.new(1280, 720)
         local fullArea = vp.X * vp.Y
@@ -543,6 +670,48 @@ local function Build(LANG)
         return best
     end
 
+    local function loadImage(img, id)
+        local sources = {
+            "rbxassetid://" .. id,
+            "rbxthumb://type=Asset&id=" .. id .. "&w=1024&h=576",
+            "rbxthumb://type=Asset&id=" .. id .. "&w=768&h=432",
+        }
+        local i = 1
+        local function attempt()
+            local src = sources[i]
+            if not src then
+                WindUI:Notify({ Title = "Kaisen X", Content = T("n_bgfail"), Duration = 6 })
+                return
+            end
+            img.Image = src
+            task.delay(2.5, function()
+                if not img.Parent or img.IsLoaded then return end
+                i += 1
+                attempt()
+            end)
+        end
+        attempt()
+    end
+
+    local function glassy(host)
+        for _, d in ipairs(host:GetDescendants()) do
+            if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then
+                if d.BackgroundTransparency < 0.9 then
+                    local sz = d.AbsoluteSize
+                    d.BackgroundTransparency = (sz.X < 60 or sz.Y < 40) and 0.55 or 0.82
+                end
+            elseif d:IsA("Frame") or d:IsA("CanvasGroup") or d:IsA("ScrollingFrame") then
+                if d.BackgroundTransparency < 0.9 then
+                    local sz = d.AbsoluteSize
+                    d.BackgroundTransparency = (sz.X < 60 or sz.Y < 40) and 0.5 or 0.8
+                end
+            elseif d:IsA("ImageLabel") and d ~= bgImage then
+                d.ImageTransparency = math.max(d.ImageTransparency, 0.85)
+            end
+        end
+        host.BackgroundTransparency = 0.25
+    end
+
     local function tryAttachBg()
         local host = resolveHost()
         if not host then return false end
@@ -550,30 +719,26 @@ local function Build(LANG)
             if bgImage.Parent == host then return true end
             bgImage:Destroy()
         end
-
         local img = Instance.new("ImageLabel")
         img.Name = "KaisenXBg"
         img.Size = UDim2.fromScale(1, 1)
-        img.Position = UDim2.fromOffset(0, 0)
         img.BackgroundTransparency = 1
         img.BorderSizePixel = 0
-        img.Image = BG_ASSET
-        img.ImageTransparency = 0.72
+        img.ImageTransparency = 0.15
         img.ScaleType = Enum.ScaleType.Crop
-        img.ZIndex = 0
+        img.ZIndex = 1
         img.Active = false
         img.Parent = host
-
-        -- empuja hacia arriba cualquier hermano que pudiera taparla
         for _, sib in ipairs(host:GetChildren()) do
-            if sib ~= img and sib:IsA("GuiObject") and sib.ZIndex <= 0 then sib.ZIndex = 1 end
+            if sib ~= img and sib:IsA("GuiObject") then sib.ZIndex = math.max(sib.ZIndex, 2) end
         end
         bgImage = img
-
+        loadImage(img, BG_ID)
         task.spawn(function()
-            task.wait(2)
-            if img.Parent and not img.IsLoaded then
-                WindUI:Notify({ Title = "Kaisen X", Content = T("n_bgfail"), Duration = 6 })
+            for _ = 1, 8 do
+                if not img.Parent then return end
+                glassy(host)
+                task.wait(0.4)
             end
         end)
         return true
@@ -586,6 +751,7 @@ local function Build(LANG)
         end
     end)
 
+    -- HUD
     local hud = Instance.new("ScreenGui")
     hud.Name = "KaisenXHUD"
     hud.ResetOnSpawn = false
@@ -615,43 +781,67 @@ local function Build(LANG)
     local hudTop = hudLabel(2, 17, true)
     local hudBot = hudLabel(23, 12, false)
 
+    -- Crosshair
+    local crossGui = Instance.new("ScreenGui")
+    crossGui.Name = "KaisenXCross"
+    crossGui.ResetOnSpawn = false
+    crossGui.IgnoreGuiInset = true
+    crossGui.Parent = guiParent
+    local crossBox = Instance.new("Frame")
+    crossBox.Size = UDim2.fromOffset(60, 60)
+    crossBox.Position = UDim2.new(0.5, -30, 0.5, -30)
+    crossBox.BackgroundTransparency = 1
+    crossBox.Parent = crossGui
+
     getgenv().__KaisenXUnload = function()
         pcall(function()
             alive = false
+            silentOn = false
             for _, c in ipairs(conns) do pcall(function() c:Disconnect() end) end
             applyNoclip(false)
             pcall(function() espFolder:Destroy() end)
             pcall(function() hud:Destroy() end)
+            pcall(function() crossGui:Destroy() end)
             if Window.Destroy then Window:Destroy() end
         end)
     end
 
-    local RoundTab = Window:Tab({ Title = T("tab_round"), Icon = "clock" })
-    local EventTab = Window:Tab({ Title = T("tab_event"), Icon = "candy" })
-    local ESPTab   = Window:Tab({ Title = T("tab_esp"), Icon = "eye" })
-    local RoleTab  = Window:Tab({ Title = T("tab_role"), Icon = "swords" })
-    local PlayerTab= Window:Tab({ Title = T("tab_player"), Icon = "user" })
-    local VisualTab= Window:Tab({ Title = T("tab_visual"), Icon = "palette" })
-    local SettingsTab = Window:Tab({ Title = T("tab_settings"), Icon = "settings" })
+    local RoundTab   = Window:Tab({ Title = T("tab_round"), Icon = "clock" })
+    local CombatTab  = Window:Tab({ Title = T("tab_combat"), Icon = "swords" })
+    local CrossTab   = Window:Tab({ Title = T("tab_cross"), Icon = "crosshair" })
+    local SkinTab    = Window:Tab({ Title = T("tab_skin"), Icon = "brush" })
+    local BtnTab     = Window:Tab({ Title = T("tab_buttons"), Icon = "mouse-pointer-click" })
+    local ESPTab     = Window:Tab({ Title = T("tab_esp"), Icon = "eye" })
+    local FlingTab   = Window:Tab({ Title = T("tab_fling"), Icon = "move" })
+    local EventTab   = Window:Tab({ Title = T("tab_event"), Icon = "coins" })
+    local PlayerTab  = Window:Tab({ Title = T("tab_player"), Icon = "user" })
+    local VisualTab  = Window:Tab({ Title = T("tab_visual"), Icon = "palette" })
+    local KeyTab     = Window:Tab({ Title = T("tab_keys"), Icon = "keyboard" })
+    local SearchTab  = Window:Tab({ Title = T("tab_search"), Icon = "search" })
+    local SettingsTab= Window:Tab({ Title = T("tab_settings"), Icon = "settings" })
 
     local S = {
         HUDOn = true, NotifyRound = true, NotifyTimer = true, NotifyDeaths = true, AutoReveal = false,
         AutoFarm = false, FarmSpeed = 27, AvoidMurd = true, AvoidDist = 30, WideSearch = true,
         AutoReset = false, CandyESP = false, NoClipFarm = true, CandySound = false,
+        PerfMode = false, AutoHop = false, HopMin = 3,
         ESPOn = false, ESPNames = true, ESPGun = true,
         ColMurd = Color3.fromRGB(255, 50, 50), ColSher = Color3.fromRGB(60, 140, 255),
         ColInno = Color3.fromRGB(80, 230, 120), ColGun = Color3.fromRGB(255, 220, 60),
         AutoGun = false, RoleNotify = true,
         AutoShoot = false, ShootRange = 70, ShootCooldown = 2, ShootPredict = true, ShootLOS = true,
-        ShootCloseRange = 15, Wallbang = false,
+        ShootCloseRange = 15, Wallbang = false, Silent = true,
         AutoKnife = false, KnifeRange = 60, KnifeCooldown = 1.5, KnifeLOS = true, KnifeSpeed = 80,
         KnifeAura = false, AuraRange = 12, KnifeReach = false, ReachSize = 8,
         SafeMode = false, AutoSafe = false, SafeDist = 25,
         WSOn = false, WS = 24, JPOn = false, JP = 60, InfJump = false,
         Noclip = false, Fly = false, FlySpeed = 40,
         ShaderOn = false, ShaderId = "real", AntiAFK = true,
+        CrossOn = false, CrossStyle = "cross", CrossSize = 12, CrossThick = 2,
+        CrossColor = Color3.fromRGB(255, 255, 255), Skin = 1,
     }
 
+    -- ===================== RONDA =====================
     do
         local lblState = RoundTab:Paragraph({ Title = T("st_round") })
         local lblTimer = RoundTab:Paragraph({ Title = T("st_timer") })
@@ -761,8 +951,7 @@ local function Build(LANG)
 
                 local timeText = "--:--"
                 if newActive then
-                    if gs and direction == "down" then timeText = string.format("%02d:%02d", gs // 60, gs % 60)
-                    elseif gs and direction == "up" then timeText = string.format("%02d:%02d", gs // 60, gs % 60)
+                    if gs then timeText = string.format("%02d:%02d", gs // 60, gs % 60)
                     else
                         local e = os.clock() - Round.startedAt
                         timeText = string.format("%02d:%02d", e // 60, e % 60)
@@ -807,7 +996,474 @@ local function Build(LANG)
         end)
     end
 
+    -- ===================== COMBAT =====================
+    local safePlat, savedCF
     do
+        local shooting, lastShot = false, 0
+
+        CombatTab:Toggle({ Title = T("tg_silent"), Value = true, Callback = function(v)
+            S.Silent = v; silentOn = v
+            if v then WindUI:Notify({ Title = "Kaisen X", Content = T("n_shotok"), Duration = 2 }) end
+        end })
+        CombatTab:Paragraph({ Title = T("tip_silent") })
+
+        CombatTab:Section({ Title = T("sec_sheriff") })
+        CombatTab:Button({ Title = T("btn_shoot"), Callback = function()
+            if getRole(LP) ~= "sheriff" then WindUI:Notify({ Title = "Kaisen X", Content = T("err_notsher"), Duration = 3 }) return end
+            local m = findByRole("murd")
+            local mh = m and m ~= LP and m.Character and m.Character:FindFirstChild("HumanoidRootPart")
+            if not mh or not isAlive(m) then WindUI:Notify({ Title = "Kaisen X", Content = T("err_nomurd"), Duration = 3 }) return end
+            if shooting then return end
+            task.spawn(function()
+                shooting = true
+                local ok, why = shootAt(mh, S.ShootLOS and not S.Wallbang, S.ShootPredict)
+                shooting = false
+                if ok then lastShot = os.clock()
+                    WindUI:Notify({ Title = "Kaisen X", Content = T("n_shotok"), Duration = 2 })
+                else
+                    WindUI:Notify({ Title = "Kaisen X", Content = T("n_shotmiss") .. " (" .. tostring(why) .. ")", Duration = 3 })
+                end
+            end)
+        end })
+        CombatTab:Toggle({ Title = T("tg_autoshoot"), Value = false, Callback = function(v) S.AutoShoot = v end })
+        CombatTab:Slider({ Title = T("sl_range"), Value = { Min = 20, Max = 200, Default = 70 }, Callback = function(v) S.ShootRange = v end })
+        CombatTab:Slider({ Title = T("sl_cooldown"), Value = { Min = 0.3, Max = 6, Default = 2 }, Callback = function(v) S.ShootCooldown = v end })
+        CombatTab:Slider({ Title = T("sl_close"), Value = { Min = 3, Max = 40, Default = 15 }, Callback = function(v) S.ShootCloseRange = v end })
+        CombatTab:Toggle({ Title = T("tg_predict"), Value = true, Callback = function(v) S.ShootPredict = v end })
+        CombatTab:Toggle({ Title = T("tg_los"), Value = true, Callback = function(v) S.ShootLOS = v end })
+        CombatTab:Toggle({ Title = T("tg_wallbang"), Value = false, Callback = function(v) S.Wallbang = v end })
+        CombatTab:Paragraph({ Title = T("tip_wallbang") })
+        CombatTab:Button({ Title = T("btn_equipgun"), Callback = function() task.spawn(ensureGun) end })
+
+        task.spawn(function()
+            while alive do
+                task.wait(0.1)
+                if S.AutoShoot and Round.active and not shooting and getRole(LP) == "sheriff" then
+                    local m = findByRole("murd")
+                    local mh = m and m ~= LP and m.Character and m.Character:FindFirstChild("HumanoidRootPart")
+                    local _, hrp = getChar()
+                    if mh and hrp and isAlive(m) then
+                        local dist = (mh.Position - hrp.Position).Magnitude
+                        local closeRange = dist <= S.ShootCloseRange
+                        local canFire = closeRange or (os.clock() - lastShot > S.ShootCooldown)
+                        if dist <= S.ShootRange and canFire then
+                            shooting = true
+                            local ok = shootAt(mh, S.ShootLOS and not S.Wallbang, S.ShootPredict)
+                            if ok then lastShot = closeRange and (os.clock() - S.ShootCooldown + 0.15) or os.clock() end
+                            shooting = false
+                        end
+                    end
+                end
+            end
+        end)
+
+        local throwing, lastThrow = false, 0
+        CombatTab:Section({ Title = T("sec_murdthrow") })
+        CombatTab:Button({ Title = T("btn_throw"), Callback = function()
+            if getRole(LP) ~= "murd" then WindUI:Notify({ Title = "Kaisen X", Content = T("n_notmurd"), Duration = 3 }) return end
+            local best = nearestEnemyHRP()
+            if not best then WindUI:Notify({ Title = "Kaisen X", Content = T("n_noenemy"), Duration = 3 }) return end
+            local ok = throwKnifeAt(best, S.KnifeLOS, S.KnifeSpeed)
+            if not ok then WindUI:Notify({ Title = "Kaisen X", Content = T("n_throwfail"), Duration = 3 })
+            else WindUI:Notify({ Title = "Kaisen X", Content = T("n_throwok"), Duration = 2 }) end
+        end })
+        CombatTab:Toggle({ Title = T("tg_autoknife"), Value = false, Callback = function(v) S.AutoKnife = v end })
+        CombatTab:Slider({ Title = T("sl_range"), Value = { Min = 10, Max = 150, Default = 60 }, Callback = function(v) S.KnifeRange = v end })
+        CombatTab:Slider({ Title = T("sl_cooldown"), Value = { Min = 0.5, Max = 4, Default = 1.5 }, Callback = function(v) S.KnifeCooldown = v end })
+        CombatTab:Slider({ Title = T("sl_knifespeed"), Value = { Min = 30, Max = 150, Default = 80 }, Callback = function(v) S.KnifeSpeed = v end })
+        CombatTab:Toggle({ Title = T("tg_los"), Value = true, Callback = function(v) S.KnifeLOS = v end })
+        CombatTab:Button({ Title = T("btn_equipknife"), Callback = function() task.spawn(ensureKnife) end })
+
+        task.spawn(function()
+            while alive do
+                task.wait(0.2)
+                if S.AutoKnife and Round.active and not throwing
+                    and os.clock() - lastThrow > S.KnifeCooldown
+                    and getRole(LP) == "murd" then
+                    local best = nearestEnemyHRP(S.KnifeRange)
+                    if best then
+                        throwing = true
+                        local ok = throwKnifeAt(best, S.KnifeLOS, S.KnifeSpeed)
+                        if ok then lastThrow = os.clock() end
+                        throwing = false
+                    end
+                end
+            end
+        end)
+
+        CombatTab:Section({ Title = T("sec_murdmelee") })
+        CombatTab:Toggle({ Title = T("tg_aura"), Value = false, Callback = function(v) S.KnifeAura = v end })
+        CombatTab:Slider({ Title = T("sl_aurarange"), Value = { Min = 5, Max = 30, Default = 12 }, Callback = function(v) S.AuraRange = v end })
+        CombatTab:Toggle({ Title = T("tg_reach"), Value = false, Callback = function(v) S.KnifeReach = v end })
+        CombatTab:Slider({ Title = T("sl_reachsize"), Value = { Min = 2, Max = 25, Default = 8 }, Callback = function(v) S.ReachSize = v end })
+        CombatTab:Button({ Title = T("btn_killall"), Callback = function()
+            if getRole(LP) ~= "murd" then WindUI:Notify({ Title = "Kaisen X", Content = T("n_notmurd"), Duration = 3 }) return end
+            task.spawn(function()
+                local knife = ensureKnife()
+                local _, hrp = getChar()
+                if not knife or not hrp then return end
+                local old = hrp.CFrame
+                for _, plr in ipairs(Players:GetPlayers()) do
+                    if plr ~= LP and isAlive(plr) then
+                        local thrp = plr.Character:FindFirstChild("HumanoidRootPart")
+                        if thrp then
+                            hrp.CFrame = thrp.CFrame * CFrame.new(0, 0, 2.5)
+                            task.wait(0.12)
+                            stab(knife, plr)
+                            task.wait(0.28)
+                        end
+                    end
+                end
+                hrp.CFrame = old
+                WindUI:Notify({ Title = "Kaisen X", Content = T("n_killdone"), Duration = 3 })
+            end)
+        end })
+
+        task.spawn(function()
+            while alive do
+                if S.KnifeAura and getRole(LP) == "murd" then
+                    pcall(function()
+                        local knife = ensureKnife()
+                        local _, hrp = getChar()
+                        if knife and hrp then
+                            for _, plr in ipairs(Players:GetPlayers()) do
+                                if plr ~= LP and isAlive(plr) then
+                                    local thrp = plr.Character:FindFirstChild("HumanoidRootPart")
+                                    if thrp and (thrp.Position - hrp.Position).Magnitude <= S.AuraRange then
+                                        stab(knife, plr)
+                                    end
+                                end
+                            end
+                        end
+                    end)
+                end
+                task.wait(0.3)
+            end
+        end)
+
+        local origHandle = {}
+        track(RunService.Heartbeat:Connect(function()
+            local knife = LP.Character and LP.Character:FindFirstChild(KNIFE_NAME)
+            local handle = knife and knife:FindFirstChild("Handle")
+            if handle then
+                if not origHandle[handle] then origHandle[handle] = handle.Size end
+                if S.KnifeReach then
+                    local s = S.ReachSize
+                    handle.Size = Vector3.new(s, s, s)
+                    handle.Massless = true
+                else
+                    handle.Size = origHandle[handle]
+                end
+            end
+        end))
+
+        CombatTab:Section({ Title = T("sec_safe") })
+        local function goSky(on)
+            local _, hrp = getChar()
+            if on then
+                if not hrp then return end
+                if not safePlat then
+                    safePlat = Instance.new("Part")
+                    safePlat.Name = "KaisenXSafe"
+                    safePlat.Size = Vector3.new(40, 2, 40)
+                    safePlat.Anchored = true
+                    safePlat.Transparency = 0.6
+                    safePlat.Position = Vector3.new(0, 1500, 0)
+                    safePlat.Parent = workspace
+                end
+                if not savedCF then savedCF = hrp.CFrame end
+                hrp.CFrame = CFrame.new(0, 1504, 0)
+            else
+                if hrp and savedCF then hrp.CFrame = savedCF end
+                savedCF = nil
+            end
+        end
+        CombatTab:Toggle({ Title = T("tg_safe"), Value = false, Callback = function(v) S.SafeMode = v; goSky(v) end })
+        CombatTab:Toggle({ Title = T("tg_autosafe"), Value = false, Callback = function(v) S.AutoSafe = v end })
+        CombatTab:Slider({ Title = T("sl_safedist"), Value = { Min = 10, Max = 80, Default = 25 }, Callback = function(v) S.SafeDist = v end })
+
+        task.spawn(function()
+            while alive do
+                if S.AutoSafe and Round.active and getRole(LP) ~= "murd" then
+                    local mh = murdererHRP()
+                    local _, hrp = getChar()
+                    if mh and hrp and not savedCF and (mh.Position - hrp.Position).Magnitude < S.SafeDist then
+                        S.SafeMode = true
+                        goSky(true)
+                    end
+                end
+                if savedCF and not Round.active then goSky(false); S.SafeMode = false end
+                task.wait(0.4)
+            end
+        end)
+    end
+
+    -- ===================== CROSSHAIR =====================
+    local crossParts = {}
+    local function renderCross()
+        for _, p in ipairs(crossParts) do p:Destroy() end
+        crossParts = {}
+        if not S.CrossOn then return end
+        local function bar(sx, sy, px, py)
+            local f = Instance.new("Frame")
+            f.Size = UDim2.fromOffset(sx, sy)
+            f.Position = UDim2.new(0.5, px, 0.5, py)
+            f.AnchorPoint = Vector2.new(0.5, 0.5)
+            f.BackgroundColor3 = S.CrossColor
+            f.BorderSizePixel = 0
+            f.Parent = crossBox
+            table.insert(crossParts, f)
+        end
+        local g = 3
+        if S.CrossStyle == "cross" then
+            bar(S.CrossThick, S.CrossSize, 0, -g - S.CrossSize / 2)
+            bar(S.CrossThick, S.CrossSize, 0, g + S.CrossSize / 2)
+            bar(S.CrossSize, S.CrossThick, -g - S.CrossSize / 2, 0)
+            bar(S.CrossSize, S.CrossThick, g + S.CrossSize / 2, 0)
+        elseif S.CrossStyle == "dot" then
+            local f = Instance.new("Frame")
+            f.Size = UDim2.fromOffset(S.CrossSize / 2, S.CrossSize / 2)
+            f.Position = UDim2.new(0.5, 0, 0.5, 0)
+            f.AnchorPoint = Vector2.new(0.5, 0.5)
+            f.BackgroundColor3 = S.CrossColor
+            f.BorderSizePixel = 0
+            f.Parent = crossBox
+            Instance.new("UICorner", f).CornerRadius = UDim.new(1, 0)
+            table.insert(crossParts, f)
+        else
+            local f = Instance.new("Frame")
+            f.Size = UDim2.fromOffset(S.CrossSize, S.CrossSize)
+            f.Position = UDim2.new(0.5, 0, 0.5, 0)
+            f.AnchorPoint = Vector2.new(0.5, 0.5)
+            f.BackgroundTransparency = 1
+            f.Parent = crossBox
+            local s = Instance.new("UIStroke", f)
+            s.Color = S.CrossColor; s.Thickness = S.CrossThick
+            Instance.new("UICorner", f).CornerRadius = UDim.new(1, 0)
+            table.insert(crossParts, f)
+        end
+    end
+
+    do
+        CrossTab:Toggle({ Title = T("tg_cross"), Value = false, Callback = function(v) S.CrossOn = v; renderCross() end })
+        CrossTab:Dropdown({ Title = T("dd_style"), Values = { T("cs_cross"), T("cs_dot"), T("cs_circle") }, Value = T("cs_cross"), Callback = function(v)
+            S.CrossStyle = (v == T("cs_dot")) and "dot" or (v == T("cs_circle")) and "circle" or "cross"
+            renderCross()
+        end })
+        CrossTab:Slider({ Title = T("sl_crosssize"), Value = { Min = 4, Max = 40, Default = 12 }, Callback = function(v) S.CrossSize = v; renderCross() end })
+        CrossTab:Slider({ Title = T("sl_crossthick"), Value = { Min = 1, Max = 6, Default = 2 }, Callback = function(v) S.CrossThick = v; renderCross() end })
+        CrossTab:Colorpicker({ Title = T("col_cross"), Default = S.CrossColor, Callback = function(c) S.CrossColor = c; renderCross() end })
+    end
+
+    -- ===================== SKIN CHANGER =====================
+    local SKINS = {
+        { "Original", nil, nil },
+        { "Rojo", Color3.fromRGB(190, 40, 40), Enum.Material.Neon },
+        { "Azul", Color3.fromRGB(45, 120, 235), Enum.Material.Neon },
+        { "Verde", Color3.fromRGB(50, 210, 110), Enum.Material.Neon },
+        { "Oro", Color3.fromRGB(240, 200, 60), Enum.Material.Metal },
+        { "Violeta", Color3.fromRGB(160, 70, 235), Enum.Material.Neon },
+        { "Hielo", Color3.fromRGB(170, 230, 255), Enum.Material.Ice },
+        { "Negro mate", Color3.fromRGB(25, 25, 30), Enum.Material.SmoothPlastic },
+    }
+    local skinOrig = {}
+    local function skinTargets()
+        local ch = LP.Character
+        if not ch then return {} end
+        local t = {}
+        for _, n in ipairs({ KNIFE_NAME, GUN_NAME }) do
+            local tool = ch:FindFirstChild(n)
+            local h = tool and tool:FindFirstChild("Handle")
+            if h and h:IsA("BasePart") then table.insert(t, h) end
+        end
+        return t
+    end
+    local function applySkin(idx)
+        local s = SKINS[idx]
+        local parts = skinTargets()
+        if #parts == 0 then return false end
+        for _, h in ipairs(parts) do
+            if not skinOrig[h] then
+                skinOrig[h] = { c = h.Color, m = h.Material, tex = h.TextureID }
+            end
+            if not s[2] then
+                h.Color = skinOrig[h].c
+                h.Material = skinOrig[h].m
+                pcall(function() h.TextureID = skinOrig[h].tex end)
+            else
+                h.Color = s[2]
+                h.Material = s[3]
+            end
+        end
+        return true
+    end
+
+    do
+        local names = {}
+        for _, s in ipairs(SKINS) do table.insert(names, s[1]) end
+        SkinTab:Section({ Title = T("gb_skin") })
+        SkinTab:Dropdown({ Title = T("dd_skin"), Values = names, Value = names[1], Callback = function(v)
+            for i, s in ipairs(SKINS) do if s[1] == v then S.Skin = i break end end
+        end })
+        SkinTab:Button({ Title = T("btn_applyskin"), Callback = function()
+            if applySkin(S.Skin) then WindUI:Notify({ Title = "Kaisen X", Content = T("n_skinok"), Duration = 2 })
+            else WindUI:Notify({ Title = "Kaisen X", Content = T("n_skinnone"), Duration = 3) end
+        end })
+        local names2 = {}
+        for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then table.insert(names2, p.Name) end end
+        if #names2 == 0 then names2 = { T("nobody") } end
+        local skinPlr = names2[1]
+        SkinTab:Dropdown({ Title = T("dd_skinplayer"), Values = names2, Value = skinPlr, Callback = function(v) skinPlr = v end })
+        SkinTab:Button({ Title = T("btn_copyskin"), Callback = function()
+            local p = Players:FindFirstChild(skinPlr or "")
+            local ch = p and p.Character
+            local src
+            for _, n in ipairs({ KNIFE_NAME, GUN_NAME }) do
+                local tool = ch and ch:FindFirstChild(n)
+                local h = tool and tool:FindFirstChild("Handle")
+                if h then src = h break end
+            end
+            local targets = skinTargets()
+            if not src or #targets == 0 then
+                WindUI:Notify({ Title = "Kaisen X", Content = T("n_skincopy"), Duration = 3 })
+                return
+            end
+            for _, h in ipairs(targets) do
+                pcall(function() h.MeshId = src.MeshId end)
+                pcall(function() h.TextureID = src.TextureID end)
+                pcall(function() h.Color = src.Color end)
+                pcall(function() h.Material = src.Material end)
+            end
+            WindUI:Notify({ Title = "Kaisen X", Content = T("n_skinok"), Duration = 2 })
+        end)
+    end
+
+    -- ===================== BOTONES =====================
+    do
+        BtnTab:Section({ Title = T("gb_buttons") })
+        BtnTab:Button({ Title = T("btn_b_reveal"), Callback = function()
+            local m = findByRole("murd")
+            if not m then return WindUI:Notify({ Title = "Kaisen X", Content = T("n_norevl"), Duration = 3 }) end
+            local ok = sendChat("The murder is " .. m.Name .. " kaisen x")
+            WindUI:Notify({ Title = "Kaisen X", Content = ok and T("n_revlok") or T("n_revlfail"), Duration = 3 })
+        end })
+        BtnTab:Button({ Title = T("btn_b_gun"), Callback = function()
+            task.spawn(function()
+                local ok, a, b = pcall(grabGun)
+                if ok and a then WindUI:Notify({ Title = "Kaisen X", Content = T("n_gunok"), Duration = 2 })
+                elseif b == "murd" then WindUI:Notify({ Title = "Kaisen X", Content = T("n_gunmurd"), Duration = 3 })
+                elseif b == "has" then WindUI:Notify({ Title = "Kaisen X", Content = T("n_gunhas"), Duration = 3 })
+                else WindUI:Notify({ Title = "Kaisen X", Content = T("n_gunfail"), Duration = 3 }) end
+            end)
+        end })
+        BtnTab:Button({ Title = T("btn_b_killall"), Callback = function()
+            local knife = ensureKnife()
+            local _, hrp = getChar()
+            if getRole(LP) ~= "murd" or not knife or not hrp then
+                return WindUI:Notify({ Title = "Kaisen X", Content = T("n_notmurd"), Duration = 3 })
+            end
+            task.spawn(function()
+                local old = hrp.CFrame
+                for _, plr in ipairs(Players:GetPlayers()) do
+                    if plr ~= LP and isAlive(plr) then
+                        local thrp = plr.Character:FindFirstChild("HumanoidRootPart")
+                        if thrp then
+                            hrp.CFrame = thrp.CFrame * CFrame.new(0, 0, 2.5)
+                            task.wait(0.12); stab(knife, plr); task.wait(0.26)
+                        end
+                    end
+                end
+                hrp.CFrame = old
+            end)
+        end })
+        BtnTab:Button({ Title = T("btn_b_safe"), Callback = function()
+            local _, hrp = getChar()
+            if hrp then hrp.CFrame = CFrame.new(0, 1504, 0) end
+        end })
+        BtnTab:Button({ Title = T("btn_b_fling"), Callback = function()
+            local m = findByRole("murd")
+            if not m then return WindUI:Notify({ Title = "Kaisen X", Content = T("n_flingfail"), Duration = 3 }) end
+            flingPlayer(m)
+        end })
+        BtnTab:Button({ Title = T("btn_b_hop"), Callback = hopServer })
+        BtnTab:Button({ Title = T("btn_b_rejoin"), Callback = function() TeleportSvc:Teleport(game.PlaceId, LP) end })
+        BtnTab:Button({ Title = T("btn_b_unload"), Callback = function() if getgenv().__KaisenXUnload then getgenv().__KaisenXUnload() end end })
+    end
+
+    -- ===================== FLING =====================
+    local function flingPlayer(plr)
+        local ch = plr.Character
+        local hrp = ch and ch:FindFirstChild("HumanoidRootPart")
+        if not hrp then
+            WindUI:Notify({ Title = "Kaisen X", Content = T("n_flingfail"), Duration = 2 })
+            return
+        end
+        local bav = Instance.new("BodyAngularVelocity")
+        bav.AngularVelocity = Vector3.new(0, 99999, 0)
+        bav.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+        bav.Parent = hrp
+        local bv = Instance.new("BodyVelocity")
+        bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+        bv.Velocity = Vector3.new(0, 90, 0)
+        bv.Parent = hrp
+        task.delay(1.4, function()
+            pcall(function() bav:Destroy() end)
+            pcall(function() bv:Destroy() end)
+        end)
+        WindUI:Notify({ Title = "Kaisen X", Content = T("n_fling"), Duration = 2 })
+    end
+
+    do
+        local names, tpPlr = {}, nil
+        for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then table.insert(names, p.Name) end end
+        if #names == 0 then names = { T("nobody") } end
+        tpPlr = names[1]
+        FlingTab:Section({ Title = T("gb_fling") })
+        FlingTab:Dropdown({ Title = T("dd_player"), Values = names, Value = tpPlr, Callback = function(v) tpPlr = v end })
+        FlingTab:Button({ Title = T("btn_fling"), Callback = function()
+            local p = Players:FindFirstChild(tpPlr or "")
+            if p then flingPlayer(p) else WindUI:Notify({ Title = "Kaisen X", Content = T("n_flingfail"), Duration = 2 }) end
+        end })
+        FlingTab:Button({ Title = T("btn_flingall"), Callback = function()
+            for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then flingPlayer(p) end end
+        end })
+
+        FlingTab:Section({ Title = T("gb_tp") })
+        FlingTab:Button({ Title = T("btn_tp"), Callback = function()
+            local p = Players:FindFirstChild(tpPlr or "")
+            local _, hrp = getChar()
+            local thrp = p and p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+            if hrp and thrp then hrp.CFrame = thrp.CFrame + Vector3.new(0, 3, 0)
+            else WindUI:Notify({ Title = "Kaisen X", Content = T("n_fail"), Duration = 2 }) end
+        end })
+        FlingTab:Button({ Title = T("btn_tpfling"), Callback = function()
+            local p = Players:FindFirstChild(tpPlr or "")
+            local _, hrp = getChar()
+            local thrp = p and p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+            if hrp and thrp then
+                hrp.CFrame = thrp.CFrame + Vector3.new(0, 3, 0)
+                task.wait(0.15)
+                flingPlayer(p)
+            end
+        end })
+        local coords = ""
+        local coordsOk = pcall(function()
+            FlingTab:Input({ Title = T("ph_coords"), Value = "", Callback = function(v) coords = v end })
+        end)
+        if not coordsOk then
+            pcall(function() FlingTab:Textbox({ Title = T("ph_coords"), Value = "", Callback = function(v) coords = v end }) end)
+        end
+        FlingTab:Button({ Title = T("btn_tpcoords"), Callback = function()
+            local x, y, z = tostring(coords):match("(-?%d+%.?%d*)%s+(-?%d+%.?%d*)%s+(-?%d+%.?%d*)")
+            local _, hrp = getChar()
+            if not x or not hrp then return WindUI:Notify({ Title = "Kaisen X", Content = T("n_tpcoords"), Duration = 3 }) end
+            hrp.CFrame = CFrame.new(tonumber(x), tonumber(y), tonumber(z))
+        end })
+    end
+
+    -- ===================== AUTOFARM =====================
+    do
+        EventTab:Section({ Title = T("gb_farm") })
         EventTab:Toggle({ Title = T("tg_farm"), Value = false, Callback = function(v) S.AutoFarm = v end })
         EventTab:Slider({ Title = T("sl_speed"), Value = { Min = 10, Max = 70, Default = 27 }, Callback = function(v) S.FarmSpeed = v end })
         EventTab:Toggle({ Title = T("tg_avoid"), Value = true, Callback = function(v) S.AvoidMurd = v end })
@@ -815,12 +1471,48 @@ local function Build(LANG)
         local lblFarm  = EventTab:Paragraph({ Title = T("l_fstate") .. ": " .. T("fs_off") })
         local lblCount = EventTab:Paragraph({ Title = T("l_count") .. ": 0" })
         local lblLeft  = EventTab:Paragraph({ Title = T("l_left") .. ": 0" })
-
         EventTab:Toggle({ Title = T("tg_wide"), Value = true, Callback = function(v) S.WideSearch = v end })
         EventTab:Toggle({ Title = T("tg_autoreset"), Value = false, Callback = function(v) S.AutoReset = v end })
         EventTab:Toggle({ Title = T("tg_candyesp"), Value = false, Callback = function(v) S.CandyESP = v end })
         EventTab:Toggle({ Title = T("tg_nocfarm"), Value = true, Callback = function(v) S.NoClipFarm = v end })
         EventTab:Toggle({ Title = T("tg_candysound"), Value = false, Callback = function(v) S.CandySound = v end })
+
+        EventTab:Section({ Title = T("gb_menu") })
+        EventTab:Toggle({ Title = T("tg_perf"), Value = false, Callback = function(v)
+            S.PerfMode = v
+            if not v then return end
+            task.spawn(function()
+                local n = 0
+                for _, d in ipairs(workspace:GetDescendants()) do
+                    if d:IsA("BasePart") then
+                        pcall(function() d.Material = Enum.Material.SmoothPlastic end)
+                        pcall(function() d.TextureID = "" end)
+                    elseif d:IsA("Decal") then
+                        pcall(function() d:Destroy() end)
+                    end
+                    n += 1
+                    if n % 500 == 0 then task.wait() end
+                end
+                WindUI:Notify({ Title = "Kaisen X", Content = T("n_perf"), Duration = 3 })
+            end)
+        end })
+        EventTab:Toggle({ Title = T("tg_autohop"), Value = false, Callback = function(v) S.AutoHop = v end })
+        EventTab:Slider({ Title = T("sl_hopmin"), Value = { Min = 1, Max = 10, Default = 3 }, Callback = function(v) S.HopMin = v end })
+        EventTab:Toggle({ Title = T("tg_antiafk"), Value = true, Callback = function(v) S.AntiAFK = v end })
+
+        track(LP.Idled:Connect(function()
+            if S.AntiAFK then
+                VirtualUser:CaptureController()
+                VirtualUser:ClickButton2(Vector2.new())
+            end
+        end))
+
+        task.spawn(function()
+            while alive do
+                if S.AutoHop and #Players:GetPlayers() < S.HopMin then hopServer() end
+                task.wait(15)
+            end
+        end)
 
         local function onCandyPicked()
             if S.CandySound then
@@ -869,7 +1561,6 @@ local function Build(LANG)
                 local pending = 0
                 for _, p in ipairs(list) do if p.Parent and not Farm.visited[p] then pending += 1 end end
                 pcall(function() lblLeft:SetTitle(T("l_left") .. ": " .. pending) end)
-
                 pcall(function()
                     lblFarm:SetTitle(T("l_fstate") .. ": " .. (not S.AutoFarm and T("fs_off") or (Round.active and T("fs_run") or T("fs_wait"))))
                 end)
@@ -974,6 +1665,7 @@ local function Build(LANG)
         end))
     end
 
+    -- ===================== ESP =====================
     local grabGun
     do
         ESPTab:Toggle({ Title = T("tg_esp"), Value = false, Callback = function(v) S.ESPOn = v end })
@@ -1067,7 +1759,7 @@ local function Build(LANG)
                     if hasTool(LP, GUN_NAME) then return true end
                     task.wait(0.05)
                 end
-                return hasTool(LP, GUN_NAME) ~= nil
+                return false
             end
             touch()
             if waitGun(0.4) then return true, "ok" end
@@ -1086,12 +1778,10 @@ local function Build(LANG)
         ESPTab:Button({ Title = T("btn_grabgun"), Callback = function()
             task.spawn(function()
                 local ok, a, b = pcall(grabGun)
-                local success = ok and a
-                local why = ok and b
-                if success then WindUI:Notify({ Title = "Kaisen X", Content = T("n_gunok"), Duration = 3 })
-                elseif why == "murd" then WindUI:Notify({ Title = "Kaisen X", Content = T("n_gunmurd"), Duration = 3 })
-                elseif why == "has" then WindUI:Notify({ Title = "Kaisen X", Content = T("n_gunhas"), Duration = 3 })
-                elseif why == "none" then WindUI:Notify({ Title = "Kaisen X", Content = T("n_gunnone"), Duration = 3 })
+                if ok and a then WindUI:Notify({ Title = "Kaisen X", Content = T("n_gunok"), Duration = 3 })
+                elseif b == "murd" then WindUI:Notify({ Title = "Kaisen X", Content = T("n_gunmurd"), Duration = 3 })
+                elseif b == "has" then WindUI:Notify({ Title = "Kaisen X", Content = T("n_gunhas"), Duration = 3 })
+                elseif b == "none" then WindUI:Notify({ Title = "Kaisen X", Content = T("n_gunnone"), Duration = 3 })
                 else WindUI:Notify({ Title = "Kaisen X", Content = T("n_gunfail"), Duration = 3 }) end
             end)
         end })
@@ -1124,212 +1814,10 @@ local function Build(LANG)
         end)
     end
 
-    local safePlat, savedCF
-    do
-        local shooting, lastShot = false, 0
-        RoleTab:Section({ Title = T("sec_sheriff") })
-        RoleTab:Button({ Title = T("btn_shoot"), Callback = function()
-            if getRole(LP) ~= "sheriff" then WindUI:Notify({ Title = "Kaisen X", Content = T("err_notsher"), Duration = 3 }) return end
-            local m = findByRole("murd")
-            local mh = m and m ~= LP and m.Character and m.Character:FindFirstChild("HumanoidRootPart")
-            if not mh or not isAlive(m) then WindUI:Notify({ Title = "Kaisen X", Content = T("err_nomurd"), Duration = 3 }) return end
-            if shooting then return end
-            task.spawn(function()
-                shooting = true
-                local useLOS = S.ShootLOS and not S.Wallbang
-                local ok, err = shootAt(mh, useLOS, S.ShootPredict)
-                shooting = false
-                if ok then lastShot = os.clock() else WindUI:Notify({ Title = "Kaisen X", Content = T("err_shoot"), Duration = 3 }) end
-            end)
-        end })
-        RoleTab:Toggle({ Title = T("tg_autoshoot"), Value = false, Callback = function(v) S.AutoShoot = v end })
-        RoleTab:Slider({ Title = T("sl_range"), Value = { Min = 20, Max = 200, Default = 70 }, Callback = function(v) S.ShootRange = v end })
-        RoleTab:Slider({ Title = T("sl_cooldown"), Value = { Min = 0.3, Max = 6, Default = 2 }, Callback = function(v) S.ShootCooldown = v end })
-        RoleTab:Slider({ Title = T("sl_close"), Value = { Min = 3, Max = 40, Default = 15 }, Callback = function(v) S.ShootCloseRange = v end })
-        RoleTab:Toggle({ Title = T("tg_predict"), Value = true, Callback = function(v) S.ShootPredict = v end })
-        RoleTab:Toggle({ Title = T("tg_los"), Value = true, Callback = function(v) S.ShootLOS = v end })
-        RoleTab:Toggle({ Title = T("tg_wallbang"), Value = false, Callback = function(v) S.Wallbang = v end })
-        RoleTab:Paragraph({ Title = T("tip_wallbang") })
-        RoleTab:Button({ Title = T("btn_equipgun"), Callback = function() task.spawn(ensureGun) end })
-
-        task.spawn(function()
-            while alive do
-                task.wait(0.1)
-                if S.AutoShoot and Round.active and not shooting and getRole(LP) == "sheriff" then
-                    local m = findByRole("murd")
-                    local mh = m and m ~= LP and m.Character and m.Character:FindFirstChild("HumanoidRootPart")
-                    local _, hrp = getChar()
-                    if mh and hrp and isAlive(m) then
-                        local dist = (mh.Position - hrp.Position).Magnitude
-                        local closeRange = dist <= S.ShootCloseRange
-                        local canFire = closeRange or (os.clock() - lastShot > S.ShootCooldown)
-                        if dist <= S.ShootRange and canFire then
-                            shooting = true
-                            local useLOS = S.ShootLOS and not S.Wallbang
-                            local ok = shootAt(mh, useLOS, S.ShootPredict)
-                            if ok then lastShot = closeRange and (os.clock() - S.ShootCooldown + 0.15) or os.clock() end
-                            shooting = false
-                        end
-                    end
-                end
-            end
-        end)
-
-        local throwing, lastThrow = false, 0
-        RoleTab:Section({ Title = T("sec_murdthrow") })
-        RoleTab:Button({ Title = T("btn_throw"), Callback = function()
-            if getRole(LP) ~= "murd" then WindUI:Notify({ Title = "Kaisen X", Content = T("n_notmurd"), Duration = 3 }) return end
-            local best = nearestEnemyHRP()
-            if not best then WindUI:Notify({ Title = "Kaisen X", Content = T("n_noenemy"), Duration = 3 }) return end
-            local ok, err = throwKnifeAt(best, S.KnifeLOS, S.KnifeSpeed)
-            if not ok then WindUI:Notify({ Title = "Kaisen X", Content = T("n_throwfail"), Duration = 3 })
-            else WindUI:Notify({ Title = "Kaisen X", Content = T("n_throwok"), Duration = 2 }) end
-        end })
-        RoleTab:Toggle({ Title = T("tg_autoknife"), Value = false, Callback = function(v) S.AutoKnife = v end })
-        RoleTab:Slider({ Title = T("sl_range"), Value = { Min = 10, Max = 150, Default = 60 }, Callback = function(v) S.KnifeRange = v end })
-        RoleTab:Slider({ Title = T("sl_cooldown"), Value = { Min = 0.5, Max = 4, Default = 1.5 }, Callback = function(v) S.KnifeCooldown = v end })
-        RoleTab:Slider({ Title = T("sl_knifespeed"), Value = { Min = 30, Max = 150, Default = 80 }, Callback = function(v) S.KnifeSpeed = v end })
-        RoleTab:Toggle({ Title = T("tg_los"), Value = true, Callback = function(v) S.KnifeLOS = v end })
-        RoleTab:Button({ Title = T("btn_equipknife"), Callback = function() task.spawn(ensureKnife) end })
-
-        task.spawn(function()
-            while alive do
-                task.wait(0.2)
-                if S.AutoKnife and Round.active and not throwing
-                    and os.clock() - lastThrow > S.KnifeCooldown
-                    and getRole(LP) == "murd" then
-                    local best = nearestEnemyHRP(S.KnifeRange)
-                    if best then
-                        throwing = true
-                        local ok = throwKnifeAt(best, S.KnifeLOS, S.KnifeSpeed)
-                        if ok then lastThrow = os.clock() end
-                        throwing = false
-                    end
-                end
-            end
-        end)
-
-        RoleTab:Section({ Title = T("sec_murdmelee") })
-        RoleTab:Toggle({ Title = T("tg_aura"), Value = false, Callback = function(v) S.KnifeAura = v end })
-        RoleTab:Slider({ Title = T("sl_aurarange"), Value = { Min = 5, Max = 30, Default = 12 }, Callback = function(v) S.AuraRange = v end })
-        RoleTab:Toggle({ Title = T("tg_reach"), Value = false, Callback = function(v) S.KnifeReach = v end })
-        RoleTab:Slider({ Title = T("sl_reachsize"), Value = { Min = 2, Max = 25, Default = 8 }, Callback = function(v) S.ReachSize = v end })
-        RoleTab:Button({ Title = T("btn_killall"), Callback = function()
-            if getRole(LP) ~= "murd" then WindUI:Notify({ Title = "Kaisen X", Content = T("n_notmurd"), Duration = 3 }) return end
-            task.spawn(function()
-                local knife = ensureKnife()
-                local _, hrp = getChar()
-                if not knife or not hrp then return end
-                local old = hrp.CFrame
-                for _, plr in ipairs(Players:GetPlayers()) do
-                    if plr ~= LP and isAlive(plr) then
-                        local thrp = plr.Character:FindFirstChild("HumanoidRootPart")
-                        if thrp then
-                            hrp.CFrame = thrp.CFrame * CFrame.new(0, 0, 2.5)
-                            task.wait(0.12)
-                            stab(knife, plr)
-                            task.wait(0.28)
-                        end
-                    end
-                end
-                hrp.CFrame = old
-                WindUI:Notify({ Title = "Kaisen X", Content = T("n_killdone"), Duration = 3 })
-            end)
-        end })
-
-        task.spawn(function()
-            while alive do
-                if S.KnifeAura and getRole(LP) == "murd" then
-                    pcall(function()
-                        local knife = ensureKnife()
-                        local _, hrp = getChar()
-                        if knife and hrp then
-                            for _, plr in ipairs(Players:GetPlayers()) do
-                                if plr ~= LP and isAlive(plr) then
-                                    local thrp = plr.Character:FindFirstChild("HumanoidRootPart")
-                                    if thrp and (thrp.Position - hrp.Position).Magnitude <= S.AuraRange then
-                                        stab(knife, plr)
-                                    end
-                                end
-                            end
-                        end
-                    end)
-                end
-                task.wait(0.3)
-            end
-        end)
-
-        local origHandle = {}
-        track(RunService.Heartbeat:Connect(function()
-            local knife = LP.Character and LP.Character:FindFirstChild(KNIFE_NAME)
-            local handle = knife and knife:FindFirstChild("Handle")
-            if handle then
-                if not origHandle[handle] then origHandle[handle] = handle.Size end
-                if S.KnifeReach then
-                    local s = S.ReachSize
-                    handle.Size = Vector3.new(s, s, s)
-                    handle.Massless = true
-                else
-                    handle.Size = origHandle[handle]
-                end
-            end
-        end))
-
-        RoleTab:Section({ Title = T("sec_safe") })
-        RoleTab:Toggle({ Title = T("tg_safe"), Value = false, Callback = function(v)
-            S.SafeMode = v
-            local _, hrp = getChar()
-            if v then
-                if not hrp then return end
-                if not safePlat then
-                    safePlat = Instance.new("Part")
-                    safePlat.Name = "KaisenXSafe"
-                    safePlat.Size = Vector3.new(40, 2, 40)
-                    safePlat.Anchored = true
-                    safePlat.Transparency = 0.6
-                    safePlat.Position = Vector3.new(0, 1500, 0)
-                    safePlat.Parent = workspace
-                end
-                if not savedCF then savedCF = hrp.CFrame end
-                hrp.CFrame = CFrame.new(0, 1504, 0)
-            else
-                if hrp and savedCF then hrp.CFrame = savedCF end
-                savedCF = nil
-            end
-        end })
-        RoleTab:Toggle({ Title = T("tg_autosafe"), Value = false, Callback = function(v) S.AutoSafe = v end })
-        RoleTab:Slider({ Title = T("sl_safedist"), Value = { Min = 10, Max = 80, Default = 25 }, Callback = function(v) S.SafeDist = v end })
-
-        task.spawn(function()
-            while alive do
-                if S.AutoSafe and Round.active and getRole(LP) ~= "murd" then
-                    local mh = murdererHRP()
-                    local _, hrp = getChar()
-                    if mh and hrp and not savedCF and (mh.Position - hrp.Position).Magnitude < S.SafeDist then
-                        S.SafeMode = true
-                        if not safePlat then
-                            safePlat = Instance.new("Part")
-                            safePlat.Name = "KaisenXSafe"; safePlat.Size = Vector3.new(40, 2, 40)
-                            safePlat.Anchored = true; safePlat.Transparency = 0.6
-                            safePlat.Position = Vector3.new(0, 1500, 0); safePlat.Parent = workspace
-                        end
-                        if not savedCF then savedCF = hrp.CFrame end
-                        hrp.CFrame = CFrame.new(0, 1504, 0)
-                    end
-                end
-                if savedCF and not Round.active then
-                    local _, hrp = getChar()
-                    if hrp then hrp.CFrame = savedCF end
-                    savedCF = nil
-                    S.SafeMode = false
-                end
-                task.wait(0.4)
-            end
-        end)
-    end
-
+    -- ===================== PLAYER =====================
     local flyBV
     do
+        PlayerTab:Section({ Title = T("gb_move") })
         PlayerTab:Toggle({ Title = T("tg_ws"), Value = false, Callback = function(v) S.WSOn = v end })
         PlayerTab:Slider({ Title = "WalkSpeed", Value = { Min = 16, Max = 100, Default = 24 }, Callback = function(v) S.WS = v end })
         PlayerTab:Toggle({ Title = T("tg_jp"), Value = false, Callback = function(v) S.JPOn = v end })
@@ -1382,13 +1870,6 @@ local function Build(LANG)
             if hrp and thrp then hrp.CFrame = thrp.CFrame + Vector3.new(0, 3, 0)
             else WindUI:Notify({ Title = "Kaisen X", Content = T("n_fail"), Duration = 2 }) end
         end })
-        PlayerTab:Toggle({ Title = T("tg_antiafk"), Value = true, Callback = function(v) S.AntiAFK = v end })
-        track(LP.Idled:Connect(function()
-            if S.AntiAFK then
-                VirtualUser:CaptureController()
-                VirtualUser:ClickButton2(Vector2.new())
-            end
-        end))
         PlayerTab:Slider({ Title = T("sl_fov"), Value = { Min = 50, Max = 120, Default = 70 }, Callback = function(v)
             workspace.CurrentCamera.FieldOfView = v
         end })
@@ -1407,25 +1888,10 @@ local function Build(LANG)
             end)
         end })
         PlayerTab:Button({ Title = T("btn_rejoin"), Callback = function() TeleportSvc:Teleport(game.PlaceId, LP) end })
-        PlayerTab:Button({ Title = T("btn_hop"), Callback = function()
-            task.spawn(function()
-                local ok, res = pcall(function()
-                    return HttpService:JSONDecode(game:HttpGet(
-                        "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
-                end)
-                if ok and res and res.data then
-                    for _, s in ipairs(res.data) do
-                        if s.id ~= game.JobId and s.playing < s.maxPlayers then
-                            TeleportSvc:TeleportToPlaceInstance(game.PlaceId, s.id, LP)
-                            return
-                        end
-                    end
-                end
-                WindUI:Notify({ Title = "Kaisen X", Content = T("n_noserver"), Duration = 3 })
-            end)
-        end })
+        PlayerTab:Button({ Title = T("btn_hop"), Callback = hopServer })
     end
 
+    -- ===================== VISUAL =====================
     local atm, bloom, cc, rays, dof
     local original, origShadows = {}, Lighting.GlobalShadows
     do
@@ -1513,6 +1979,147 @@ local function Build(LANG)
         VisualTab:Slider({ Title = T("fx_sat"), Value = { Min = -1, Max = 1, Default = 0.1 }, Callback = function(v) cc.Saturation = v end })
     end
 
+    -- ===================== KEYBINDS =====================
+    do
+        local binds = {}
+        local pendingBind = nil
+        local actions = {}
+
+        local function addAction(id, label, fn) table.insert(actions, { id = id, label = label, fn = fn }) end
+
+        addAction("silent", T("tg_silent"), function() S.Silent = not S.Silent; silentOn = S.Silent end)
+        addAction("shoot", T("btn_shoot"), function()
+            local m = findByRole("murd")
+            local mh = m and m.Character and m.Character:FindFirstChild("HumanoidRootPart")
+            if mh and isAlive(m) then task.spawn(shootAt, mh, S.ShootLOS and not S.Wallbang, S.ShootPredict) end
+        end)
+        addAction("throw", T("btn_throw"), function()
+            local best = nearestEnemyHRP()
+            if best then throwKnifeAt(best, S.KnifeLOS, S.KnifeSpeed) end
+        end)
+        addAction("killall", T("btn_killall"), function()
+            local knife = ensureKnife()
+            local _, hrp = getChar()
+            if not knife or not hrp then return end
+            task.spawn(function()
+                local old = hrp.CFrame
+                for _, plr in ipairs(Players:GetPlayers()) do
+                    if plr ~= LP and isAlive(plr) then
+                        local t = plr.Character:FindFirstChild("HumanoidRootPart")
+                        if t then hrp.CFrame = t.CFrame * CFrame.new(0, 0, 2.5); task.wait(0.12); stab(knife, plr); task.wait(0.26) end
+                    end
+                end
+                hrp.CFrame = old
+            end)
+        end)
+        addAction("safe", T("tg_safe"), function() S.SafeMode = not S.SafeMode; local _, h = getChar(); if h then h.CFrame = CFrame.new(0, 1504, 0) end end)
+        addAction("noclip", T("tg_noclip"), function() S.Noclip = not S.Noclip; applyNoclip(S.Noclip) end)
+        addAction("fly", T("tg_fly"), function() S.Fly = not S.Fly end)
+        addAction("esp", T("tg_esp"), function() S.ESPOn = not S.ESPOn end)
+        addAction("cross", T("tg_cross"), function() S.CrossOn = not S.CrossOn; renderCross() end)
+        addAction("gun", T("btn_grabgun"), function() task.spawn(grabGun) end)
+        addAction("reveal", T("btn_reveal"), function()
+            local m = findByRole("murd")
+            if m then sendChat("The murder is " .. m.Name .. " kaisen x") end
+        end)
+        addAction("fling", T("btn_fling"), function()
+            local p = nearestEnemyHRP()
+            if p and p.Parent then
+                local plr = Players:GetPlayerFromCharacter(p.Parent)
+                if plr then flingPlayer(plr) end
+            end
+        end)
+        addAction("hop", T("btn_hop"), hopServer)
+
+        local labels = {}
+        for _, a in ipairs(actions) do table.insert(labels, a.label) end
+        local chosen = labels[1]
+        local lblList = KeyTab:Paragraph({ Title = T("l_binds") .. ": -" })
+
+        local function refreshList()
+            local parts = {}
+            for code, id in pairs(binds) do
+                for _, a in ipairs(actions) do
+                    if a.id == id then table.insert(parts, code .. " = " .. a.label) end
+                end
+            end
+            pcall(function() lblList:SetTitle(T("l_binds") .. ": " .. (#parts > 0 and table.concat(parts, "  |  ") or "-")) end)
+        end
+
+        KeyTab:Dropdown({ Title = T("dd_action"), Values = labels, Value = chosen, Callback = function(v) chosen = v end })
+        KeyTab:Button({ Title = T("btn_bind"), Callback = function()
+            pendingBind = chosen
+            WindUI:Notify({ Title = "Kaisen X", Content = T("n_bindwait"), Duration = 4 })
+        end })
+        KeyTab:Button({ Title = T("btn_clear"), Callback = function()
+            binds = {}
+            refreshList()
+            WindUI:Notify({ Title = "Kaisen X", Content = T("n_cleared"), Duration = 2 })
+        end })
+
+        track(UIS.InputBegan:Connect(function(input, gp)
+            if gp then return end
+            if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+            if pendingBind then
+                for _, a in ipairs(actions) do
+                    if a.label == pendingBind then
+                        binds[input.KeyCode.Name] = a.id
+                        break
+                    end
+                end
+                pendingBind = nil
+                refreshList()
+                WindUI:Notify({ Title = "Kaisen X", Content = T("n_bindok") .. " " .. input.KeyCode.Name, Duration = 2 })
+                return
+            end
+            local id = binds[input.KeyCode.Name]
+            if id then
+                for _, a in ipairs(actions) do
+                    if a.id == id then pcall(a.fn); break end
+                end
+            end
+        end))
+    end
+
+    -- ===================== BUSCAR =====================
+    do
+        local idx = {
+            { "coin farm moneda candy autofarm", function() selectTabByIndex(8) end },
+            { "silent aim disparar shoot combat pistola gun", function() selectTabByIndex(2) end },
+            { "crosshair mira", function() selectTabByIndex(3) end },
+            { "skin cuchillo knife", function() selectTabByIndex(4) end },
+            { "esp resaltar highlight", function() selectTabByIndex(6) end },
+            { "fling teleport tp", function() selectTabByIndex(7) end },
+            { "velocidad speed jump salto noclip fly", function() selectTabByIndex(9) end },
+            { "shader visual luz", function() selectTabByIndex(10) end },
+            { "keybind tecla", function() selectTabByIndex(11) end },
+            { "ronda round hud timer", function() selectTabByIndex(1) end },
+            { "idioma language", function() selectTabByIndex(13) end },
+        }
+        local q = ""
+        local okIn = pcall(function()
+            SearchTab:Input({ Title = T("ph_search"), Value = "", Callback = function(v) q = v end })
+        end)
+        if not okIn then
+            pcall(function() SearchTab:Textbox({ Title = T("ph_search"), Value = "", Callback = function(v) q = v end }) end)
+        end
+        SearchTab:Button({ Title = T("btn_search"), Callback = function()
+            local s = tostring(q):lower()
+            if s == "" then return end
+            local hits = 0
+            for _, e in ipairs(idx) do
+                if e[1]:find(s, 1, true) then
+                    e[2]()
+                    hits += 1
+                    WindUI:Notify({ Title = "Kaisen X", Content = T("n_searchfound"), Duration = 2 })
+                    break
+                end
+            end
+            if hits == 0 then WindUI:Notify({ Title = "Kaisen X", Content = T("n_searchnone"), Duration = 2 }) end
+        end })
+    end
+
+    -- ===================== AJUSTES =====================
     do
         SettingsTab:Button({ Title = T("btn_unload"), Callback = function() if getgenv().__KaisenXUnload then getgenv().__KaisenXUnload() end end })
 
@@ -1547,6 +2154,22 @@ local function Build(LANG)
             else WindUI:Notify({ Title = "Kaisen X", Content = T("n_discnosup"), Duration = 3 }) end
         end })
     end
+
+    -- puntero del silent aim
+    task.spawn(function()
+        while alive do
+            silentOn = S.Silent
+            if S.Silent then
+                local m = findByRole("murd")
+                local ch = m and m.Character
+                local head = ch and ch:FindFirstChild("Head")
+                aimTarget = (head and isAlive(m)) and head or murdererHRP()
+            else
+                aimTarget = nil
+            end
+            task.wait(0.1)
+        end
+    end)
 
     WindUI:Notify({ Title = "Kaisen X", Content = T("n_loaded"), Duration = 4 })
 end
