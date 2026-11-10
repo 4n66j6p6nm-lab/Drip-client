@@ -210,7 +210,13 @@ end
 
 if getgenv().__KaisenXUnload then pcall(getgenv().__KaisenXUnload) task.wait(0.4) end
 
-local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+local okLib, WindUI = pcall(function()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+end)
+if not okLib or not WindUI then
+    warn("Kaisen X: no se pudo cargar WindUI. Revisa tu conexión o que el executor soporte loadstring/HttpGet.")
+    return
+end
 
 local function Build(LANG)
     local function T(key)
@@ -481,8 +487,9 @@ local function Build(LANG)
     end
 
     -- =============================================================================
-    -- VENTANA + imagen de fondo: busca el mayor contenedor visual sin asumir
-    -- clase (Frame, CanvasGroup o ScrollingFrame), con reintento manual.
+    -- VENTANA + imagen de fondo: ya NO se recorre CoreGui completo (podía estar
+    -- protegido y lanzar un error que detenía todo el script). Solo se busca
+    -- dentro del propio contenedor nuevo que crea WindUI.
     -- =============================================================================
     local guiParent = (pcall(function() return gethui() end) and gethui()) or CoreGui
 
@@ -491,30 +498,31 @@ local function Build(LANG)
     end
     local espFolder = Instance.new("Folder"); espFolder.Name = "KaisenXESP"; espFolder.Parent = guiParent
 
-    local scanRoots = { CoreGui, guiParent }
-    pcall(function() table.insert(scanRoots, LP:WaitForChild("PlayerGui", 5)) end)
-
     local function listScreenGuis()
         local set = {}
-        for _, root in ipairs(scanRoots) do
-            if root then
-                for _, sg in ipairs(root:GetChildren()) do
-                    if sg:IsA("ScreenGui") or sg:IsA("Folder") then set[sg] = true end
-                end
+        local ok = pcall(function()
+            for _, sg in ipairs(guiParent:GetChildren()) do
+                if sg:IsA("ScreenGui") or sg:IsA("Folder") then set[sg] = true end
             end
-        end
+        end)
         return set
     end
     local before = listScreenGuis()
 
-    local Window = WindUI:CreateWindow({
-        Title = "Kaisen X",
-        Icon = "swords",
-        Author = "Kaisen X",
-        Folder = "KaisenX",
-        Theme = "Dark",
-        Size = UDim2.fromOffset(560, 420),
-    })
+    local okWin, Window = pcall(function()
+        return WindUI:CreateWindow({
+            Title = "Kaisen X",
+            Icon = "swords",
+            Author = "Kaisen X",
+            Folder = "KaisenX",
+            Theme = "Dark",
+            Size = UDim2.fromOffset(560, 420),
+        })
+    end)
+    if not okWin or not Window then
+        warn("Kaisen X: no se pudo crear la ventana de WindUI: " .. tostring(Window))
+        return
+    end
 
     local newGui
     for i = 1, 40 do
@@ -526,44 +534,47 @@ local function Build(LANG)
         task.wait(0.1)
     end
 
+    -- Solo busca dentro de newGui (y guiParent como respaldo), nunca en CoreGui completo
     local bgImage
     local function tryAttachBg()
         local biggest, biggestArea
-        local roots = { newGui, CoreGui, guiParent }
-        for _, root in ipairs(roots) do
-            if root then
-                for _, f in ipairs(root:GetDescendants()) do
-                    if (f:IsA("Frame") or f:IsA("CanvasGroup") or f:IsA("ScrollingFrame")) and f.Name ~= "KaisenXBg" then
-                        local sz = f.AbsoluteSize
-                        local area = sz.X * sz.Y
-                        if area > 300 * 200 and (not biggestArea or area > biggestArea) then
-                            biggest, biggestArea = f, area
+        pcall(function()
+            local roots = { newGui, guiParent }
+            for _, root in ipairs(roots) do
+                if root then
+                    for _, f in ipairs(root:GetDescendants()) do
+                        if (f:IsA("Frame") or f:IsA("CanvasGroup") or f:IsA("ScrollingFrame")) and f.Name ~= "KaisenXBg" then
+                            local sz = f.AbsoluteSize
+                            local area = sz.X * sz.Y
+                            if area > 300 * 200 and (not biggestArea or area > biggestArea) then
+                                biggest, biggestArea = f, area
+                            end
                         end
                     end
                 end
             end
-        end
+        end)
         if not biggest then return false end
         if bgImage then pcall(function() bgImage:Destroy() end) end
-        local img = Instance.new("ImageLabel")
-        img.Name = "KaisenXBg"
-        img.Size = UDim2.fromScale(1, 1)
-        img.BackgroundTransparency = 1
-        img.Image = BG_ASSET
-        img.ImageTransparency = 0.8
-        img.ScaleType = Enum.ScaleType.Crop
-        img.ZIndex = math.max(biggest.ZIndex - 1, -100)
-        img.Active = false
-        img.Parent = biggest
-        bgImage = img
-        return true
+        local ok = pcall(function()
+            local img = Instance.new("ImageLabel")
+            img.Name = "KaisenXBg"
+            img.Size = UDim2.fromScale(1, 1)
+            img.BackgroundTransparency = 1
+            img.Image = BG_ASSET
+            img.ImageTransparency = 0.8
+            img.ScaleType = Enum.ScaleType.Crop
+            img.ZIndex = math.max(biggest.ZIndex - 1, -100)
+            img.Active = false
+            img.Parent = biggest
+            bgImage = img
+        end)
+        return ok
     end
     task.spawn(function()
-        local ok = false
         for i = 1, 20 do
             task.wait(0.25)
-            ok = tryAttachBg()
-            if ok then break end
+            if tryAttachBg() then break end
         end
     end)
 
@@ -1532,4 +1543,7 @@ local function Build(LANG)
     WindUI:Notify({ Title = "Kaisen X", Content = T("n_loaded"), Duration = 4 })
 end
 
-Build(loadLang())
+local okBuild, buildErr = pcall(Build, loadLang())
+if not okBuild then
+    warn("Kaisen X: error al construir el menú: " .. tostring(buildErr))
+end
