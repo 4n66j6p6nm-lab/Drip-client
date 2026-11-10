@@ -135,7 +135,7 @@ local TR = {
     err_noremote="La pistola no tiene Shoot,Gun has no Shoot,Arma sem Shoot,Arme sans Shoot,У пистолета нет Shoot",
     err_shoot="No se pudo disparar,Could not shoot,Não foi possível atirar,Tir impossible,Не удалось выстрелить",
     tg_silent="Silent aim (mouse.Hit),Silent aim (mouse.Hit),Silent aim (mouse.Hit),Silent aim (mouse.Hit),Сайлент аим",
-    tip_silent="Reescribe el punto de mira del cliente. Con esto la bala va al objetivo aunque no esté en el centro de la pantalla.,Rewrites the client aim point. The bullet goes to the target even off-center.,Reescreve a mira do cliente. A bala vai ao alvo.,Réécrit le point de visée client. La balle va à la cible.,Переписывает точку прицела. Пуля летит в цель.",
+    tip_silent="Reescribe el punto de mira del cliente. La bala va al objetivo aunque no esté centrado.,Rewrites the client aim point. The bullet goes to the target even off-center.,Reescreve a mira do cliente. A bala vai ao alvo.,Réécrit le point de visée client. La balle va à la cible.,Переписывает точку прицела. Пуля летит в цель.",
     n_shotok="Impacto confirmado,Hit confirmed,Acerto confirmado,Touché confirmé,Попадание",
     n_shotmiss="No impactó,Missed,Não acertou,Raté,Промах",
 
@@ -296,6 +296,15 @@ local function Build(LANG)
     local alive = true
     local conns = {}
     local function track(c) table.insert(conns, c); return c end
+
+    -- declaradas antes de cualquier pestaña que las use
+    local grabGun
+    local flingPlayer
+    local renderCross
+    local selectTabByIndex
+    local crossParts = {}
+    local TAB_LIST = {}
+    local TAB_COUNT = 0
 
     local function getChar()
         local ch = LP.Character
@@ -468,9 +477,6 @@ local function Build(LANG)
         return best
     end
 
-    -- =========================================================================
-    -- DISPARO: origen de cámara, verificación por vida y reintentos
-    -- =========================================================================
     local aimTarget
     local silentOn = false
 
@@ -492,8 +498,6 @@ local function Build(LANG)
         for attempt = 1, tries do
             local point = (attempt > 1 and head and head.Position) or targetHRP.Position
             if predict then point = point + targetHRP.AssemblyLinearVelocity * 0.1 end
-
-            -- origen: cámara del cliente, que es desde donde dispara MM2
             local origin = cam.CFrame
 
             if useLOS and not losClear(origin.Position, point, char) then
@@ -511,7 +515,7 @@ local function Build(LANG)
     end
 
     if getrawmetatable and setreadonly and newcclosure then
-        local okHook = pcall(function()
+        pcall(function()
             local mt = getrawmetatable(game)
             setreadonly(mt, false)
             local old = mt.__index
@@ -528,7 +532,6 @@ local function Build(LANG)
             end)
             setreadonly(mt, true)
         end)
-        if not okHook then warn("Kaisen X: sin soporte para silent aim") end
     end
 
     local function throwKnifeAt(targetHRP, useLOS, knifeSpeed)
@@ -619,7 +622,7 @@ local function Build(LANG)
     end
 
     -- =========================================================================
-    -- VENTANA + fondo tipo cristal
+    -- VENTANA
     -- =========================================================================
     local guiParent = (pcall(function() return gethui() end) and gethui()) or CoreGui
 
@@ -643,6 +646,28 @@ local function Build(LANG)
         return
     end
 
+    -- pestañas con icono y respaldo
+    local function makeTab(title, icon)
+        TAB_COUNT += 1
+        local ok, t = pcall(function() return Window:Tab({ Title = title, Icon = icon }) end)
+        if not ok or not t then
+            ok, t = pcall(function() return Window:Tab({ Title = title }) end)
+        end
+        TAB_LIST[TAB_COUNT] = t
+        return t
+    end
+
+    selectTabByIndex = function(i)
+        local t = TAB_LIST[i]
+        if not t then return end
+        pcall(function() t:Select() end)
+        pcall(function() t:Show() end)
+        pcall(function() t:Open() end)
+    end
+
+    -- =========================================================================
+    -- FONDO
+    -- =========================================================================
     local BG_ID = (BG_ASSET:gsub("%D", ""))
     local bgImage
 
@@ -781,7 +806,7 @@ local function Build(LANG)
     local hudTop = hudLabel(2, 17, true)
     local hudBot = hudLabel(23, 12, false)
 
-    -- Crosshair
+    -- Crosshair gui
     local crossGui = Instance.new("ScreenGui")
     crossGui.Name = "KaisenXCross"
     crossGui.ResetOnSpawn = false
@@ -806,19 +831,19 @@ local function Build(LANG)
         end)
     end
 
-    local RoundTab   = Window:Tab({ Title = T("tab_round"), Icon = "clock" })
-    local CombatTab  = Window:Tab({ Title = T("tab_combat"), Icon = "swords" })
-    local CrossTab   = Window:Tab({ Title = T("tab_cross"), Icon = "crosshair" })
-    local SkinTab    = Window:Tab({ Title = T("tab_skin"), Icon = "brush" })
-    local BtnTab     = Window:Tab({ Title = T("tab_buttons"), Icon = "mouse-pointer-click" })
-    local ESPTab     = Window:Tab({ Title = T("tab_esp"), Icon = "eye" })
-    local FlingTab   = Window:Tab({ Title = T("tab_fling"), Icon = "move" })
-    local EventTab   = Window:Tab({ Title = T("tab_event"), Icon = "coins" })
-    local PlayerTab  = Window:Tab({ Title = T("tab_player"), Icon = "user" })
-    local VisualTab  = Window:Tab({ Title = T("tab_visual"), Icon = "palette" })
-    local KeyTab     = Window:Tab({ Title = T("tab_keys"), Icon = "keyboard" })
-    local SearchTab  = Window:Tab({ Title = T("tab_search"), Icon = "search" })
-    local SettingsTab= Window:Tab({ Title = T("tab_settings"), Icon = "settings" })
+    local RoundTab   = makeTab(T("tab_round"), "clock")
+    local CombatTab  = makeTab(T("tab_combat"), "swords")
+    local CrossTab   = makeTab(T("tab_cross"), "crosshair")
+    local SkinTab    = makeTab(T("tab_skin"), "brush")
+    local BtnTab     = makeTab(T("tab_buttons"), "mouse-pointer-click")
+    local ESPTab     = makeTab(T("tab_esp"), "eye")
+    local FlingTab   = makeTab(T("tab_fling"), "move")
+    local EventTab   = makeTab(T("tab_event"), "coins")
+    local PlayerTab  = makeTab(T("tab_player"), "user")
+    local VisualTab  = makeTab(T("tab_visual"), "palette")
+    local KeyTab     = makeTab(T("tab_keys"), "keyboard")
+    local SearchTab  = makeTab(T("tab_search"), "search")
+    local SettingsTab= makeTab(T("tab_settings"), "settings")
 
     local S = {
         HUDOn = true, NotifyRound = true, NotifyTimer = true, NotifyDeaths = true, AutoReveal = false,
@@ -841,8 +866,30 @@ local function Build(LANG)
         CrossColor = Color3.fromRGB(255, 255, 255), Skin = 1,
     }
 
+    local safePlat, savedCF
+    local function goSky(on)
+        local _, hrp = getChar()
+        if on then
+            if not hrp then return end
+            if not safePlat then
+                safePlat = Instance.new("Part")
+                safePlat.Name = "KaisenXSafe"
+                safePlat.Size = Vector3.new(40, 2, 40)
+                safePlat.Anchored = true
+                safePlat.Transparency = 0.6
+                safePlat.Position = Vector3.new(0, 1500, 0)
+                safePlat.Parent = workspace
+            end
+            if not savedCF then savedCF = hrp.CFrame end
+            hrp.CFrame = CFrame.new(0, 1504, 0)
+        else
+            if hrp and savedCF then hrp.CFrame = savedCF end
+            savedCF = nil
+        end
+    end
+
     -- ===================== RONDA =====================
-    do
+    pcall(function()
         local lblState = RoundTab:Paragraph({ Title = T("st_round") })
         local lblTimer = RoundTab:Paragraph({ Title = T("st_timer") })
         local lblAlive = RoundTab:Paragraph({ Title = T("st_alive") })
@@ -994,16 +1041,14 @@ local function Build(LANG)
                 task.wait(0.4)
             end
         end)
-    end
+    end)
 
     -- ===================== COMBAT =====================
-    local safePlat, savedCF
-    do
+    pcall(function()
         local shooting, lastShot = false, 0
 
         CombatTab:Toggle({ Title = T("tg_silent"), Value = true, Callback = function(v)
             S.Silent = v; silentOn = v
-            if v then WindUI:Notify({ Title = "Kaisen X", Content = T("n_shotok"), Duration = 2 }) end
         end })
         CombatTab:Paragraph({ Title = T("tip_silent") })
 
@@ -1018,7 +1063,8 @@ local function Build(LANG)
                 shooting = true
                 local ok, why = shootAt(mh, S.ShootLOS and not S.Wallbang, S.ShootPredict)
                 shooting = false
-                if ok then lastShot = os.clock()
+                if ok then
+                    lastShot = os.clock()
                     WindUI:Notify({ Title = "Kaisen X", Content = T("n_shotok"), Duration = 2 })
                 else
                     WindUI:Notify({ Title = "Kaisen X", Content = T("n_shotmiss") .. " (" .. tostring(why) .. ")", Duration = 3 })
@@ -1158,26 +1204,6 @@ local function Build(LANG)
         end))
 
         CombatTab:Section({ Title = T("sec_safe") })
-        local function goSky(on)
-            local _, hrp = getChar()
-            if on then
-                if not hrp then return end
-                if not safePlat then
-                    safePlat = Instance.new("Part")
-                    safePlat.Name = "KaisenXSafe"
-                    safePlat.Size = Vector3.new(40, 2, 40)
-                    safePlat.Anchored = true
-                    safePlat.Transparency = 0.6
-                    safePlat.Position = Vector3.new(0, 1500, 0)
-                    safePlat.Parent = workspace
-                end
-                if not savedCF then savedCF = hrp.CFrame end
-                hrp.CFrame = CFrame.new(0, 1504, 0)
-            else
-                if hrp and savedCF then hrp.CFrame = savedCF end
-                savedCF = nil
-            end
-        end
         CombatTab:Toggle({ Title = T("tg_safe"), Value = false, Callback = function(v) S.SafeMode = v; goSky(v) end })
         CombatTab:Toggle({ Title = T("tg_autosafe"), Value = false, Callback = function(v) S.AutoSafe = v end })
         CombatTab:Slider({ Title = T("sl_safedist"), Value = { Min = 10, Max = 80, Default = 25 }, Callback = function(v) S.SafeDist = v end })
@@ -1196,12 +1222,11 @@ local function Build(LANG)
                 task.wait(0.4)
             end
         end)
-    end
+    end)
 
     -- ===================== CROSSHAIR =====================
-    local crossParts = {}
-    local function renderCross()
-        for _, p in ipairs(crossParts) do p:Destroy() end
+    renderCross = function()
+        for _, p in ipairs(crossParts) do pcall(function() p:Destroy() end) end
         crossParts = {}
         if not S.CrossOn then return end
         local function bar(sx, sy, px, py)
@@ -1244,7 +1269,7 @@ local function Build(LANG)
         end
     end
 
-    do
+    pcall(function()
         CrossTab:Toggle({ Title = T("tg_cross"), Value = false, Callback = function(v) S.CrossOn = v; renderCross() end })
         CrossTab:Dropdown({ Title = T("dd_style"), Values = { T("cs_cross"), T("cs_dot"), T("cs_circle") }, Value = T("cs_cross"), Callback = function(v)
             S.CrossStyle = (v == T("cs_dot")) and "dot" or (v == T("cs_circle")) and "circle" or "cross"
@@ -1253,9 +1278,9 @@ local function Build(LANG)
         CrossTab:Slider({ Title = T("sl_crosssize"), Value = { Min = 4, Max = 40, Default = 12 }, Callback = function(v) S.CrossSize = v; renderCross() end })
         CrossTab:Slider({ Title = T("sl_crossthick"), Value = { Min = 1, Max = 6, Default = 2 }, Callback = function(v) S.CrossThick = v; renderCross() end })
         CrossTab:Colorpicker({ Title = T("col_cross"), Default = S.CrossColor, Callback = function(c) S.CrossColor = c; renderCross() end })
-    end
+    end)
 
-    -- ===================== SKIN CHANGER =====================
+    -- ===================== SKINS =====================
     local SKINS = {
         { "Original", nil, nil },
         { "Rojo", Color3.fromRGB(190, 40, 40), Enum.Material.Neon },
@@ -1281,7 +1306,7 @@ local function Build(LANG)
     local function applySkin(idx)
         local s = SKINS[idx]
         local parts = skinTargets()
-        if #parts == 0 then return false end
+        if not s or #parts == 0 then return false end
         for _, h in ipairs(parts) do
             if not skinOrig[h] then
                 skinOrig[h] = { c = h.Color, m = h.Material, tex = h.TextureID }
@@ -1298,7 +1323,7 @@ local function Build(LANG)
         return true
     end
 
-    do
+    pcall(function()
         local names = {}
         for _, s in ipairs(SKINS) do table.insert(names, s[1]) end
         SkinTab:Section({ Title = T("gb_skin") })
@@ -1336,10 +1361,10 @@ local function Build(LANG)
             end
             WindUI:Notify({ Title = "Kaisen X", Content = T("n_skinok"), Duration = 2 })
         end)
-    end
+    end)
 
     -- ===================== BOTONES =====================
-    do
+    pcall(function()
         BtnTab:Section({ Title = T("gb_buttons") })
         BtnTab:Button({ Title = T("btn_b_reveal"), Callback = function()
             local m = findByRole("murd")
@@ -1348,6 +1373,7 @@ local function Build(LANG)
             WindUI:Notify({ Title = "Kaisen X", Content = ok and T("n_revlok") or T("n_revlfail"), Duration = 3 })
         end })
         BtnTab:Button({ Title = T("btn_b_gun"), Callback = function()
+            if not grabGun then return end
             task.spawn(function()
                 local ok, a, b = pcall(grabGun)
                 if ok and a then WindUI:Notify({ Title = "Kaisen X", Content = T("n_gunok"), Duration = 2 })
@@ -1383,16 +1409,16 @@ local function Build(LANG)
         BtnTab:Button({ Title = T("btn_b_fling"), Callback = function()
             local m = findByRole("murd")
             if not m then return WindUI:Notify({ Title = "Kaisen X", Content = T("n_flingfail"), Duration = 3 }) end
-            flingPlayer(m)
+            if flingPlayer then flingPlayer(m) end
         end })
         BtnTab:Button({ Title = T("btn_b_hop"), Callback = hopServer })
         BtnTab:Button({ Title = T("btn_b_rejoin"), Callback = function() TeleportSvc:Teleport(game.PlaceId, LP) end })
         BtnTab:Button({ Title = T("btn_b_unload"), Callback = function() if getgenv().__KaisenXUnload then getgenv().__KaisenXUnload() end end })
-    end
+    end)
 
     -- ===================== FLING =====================
-    local function flingPlayer(plr)
-        local ch = plr.Character
+    flingPlayer = function(plr)
+        local ch = plr and plr.Character
         local hrp = ch and ch:FindFirstChild("HumanoidRootPart")
         if not hrp then
             WindUI:Notify({ Title = "Kaisen X", Content = T("n_flingfail"), Duration = 2 })
@@ -1413,11 +1439,11 @@ local function Build(LANG)
         WindUI:Notify({ Title = "Kaisen X", Content = T("n_fling"), Duration = 2 })
     end
 
-    do
-        local names, tpPlr = {}, nil
+    pcall(function()
+        local names = {}
         for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then table.insert(names, p.Name) end end
         if #names == 0 then names = { T("nobody") } end
-        tpPlr = names[1]
+        local tpPlr = names[1]
         FlingTab:Section({ Title = T("gb_fling") })
         FlingTab:Dropdown({ Title = T("dd_player"), Values = names, Value = tpPlr, Callback = function(v) tpPlr = v end })
         FlingTab:Button({ Title = T("btn_fling"), Callback = function()
@@ -1447,10 +1473,10 @@ local function Build(LANG)
             end
         end })
         local coords = ""
-        local coordsOk = pcall(function()
+        local okIn = pcall(function()
             FlingTab:Input({ Title = T("ph_coords"), Value = "", Callback = function(v) coords = v end })
         end)
-        if not coordsOk then
+        if not okIn then
             pcall(function() FlingTab:Textbox({ Title = T("ph_coords"), Value = "", Callback = function(v) coords = v end }) end)
         end
         FlingTab:Button({ Title = T("btn_tpcoords"), Callback = function()
@@ -1459,10 +1485,10 @@ local function Build(LANG)
             if not x or not hrp then return WindUI:Notify({ Title = "Kaisen X", Content = T("n_tpcoords"), Duration = 3 }) end
             hrp.CFrame = CFrame.new(tonumber(x), tonumber(y), tonumber(z))
         end })
-    end
+    end)
 
     -- ===================== AUTOFARM =====================
-    do
+    pcall(function()
         EventTab:Section({ Title = T("gb_farm") })
         EventTab:Toggle({ Title = T("tg_farm"), Value = false, Callback = function(v) S.AutoFarm = v end })
         EventTab:Slider({ Title = T("sl_speed"), Value = { Min = 10, Max = 70, Default = 27 }, Callback = function(v) S.FarmSpeed = v end })
@@ -1663,11 +1689,10 @@ local function Build(LANG)
                 end
             end
         end))
-    end
+    end)
 
     -- ===================== ESP =====================
-    local grabGun
-    do
+    pcall(function()
         ESPTab:Toggle({ Title = T("tg_esp"), Value = false, Callback = function(v) S.ESPOn = v end })
         ESPTab:Toggle({ Title = T("tg_espnames"), Value = true, Callback = function(v) S.ESPNames = v end })
         ESPTab:Toggle({ Title = T("tg_espgun"), Value = true, Callback = function(v) S.ESPGun = v end })
@@ -1791,7 +1816,7 @@ local function Build(LANG)
         task.spawn(function()
             while alive do
                 local wait = 0.5
-                if S.AutoGun and getRole(LP) ~= "murd" and not hasTool(LP, GUN_NAME) and findGunDrop() then
+                if S.AutoGun and getRole(LP) ~= "murd" and not hasTool(LP, GUN_NAME) and findGunDrop() and grabGun then
                     local ok, got = pcall(grabGun)
                     wait = (ok and got) and 1 or 3
                 end
@@ -1812,11 +1837,11 @@ local function Build(LANG)
                 task.wait(1)
             end
         end)
-    end
+    end)
 
     -- ===================== PLAYER =====================
     local flyBV
-    do
+    pcall(function()
         PlayerTab:Section({ Title = T("gb_move") })
         PlayerTab:Toggle({ Title = T("tg_ws"), Value = false, Callback = function(v) S.WSOn = v end })
         PlayerTab:Slider({ Title = "WalkSpeed", Value = { Min = 16, Max = 100, Default = 24 }, Callback = function(v) S.WS = v end })
@@ -1889,12 +1914,12 @@ local function Build(LANG)
         end })
         PlayerTab:Button({ Title = T("btn_rejoin"), Callback = function() TeleportSvc:Teleport(game.PlaceId, LP) end })
         PlayerTab:Button({ Title = T("btn_hop"), Callback = hopServer })
-    end
+    end)
 
     -- ===================== VISUAL =====================
-    local atm, bloom, cc, rays, dof
-    local original, origShadows = {}, Lighting.GlobalShadows
-    do
+    pcall(function()
+        local atm, bloom, cc, rays, dof
+        local original, origShadows = {}, Lighting.GlobalShadows
         for _, k in ipairs({ "Brightness", "ClockTime", "Ambient", "OutdoorAmbient", "ColorShift_Top",
             "ColorShift_Bottom", "ExposureCompensation", "FogColor", "FogStart", "FogEnd" }) do
             pcall(function() original[k] = Lighting[k] end)
@@ -1977,10 +2002,10 @@ local function Build(LANG)
         VisualTab:Slider({ Title = T("fx_fog"), Value = { Min = 100, Max = 6000, Default = 2000 }, Callback = function(v) Lighting.FogEnd = v end })
         VisualTab:Slider({ Title = T("fx_bloom"), Value = { Min = 0, Max = 2, Default = 0.4 }, Callback = function(v) bloom.Intensity = v end })
         VisualTab:Slider({ Title = T("fx_sat"), Value = { Min = -1, Max = 1, Default = 0.1 }, Callback = function(v) cc.Saturation = v end })
-    end
+    end)
 
     -- ===================== KEYBINDS =====================
-    do
+    pcall(function()
         local binds = {}
         local pendingBind = nil
         local actions = {}
@@ -2012,22 +2037,20 @@ local function Build(LANG)
                 hrp.CFrame = old
             end)
         end)
-        addAction("safe", T("tg_safe"), function() S.SafeMode = not S.SafeMode; local _, h = getChar(); if h then h.CFrame = CFrame.new(0, 1504, 0) end end)
+        addAction("safe", T("tg_safe"), function() goSky(true) end)
         addAction("noclip", T("tg_noclip"), function() S.Noclip = not S.Noclip; applyNoclip(S.Noclip) end)
         addAction("fly", T("tg_fly"), function() S.Fly = not S.Fly end)
         addAction("esp", T("tg_esp"), function() S.ESPOn = not S.ESPOn end)
         addAction("cross", T("tg_cross"), function() S.CrossOn = not S.CrossOn; renderCross() end)
-        addAction("gun", T("btn_grabgun"), function() task.spawn(grabGun) end)
+        addAction("gun", T("btn_grabgun"), function() if grabGun then task.spawn(grabGun) end end)
         addAction("reveal", T("btn_reveal"), function()
             local m = findByRole("murd")
             if m then sendChat("The murder is " .. m.Name .. " kaisen x") end
         end)
         addAction("fling", T("btn_fling"), function()
-            local p = nearestEnemyHRP()
-            if p and p.Parent then
-                local plr = Players:GetPlayerFromCharacter(p.Parent)
-                if plr then flingPlayer(plr) end
-            end
+            local hrp = nearestEnemyHRP()
+            local plr = hrp and hrp.Parent and Players:GetPlayerFromCharacter(hrp.Parent)
+            if plr and flingPlayer then flingPlayer(plr) end
         end)
         addAction("hop", T("btn_hop"), hopServer)
 
@@ -2079,19 +2102,19 @@ local function Build(LANG)
                 end
             end
         end))
-    end
+    end)
 
     -- ===================== BUSCAR =====================
-    do
+    pcall(function()
         local idx = {
-            { "coin farm moneda candy autofarm", function() selectTabByIndex(8) end },
-            { "silent aim disparar shoot combat pistola gun", function() selectTabByIndex(2) end },
-            { "crosshair mira", function() selectTabByIndex(3) end },
+            { "moneda coin candy autofarm farm", function() selectTabByIndex(8) end },
+            { "silent aim shoot disparar pistola gun combat", function() selectTabByIndex(2) end },
+            { "crosshair mira punto", function() selectTabByIndex(3) end },
             { "skin cuchillo knife", function() selectTabByIndex(4) end },
             { "esp resaltar highlight", function() selectTabByIndex(6) end },
             { "fling teleport tp", function() selectTabByIndex(7) end },
-            { "velocidad speed jump salto noclip fly", function() selectTabByIndex(9) end },
-            { "shader visual luz", function() selectTabByIndex(10) end },
+            { "velocidad speed salto jump noclip fly", function() selectTabByIndex(9) end },
+            { "shader visual luz brillo", function() selectTabByIndex(10) end },
             { "keybind tecla", function() selectTabByIndex(11) end },
             { "ronda round hud timer", function() selectTabByIndex(1) end },
             { "idioma language", function() selectTabByIndex(13) end },
@@ -2106,21 +2129,19 @@ local function Build(LANG)
         SearchTab:Button({ Title = T("btn_search"), Callback = function()
             local s = tostring(q):lower()
             if s == "" then return end
-            local hits = 0
             for _, e in ipairs(idx) do
                 if e[1]:find(s, 1, true) then
                     e[2]()
-                    hits += 1
                     WindUI:Notify({ Title = "Kaisen X", Content = T("n_searchfound"), Duration = 2 })
-                    break
+                    return
                 end
             end
-            if hits == 0 then WindUI:Notify({ Title = "Kaisen X", Content = T("n_searchnone"), Duration = 2 }) end
+            WindUI:Notify({ Title = "Kaisen X", Content = T("n_searchnone"), Duration = 2 })
         end })
-    end
+    end)
 
     -- ===================== AJUSTES =====================
-    do
+    pcall(function()
         SettingsTab:Button({ Title = T("btn_unload"), Callback = function() if getgenv().__KaisenXUnload then getgenv().__KaisenXUnload() end end })
 
         local langNames, curName, nameToCode = {}, "Español", {}
@@ -2151,9 +2172,9 @@ local function Build(LANG)
         SettingsTab:Button({ Title = T("btn_discord"), Callback = function()
             local msg = "¡Únete al Discord de Kaisen X! " .. DISCORD_URL .. " — novedades del script, soporte y sorteos."
             if setclipboard then pcall(setclipboard, msg); WindUI:Notify({ Title = "Kaisen X", Content = T("n_disccopy"), Duration = 3 })
-            else WindUI:Notify({ Title = "Kaisen X", Content = T("n_discnosup"), Duration = 3 }) end
+            else WindUI:Notify({ Title = "Kaisen X", Content = T("n_disdnosup"), Duration = 3 }) end
         end })
-    end
+    end)
 
     -- puntero del silent aim
     task.spawn(function()
