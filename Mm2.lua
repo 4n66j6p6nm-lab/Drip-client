@@ -487,9 +487,7 @@ local function Build(LANG)
     end
 
     -- =============================================================================
-    -- VENTANA + imagen de fondo: ya NO se recorre CoreGui completo (podía estar
-    -- protegido y lanzar un error que detenía todo el script). Solo se busca
-    -- dentro del propio contenedor nuevo que crea WindUI.
+    -- VENTANA + imagen de fondo
     -- =============================================================================
     local guiParent = (pcall(function() return gethui() end) and gethui()) or CoreGui
 
@@ -497,17 +495,6 @@ local function Build(LANG)
         local old = guiParent:FindFirstChild(n); if old then old:Destroy() end
     end
     local espFolder = Instance.new("Folder"); espFolder.Name = "KaisenXESP"; espFolder.Parent = guiParent
-
-    local function listScreenGuis()
-        local set = {}
-        local ok = pcall(function()
-            for _, sg in ipairs(guiParent:GetChildren()) do
-                if sg:IsA("ScreenGui") or sg:IsA("Folder") then set[sg] = true end
-            end
-        end)
-        return set
-    end
-    local before = listScreenGuis()
 
     local okWin, Window = pcall(function()
         return WindUI:CreateWindow({
@@ -524,55 +511,76 @@ local function Build(LANG)
         return
     end
 
-    local newGui
-    for i = 1, 40 do
-        local after = listScreenGuis()
-        for sg in pairs(after) do
-            if not before[sg] then newGui = sg break end
-        end
-        if newGui then break end
-        task.wait(0.1)
-    end
-
-    -- Solo busca dentro de newGui (y guiParent como respaldo), nunca en CoreGui completo
+    -- =============================================================================
+    -- FONDO: se ancla al marco real de la ventana, nunca al contenedor de
+    -- pantalla completa. Verifica que el asset cargue y avisa si no.
+    -- =============================================================================
     local bgImage
-    local function tryAttachBg()
-        local biggest, biggestArea
+
+    local function resolveHost()
+        -- 1) API del propio WindUI
+        for _, key in ipairs({ "Frame", "MainFrame", "Window", "Root", "Holder" }) do
+            local f = Window[key]
+            if typeof(f) == "Instance" and f:IsA("GuiObject") then return f end
+        end
+        -- 2) respaldo: descendencia, descartando frames de pantalla completa
+        local cam = workspace.CurrentCamera
+        local vp = cam and cam.ViewportSize or Vector2.new(1280, 720)
+        local fullArea = vp.X * vp.Y
+        local best, bestScore
         pcall(function()
-            local roots = { newGui, guiParent }
-            for _, root in ipairs(roots) do
-                if root then
-                    for _, f in ipairs(root:GetDescendants()) do
-                        if (f:IsA("Frame") or f:IsA("CanvasGroup") or f:IsA("ScrollingFrame")) and f.Name ~= "KaisenXBg" then
-                            local sz = f.AbsoluteSize
-                            local area = sz.X * sz.Y
-                            if area > 300 * 200 and (not biggestArea or area > biggestArea) then
-                                biggest, biggestArea = f, area
-                            end
-                        end
+            for _, d in ipairs(guiParent:GetDescendants()) do
+                if d:IsA("Frame") and d.Name ~= "KaisenXBg" then
+                    local sz = d.AbsoluteSize
+                    local area = sz.X * sz.Y
+                    if area > 120 * 120 and area < fullArea * 0.7 then
+                        local score = math.abs(sz.X - 560) + math.abs(sz.Y - 420)
+                        if not bestScore or score < bestScore then best, bestScore = d, score end
                     end
                 end
             end
         end)
-        if not biggest then return false end
-        if bgImage then pcall(function() bgImage:Destroy() end) end
-        local ok = pcall(function()
-            local img = Instance.new("ImageLabel")
-            img.Name = "KaisenXBg"
-            img.Size = UDim2.fromScale(1, 1)
-            img.BackgroundTransparency = 1
-            img.Image = BG_ASSET
-            img.ImageTransparency = 0.8
-            img.ScaleType = Enum.ScaleType.Crop
-            img.ZIndex = math.max(biggest.ZIndex - 1, -100)
-            img.Active = false
-            img.Parent = biggest
-            bgImage = img
-        end)
-        return ok
+        return best
     end
+
+    local function tryAttachBg()
+        local host = resolveHost()
+        if not host then return false end
+        if bgImage and bgImage.Parent then
+            if bgImage.Parent == host then return true end
+            bgImage:Destroy()
+        end
+
+        local img = Instance.new("ImageLabel")
+        img.Name = "KaisenXBg"
+        img.Size = UDim2.fromScale(1, 1)
+        img.Position = UDim2.fromOffset(0, 0)
+        img.BackgroundTransparency = 1
+        img.BorderSizePixel = 0
+        img.Image = BG_ASSET
+        img.ImageTransparency = 0.72
+        img.ScaleType = Enum.ScaleType.Crop
+        img.ZIndex = 0
+        img.Active = false
+        img.Parent = host
+
+        -- empuja hacia arriba cualquier hermano que pudiera taparla
+        for _, sib in ipairs(host:GetChildren()) do
+            if sib ~= img and sib:IsA("GuiObject") and sib.ZIndex <= 0 then sib.ZIndex = 1 end
+        end
+        bgImage = img
+
+        task.spawn(function()
+            task.wait(2)
+            if img.Parent and not img.IsLoaded then
+                WindUI:Notify({ Title = "Kaisen X", Content = T("n_bgfail"), Duration = 6 })
+            end
+        end)
+        return true
+    end
+
     task.spawn(function()
-        for i = 1, 20 do
+        for _ = 1, 25 do
             task.wait(0.25)
             if tryAttachBg() then break end
         end
